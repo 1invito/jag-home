@@ -1,0 +1,12 @@
+# Third-party apps that get uninstalled outright. These live in /data, so they
+# are gone for good — they come back from the app store if the user wants them.
+# Keep YouTube (com.amazon.firetv.youtube) and VLC (org.videolan.vlc).
+in.startv.hotstar
+com.zee5.amazon
+com.jio.media.stb.ondemand
+com.onemainstream.sonyliv.android
+com.discoveryplus.tv.fire
+com.aajtak.firetv
+tv.twitch.android.viewer
+com.creative.fastscreen.tv
+com.mxtech.videoplayer.television

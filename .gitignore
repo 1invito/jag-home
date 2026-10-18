@@ -1,0 +1,5 @@
+report/
+*.log
+.DS_Store
+*.dumbtv
+dumbtv.conf
