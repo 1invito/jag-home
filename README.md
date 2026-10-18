@@ -133,6 +133,7 @@ If anything looks wrong later, `scripts/restore.sh` puts it back.
 | Script | Does | Reboot needed |
 |---|---|---|
 | `preflight.sh` | Prints device facts, snapshots the current settings, shows the plan. Changes nothing else. | no |
+| `discover.sh` | Read-only inventory for a TV with no verified package list: flags likely ads/analytics packages and writes a commented block for `data/<platform>/packages.txt`. | no |
 | `configure.sh` | Asks what to keep and writes `dumbtv.conf`. | no |
 | `debloat.sh` | Uninstalls/disables packages, applies privacy settings. | yes |
 | `lockdown.sh` | App-ops + data-saver rules for protected packages. | no |

@@ -142,10 +142,11 @@ the settings in `data/fireos/settings.restore.txt`. Apps uninstalled from
 
 ## Adding support for a new device
 
-1. `adb shell pm list packages > /tmp/pkgs.txt`.
-2. Copy `data/fireos/packages.txt`, drop entries that are not in that list.
+1. `./scripts/discover.sh` — read-only inventory that flags ads/analytics-looking
+   packages and writes a commented block for `data/<platform>/packages.txt`.
+2. Verify candidates by hand on that TV, then fill in the list.
 3. Run `debloat.sh --dry-run`, then for real; add every `PROTECTED` to
-   `data/fireos/protected.txt`.
+   `data/fireos/protected.txt` (or the matching platform file).
 4. Never add a package that is not on the device, and never remove a package
    from `never-disable.txt`.
 5. Android TV: keep the Fire OS settings keys out of it and read

@@ -56,8 +56,17 @@ than guess a package list.
 
 `data/androidtv/` exists but is deliberately empty apart from the safety list.
 No package list is verified on hardware yet, so `debloat.sh` refuses to run there.
-If you own an Android TV, the most useful contribution is `scripts/contribute.sh`
-plus your own verified lists in a PR.
+
+To build one safely on your own TV:
+
+```sh
+./scripts/discover.sh        # read-only: lists packages, flags ads/analytics candidates
+```
+
+It changes nothing; it writes `report/discover-<platform>-<date>.txt` with a
+suggested block for `data/androidtv/packages.txt`, commented out. Verify the
+candidates by hand (disable one, then check inputs, settings, app store and
+streaming), commit the safe ones, and run `./scripts/contribute.sh`.
 
 ## The option that always works
 
