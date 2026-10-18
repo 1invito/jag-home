@@ -3,3 +3,5 @@ report/
 .DS_Store
 *.dumbtv
 dumbtv.conf
+launcher/build/
+launcher/*.keystore
