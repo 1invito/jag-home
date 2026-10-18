@@ -15,6 +15,9 @@ fi
 
 PKG=dnsfilter.android
 APK_URL=https://f-droid.org/repo/dnsfilter.android_1506103.apk
+# Pinned: F-Droid keeps one file per version, so this is stable. Update the hash
+# deliberately when the version above changes.
+APK_SHA256=3ddd0db322d1ca5fe950ea29dc1788af6e6581bb5f34694085fb4aa2e77b68ad
 CONF_URL=https://raw.githubusercontent.com/IngoZenz/personaldnsfilter/master/app/src/main/assets/dnsfilter.conf
 HAGEZI_URL=https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/native.amazon-onlydomains.txt
 # Private work dir: fixed paths under /tmp can be pre-seeded by another local user.
@@ -58,6 +61,10 @@ fi
 step "app"
 if [[ $DRY_RUN == 0 ]]; then
   curl -fsSL -o "$APK" "$APK_URL" || die "could not download $APK_URL"
+  if command -v sha256sum >/dev/null; then got=$(sha256sum "$APK" | awk '{print $1}')
+  else got=$(shasum -a 256 "$APK" | awk '{print $1}'); fi
+  [[ $got == "$APK_SHA256" ]] || die "checksum mismatch for $APK_URL (got $got) — not installing"
+  note "checksum ok"
   out=$("$ADB" -s "$SERIAL" install -r "$APK" 2>&1 | tail -1)
   printf '  %s\n' "$out"
   case $out in

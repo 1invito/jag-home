@@ -81,6 +81,17 @@ else
   fi
 fi
 
+if [[ $LAUNCHER == 0 ]]; then
+  printf '%-10s %-38s %s\n' skip alarm "LAUNCHER=0, not checked"
+else
+  # dumbtv home needs this to answer HOME immediately; an update can drop it.
+  if dev 'settings get global alarm_manager_constants' | grep -q 'min_futurity=0'; then
+    printf '%-10s %-38s %s\n' ok alarm "min_futurity=0"
+  else
+    printf '%-10s %-38s %s\n' warn alarm "missing min_futurity=0 (HOME is slower, still works)"
+  fi
+fi
+
 if [[ $fail == 0 ]]; then
   printf '\nall checks passed\n'
 else
