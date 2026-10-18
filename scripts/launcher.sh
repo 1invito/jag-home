@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Installs Projectivy Launcher and makes it the home screen.
-# On Fire OS the HOME button is hijacked through an accessibility service,
-# because the Amazon launcher is a protected package and Fire OS ignores
-# "default home" settings. Usage: ./scripts/launcher.sh [--dry-run] [-y]
+# Installs dumbtv home (this repo's own launcher, launcher/) and gives it the
+# HOME button. Fire OS ignores "default home" and protects Amazon's launcher, so
+# the takeover runs through a small accessibility service; launcher/README.md has
+# the details. Usage: ./scripts/launcher.sh [--dry-run] [-y]
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 parse_flags "$@"
@@ -14,42 +14,25 @@ if [[ $LAUNCHER == 0 ]]; then
   exit 0
 fi
 
-PKG=com.spocky.projengmenu
-HOME_ACT=$PKG/.ui.home.MainActivity
-A11Y=$PKG/$PKG.services.ProjectivyAccessibilityService
-APK_URL=https://github.com/spocky/miproja1/releases/download/4.72/ProjectivyLauncher-4.72-c97-xda-release.apk
-APK=/tmp/dumbtv-projectivy.apk
+PKG=tv.dumbtv.home
 
 step "plan"
-note "install Projectivy 4.72 and take over the HOME button"
-note "Amazon's launcher stays installed: long-press HOME returns to it (settings escape hatch)"
-if [[ $DRY_RUN == 0 ]]; then confirm "Replace the home screen on $SERIAL?" || die "cancelled"; fi
-
-if ! present "$PKG" && [[ $DRY_RUN == 0 ]]; then
-  [[ -s $APK ]] || curl -fsSL -o "$APK" "$APK_URL" || die "could not download $APK_URL"
-  adb -s "$SERIAL" install -r "$APK" | tail -1
+note "install dumbtv home: open source, 41 KB, no permissions (no internet, no ad ID)"
+note "the prebuilt APK comes from this repo's GitHub release and is checksum-verified"
+note "take over HOME: accessibility service + settings global alarm_manager_constants min_futurity=0"
+note "Amazon's launcher stays installed: hold HOME for Fire OS's menu, or Options > Open Amazon's home screen"
+if [[ $DRY_RUN == 1 ]]; then
+  note "[dry-run] ADB=$ADB ADB_SERIAL=$SERIAL launcher/install.sh"
+  exit 0
 fi
+confirm "Replace the home screen on $SERIAL?" || die "cancelled"
 
-acmd appops set $PKG SYSTEM_ALERT_WINDOW allow >/dev/null
-acmd dumpsys deviceidle whitelist +$PKG >/dev/null
+ADB=$ADB ADB_SERIAL=$SERIAL "$ROOT/launcher/install.sh" || die "launcher install failed (see above)"
 
-if is_fireos; then
-  # Toggling off first forces the accessibility manager to rebind a service whose
-  # process died; without the toggle a stale entry can leave HOME with Amazon.
-  acmd settings put secure enabled_accessibility_services "" >/dev/null
-  sleep 2
-  acmd settings put secure enabled_accessibility_services "$A11Y" >/dev/null
-  acmd settings put secure accessibility_enabled 1 >/dev/null
-fi
-
-acmd cmd package set-home-activity "$PKG/$HOME_ACT" >/dev/null 2>&1
-acmd am start -n "$HOME_ACT" >/dev/null 2>&1
-[[ $DRY_RUN == 1 ]] && { note "[dry-run] done"; exit 0; }
-
-sleep 5
+sleep 3
 home=$(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')
-if printf '%s' "$home" | grep -q projengmenu; then
-  note "home screen is Projectivy"
+if printf '%s' "$home" | grep -q "$PKG"; then
+  note "home screen is dumbtv home"
 else
   note "home screen is $home"
   note "press HOME once or run this script again; see docs/GOTCHAS.md if it will not stick"

@@ -70,14 +70,26 @@ On Android TV, `cmd package set-home-activity` works. On Fire OS it prints
 still answers `com.amazon.tv.launcher`, and both the launcher and
 `com.amazon.firehomestarter` are protected packages.
 
-So Projectivy takes over by watching for the home window with an accessibility
-service and launching itself on top. Consequences worth knowing:
+So dumbtv home (`launcher/`, this repo's own launcher) takes over with a small
+accessibility service, `Guard`, that sees only window changes — it reads no
+screen content. Measured on a Fire OS 7.7 TV:
 
-- A HOME press from inside an app shows Amazon's home for 3–6 seconds first.
-- If the accessibility service dies or the setting is cleared, HOME goes back to
-  Amazon. `scripts/launcher.sh` puts it back.
-- Long-press HOME still reaches Amazon's launcher, which is the escape hatch for
-  anything Projectivy does not expose.
+- **The HOME key cannot be intercepted.** Fire OS handles it before any
+  accessibility key filter runs, so `Guard` waits for Amazon's home window instead.
+- **Android holds back app launches for 5 s after a HOME press**
+  (`APP_SWITCH_DELAY_TIME`). That is why third-party launchers flash Amazon's home
+  for 3–6 s. `Guard` launches through an AlarmManager `PendingIntent`, which
+  `system_server` sends and is exempt from the delay. Alarms normally fire no
+  sooner than 5 s ahead, so `launcher.sh` sets
+  `settings global alarm_manager_constants min_futurity=0`; `restore.sh` and
+  `launcher/install.sh --undo` remove it.
+- **Amazon's home is covered before it draws** by an overlay window `Guard` keeps
+  ready without a surface, and removed once ours is on screen. HOME from an app:
+  about 0.3 s of black, then the home screen.
+- If the accessibility setting is cleared, HOME goes back to Amazon.
+  `scripts/launcher.sh` puts it back.
+- Holding HOME still opens Fire OS's own quick menu, and the launcher's Options
+  screen can open Amazon's home on purpose.
 
 ## What is not used, and why
 

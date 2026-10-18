@@ -1,0 +1,10 @@
+# Android TV (Google TV): package list NOT populated.
+#
+# Nothing here is verified on hardware yet, so debloat.sh refuses to run on
+# non-Amazon devices. Contributions welcome: run
+#   adb shell pm list packages
+# on your TV, pick the packages that only do ads, telemetry or vendor promo, and
+# add them here with a comment saying what each one did.
+#
+# Do not copy a list from a blog post. A wrong entry on a television can remove
+# the input switcher or the settings app.

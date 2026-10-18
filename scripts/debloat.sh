@@ -7,46 +7,58 @@ parse_flags "$@"
 need_device
 is_fireos || die "this package list is for Fire OS; see docs/OTHER-TVS.md"
 load_conf
+check_keep_list
+
+aps=$(list_of "$DATA/fireos/user-apps.txt")
+for p in $REMOVE_EXTRA; do case " $aps " in *" $p "*) ;; *) aps="$aps $p";; esac; done
 
 step "plan"
 note "packages   $(list_of "$DATA/fireos/packages.txt" | wc -l | tr -d ' ')"
-note "user apps  $(list_of "$DATA/fireos/user-apps.txt" | wc -l | tr -d ' ') (keeping: ${KEEP_APPS:-none extra})"
+note "user apps  $(printf '%s' "$aps" | wc -w | tr -d ' ') (keeping: ${KEEP_APPS:-none extra})"
 note "settings   $(list_of "$DATA/fireos/settings.txt" | wc -l | tr -d ' ')"
 if [[ $DRY_RUN == 0 ]]; then
-  note "the TV will reboot when this finishes"
-  confirm "Remove Amazon ads, telemetry and bloat from $SERIAL?" || die "cancelled"
+  note "these are uninstalled permanently (APKs live in /data):"
+  for p in $aps; do
+    keep_pkg "$p" && continue
+    present "$p" || continue
+    printf '    %-32s %s\n' "$(app_name "$p" || true)" "$p" >&2
+  done
+  note "Amazon system apps are disabled and can be restored by restore.sh"
+  confirm "Remove ads/telemetry AND uninstall the apps listed above from $SERIAL?" || die "cancelled"
 fi
 
+if [[ $DRY_RUN == 1 ]]; then
+  step "Amazon packages (dry-run)"
+  for p in $(list_of "$DATA/fireos/packages.txt"); do
+    protected_by_policy "$p" && { note "$p  SKIP (never-disable list)"; continue; }
+    keep_pkg "$p" && { note "$p  SKIP (keep list)"; continue; }
+    present "$p" && note "$p  would be removed or disabled"
+  done
+  step "third-party apps (dry-run)"
+  for p in $aps; do
+    protected_by_policy "$p" && { note "$p  SKIP (never-disable list)"; continue; }
+    keep_pkg "$p" && { note "$p  SKIP (keep list)"; continue; }
+    present "$p" && note "$p  would be uninstalled"
+  done
+  note "dry-run: nothing was changed"
+  exit 0
+fi
+
+mkdir -p "$REPORT"
 log="$REPORT/debloat.txt"
 : > "$log"
 
 step "Amazon packages"
-if [[ $DRY_RUN == 1 ]]; then
-  for p in $(list_of "$DATA/fireos/packages.txt"); do
-    protected_by_policy "$p" && { printf '  %-46s SKIP (never-disable list)\n' "$p"; continue; }
-    keep_pkg "$p" && { printf '  %-46s SKIP (keep list)\n' "$p"; continue; }
-    present "$p" && printf '  %-46s would be removed or disabled\n' "$p"
-  done
-  for p in $(list_of "$DATA/fireos/user-apps.txt") $REMOVE_EXTRA; do
-    keep_pkg "$p" && { printf '  %-46s SKIP (keep list)\n' "$p"; continue; }
-    present "$p" && printf '  %-46s would be uninstalled\n' "$p"
-  done
-  printf '\n  dry-run: nothing was changed\n'
-  exit 0
-fi
 removed=0; disabledn=0; protectedn=0; absent=0; suspect=0
 for p in $(list_of "$DATA/fireos/packages.txt"); do
   if protected_by_policy "$p"; then
-    printf '  %-46s SKIP (never-disable list)\n' "$p"
-    continue
+    printf '  %-46s SKIP (never-disable list)\n' "$p"; continue
   fi
   if keep_pkg "$p"; then
-    printf '  %-46s SKIP (keep list)\n' "$p"
-    continue
+    printf '  %-46s SKIP (keep list)\n' "$p"; continue
   fi
   if ! present "$p"; then
-    printf '  %-46s absent\n' "$p"
-    absent=$((absent+1)); continue
+    printf '  %-46s absent\n' "$p"; absent=$((absent+1)); continue
   fi
   out=$(acmd pm uninstall -k --user 0 "$p" | head -1)
   case $out in
@@ -65,7 +77,10 @@ for p in $(list_of "$DATA/fireos/packages.txt"); do
 done
 
 step "third-party apps"
-for p in $(list_of "$DATA/fireos/user-apps.txt") $REMOVE_EXTRA; do
+for p in $aps; do
+  if protected_by_policy "$p"; then
+    printf '  %-46s SKIP (never-disable list)\n' "$p"; continue
+  fi
   if keep_pkg "$p"; then
     printf '  %-46s SKIP (keep list)\n' "$p"; continue
   fi
@@ -93,6 +108,7 @@ for p in $(list_of "$DATA/fireos/packages.txt"); do
     acmd cmd netpolicy add restrict-background-blacklist "$uid" >/dev/null
   fi
   printf '  %-46s still running -> ops off, data blocked\n' "$p"
+  printf '%s\tstarved\n' "$p" >> "$log"
 done
 
 step "privacy settings"
@@ -105,10 +121,8 @@ done < <(list_of "$DATA/fireos/settings.txt" | sed 's/ = / /')
 step "summary"
 note "removed $removed · disabled $disabledn · protected $protectedn · absent $absent · suspect $suspect"
 note "log: ${log#$ROOT/}"
-[[ $suspect -gt 0 ]] && note "SUSPECT entries above need a human look before continuing"
+[[ $suspect -gt 0 ]] && note "SUSPECT entries need a human look before continuing"
 
-if [[ $DRY_RUN == 0 ]]; then
-  reboot_wait
-  note "home screen now: $(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')"
-  note "if that is not a home screen you can use, run ./scripts/restore.sh"
-fi
+reboot_wait
+note "home screen now: $(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')"
+note "if that is not a home screen you can use, run ./scripts/restore.sh"

@@ -9,15 +9,18 @@ DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FLAGS=("$@")
 CONF="$DIR/../dumbtv.conf"
 
-"$DIR/preflight.sh"
+# bash 3.2 (macOS) errors on "${FLAGS[@]}" when the array is empty under set -u.
+run() { "$@" ${FLAGS[@]+"${FLAGS[@]}"}; }
+
+run "$DIR/preflight.sh" || exit 1
 printf '\n'
 
 if [[ ! -f $CONF ]]; then
-  "$DIR/configure.sh" "${FLAGS[@]}" || exit 1
+  run "$DIR/configure.sh" || exit 1
 fi
 
-"$DIR/debloat.sh"   "${FLAGS[@]}" || exit 1
-"$DIR/lockdown.sh"  "${FLAGS[@]}" || exit 1
-"$DIR/dnsfilter.sh" "${FLAGS[@]}" || exit 1
-"$DIR/launcher.sh"  "${FLAGS[@]}" || exit 1
+run "$DIR/debloat.sh"   || exit 1
+run "$DIR/lockdown.sh"  || exit 1
+run "$DIR/dnsfilter.sh" || exit 1
+run "$DIR/launcher.sh"  || exit 1
 "$DIR/verify.sh"

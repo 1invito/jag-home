@@ -5,6 +5,7 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 parse_flags "$@"
 need_device
+mkdir -p "$REPORT"
 
 step "device"
 note "serial        $SERIAL"
@@ -29,7 +30,7 @@ note "third-party   $(dev 'pm list packages -3' | sed 's/package://' | grep -vc 
 note "home screen   $(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//' | awk -F/ '{print $1}')"
 note "free ram      $(dev 'dumpsys meminfo' | sed -n 's/.*Free RAM: *\([0-9,]*K\).*/\1/p' | head -1)"
 note "dns filter    $(present dnsfilter.android && echo installed || echo 'not installed')"
-note "launcher      $(present com.spocky.projengmenu && echo installed || echo 'not installed')"
+note "launcher      $(present tv.dumbtv.home && echo 'dumbtv home installed' || echo 'not installed')"
 
 step "the pass would"
 note "disable $(($(list_of "$DATA/fireos/packages.txt" | wc -l | tr -d ' ') - 0)) Amazon packages, minus anything in never-disable.txt"
@@ -37,7 +38,7 @@ note "remove $(list_of "$DATA/fireos/user-apps.txt" | wc -l | tr -d ' ') third-p
 note "deny background work + data to $(list_of "$DATA/fireos/protected.txt" | wc -l | tr -d ' ') protected packages"
 note "apply $(list_of "$DATA/fireos/settings.txt" | wc -l | tr -d ' ') privacy settings"
 note "install a DNS filter that blocks Amazon telemetry, Alexa and the OTA servers"
-note "replace the home screen with Projectivy"
+note "replace the home screen with dumbtv home (this repo's own launcher, no permissions)"
 note "reboot twice (about 5 minutes)"
 
 step "not touched, ever"
@@ -46,9 +47,15 @@ note "see data/fireos/never-disable.txt"
 
 step "snapshot before anything changes"
 if [[ $DRY_RUN == 0 ]]; then
-  dev 'settings list secure' > "$REPORT/settings-before-secure.txt" 2>/dev/null || true
-  dev 'settings list global' > "$REPORT/settings-before-global.txt" 2>/dev/null || true
-  note "saved to report/ (git-ignored) so restore.sh can put the exact values back"
+  # Only the first run counts: later runs would snapshot the already-tightened
+  # values and destroy the originals restore.sh needs.
+  if [[ -f $REPORT/settings-before-secure.txt ]]; then
+    note "settings snapshot already exists, keeping the original"
+  else
+    dev 'settings list secure' > "$REPORT/settings-before-secure.txt" 2>/dev/null || true
+    dev 'settings list global' > "$REPORT/settings-before-global.txt" 2>/dev/null || true
+    note "saved to report/ (git-ignored) so restore.sh can put the exact values back"
+  fi
 else
   note "[dry-run] would snapshot secure and global settings into report/"
 fi

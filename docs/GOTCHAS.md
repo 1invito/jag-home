@@ -7,7 +7,9 @@ Everything here cost real time to work out. Read it before debugging anything.
 **`am force-stop dnsfilter.android` breaks filtering silently.** The app comes
 back (always-on VPN), the VPN network re-registers, and DNS stops going through
 it: every lookup goes straight to the router. The traffic log goes quiet, which
-is the tell. Recovery is a reboot, not a restart. Never force-stop it.
+is the tell. Recovery is a reboot, not a restart. Never force-stop it — the one
+exception is `scripts/dnsfilter.sh`, which stops it during setup and reboots
+immediately afterwards so the pushed list is the one that loads.
 
 **Without storage permission the blocklist import writes a 234-byte header.**
 This only matters for the `filterAutoUpdateURL` + `file://` route, which an
@@ -46,11 +48,27 @@ adb shell settings get secure accessibility_enabled             # 0 = broken
 Re-run `scripts/launcher.sh`. Toggling the service off and on again is what
 actually rebinds it.
 
-**A 3–6 s flash of Amazon's home screen** when pressing HOME from an app is
-normal: Amazon wins the intent, Projectivy reacts to the window change a moment
-later. A second HOME press is instant.
+**Amazon's home for ~5 s on every HOME press** means
+`alarm_manager_constants` lost `min_futurity=0` (an update or a settings reset).
+Check with `adb shell settings get global alarm_manager_constants` and re-run
+`scripts/launcher.sh`. With it set, HOME shows ~0.3 s of black, then the home
+screen.
 
-**After every boot the launcher takes ~15 s to appear**; until then Android shows
+**The HOME key never reaches an accessibility key filter on Fire OS** — D-pad
+keys do, HOME does not. Do not build on `onKeyEvent` for HOME; react to Amazon's
+home window instead, as `launcher/` does.
+
+**`android.settings.SETTINGS` reopens Amazon's home** on Fire OS: it resolves to a
+stub (`CTSDummySettingsHandler`) that forwards to `HomeActivity_vNext`, which the
+launcher then replaces. Open settings with `MAIN` +
+`android.intent.category.LEANBACK_SETTINGS` instead.
+
+**Injected keys skip accessibility filters.** `adb shell input keyevent HOME`
+proves nothing about a real remote; to test like a remote, write to the remote's
+input device: `sendevent /dev/input/eventN 1 172 1` (shell is in the `input`
+group; find N with `getevent -pl`).
+
+**After every boot the home screen takes ~15 s to appear**; until then Android shows
 `com.amazon.tv.settings.v2/.system.FallbackHome`, a blank screen. That is startup
 order, not damage.
 

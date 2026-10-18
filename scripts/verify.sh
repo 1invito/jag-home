@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Proof that it worked: blocked hosts must answer 0.0.0.0, everyday hosts must
-# still resolve, and the home screen must be Projectivy unless the user said to
-# keep Amazon's. Exit code 0 means every enabled check passed.
+# still resolve, and HOME must land on dumbtv home unless the user kept Amazon's.
+# Exit code 0 means every enabled check passed.
 # Usage: ./scripts/verify.sh
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
@@ -28,7 +28,8 @@ else
     line=$(dev "ping -c1 -W2 $h" | head -1)
     case $line in
       *0.0.0.0*|*127.0.0.1*) printf '%-10s %-38s WRONGLY BLOCKED\n' FAIL "$h"; fail=1 ;;
-      "") printf '%-10s %-38s no answer\n' FAIL "$h"; fail=1 ;;
+      *"unknown host"*|*"not known"*|*"cannot resolve"*|"")
+        printf '%-10s %-38s no answer\n' FAIL "$h"; fail=1 ;;
       *) printf '%-10s %-38s resolves\n' ok "$h" ;;
     esac
   done < <(list_of "$DATA/blocklists/verify-allowed.txt")
@@ -37,24 +38,47 @@ fi
 home=$(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')
 wake=$(dev 'dumpsys power' | sed -n 's/.*mWakefulness=\([A-Za-z]*\).*/\1/p' | head -1)
 a11y=$(dev 'settings get secure enabled_accessibility_services' | tr -d '\r')
+alarms=$(dev 'settings get global alarm_manager_constants' | tr -d '\r')
+case $home in
+  *tv.dumbtv.home*)     home_state=ok ;;
+  *com.amazon.tv.launcher*) home_state=amazon ;;
+  *)                    home_state=other ;;
+esac
 if [[ $LAUNCHER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip home "LAUNCHER=0, not checked"
-elif printf '%s' "$home" | grep -q projengmenu; then
-  printf '%-10s %-38s %s\n' ok home "$home"
-elif [[ $wake == Asleep && $a11y == *projengmenu* ]]; then
-  printf '%-10s %-38s %s\n' ok home "armed, screen off"
+elif [[ $home_state == amazon && $a11y != *tv.dumbtv.home* ]]; then
+  # Amazon's home in front and no hook armed: the launcher really is gone.
+  printf '%-10s %-38s %s\n' FAIL home "${home:-unknown} (hook empty)"; fail=1
+elif [[ $a11y == *tv.dumbtv.home* ]]; then
+  # Hook armed: an app in the foreground is normal, HOME will land on dumbtv home.
+  printf '%-10s %-38s %s\n' ok home "armed, front is ${home:-unknown}"
+  if [[ $alarms != *min_futurity=0* ]]; then
+    # Without it HOME still works, but Amazon's home shows for 5 s first.
+    printf '%-10s %-38s %s\n' FAIL home-speed "min_futurity=0 missing; re-run launcher.sh"; fail=1
+  fi
+elif [[ $wake == Asleep ]]; then
+  printf '%-10s %-38s %s\n' FAIL home "asleep and no hook"; fail=1
 else
-  printf '%-10s %-38s %s\n' FAIL home "${home:-unknown} (wakefulness: ${wake:-?})"
-  fail=1
+  printf '%-10s %-38s %s\n' FAIL home "${home:-unknown} (wakefulness: ${wake:-?})"; fail=1
 fi
 
 printf '%-10s %-38s %s\n' packages "" "$(dev 'pm list packages -d' | wc -l | tr -d ' ') disabled"
+
 if [[ $DNSFILTER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip filter "not installed by choice"
 else
-  printf '%-10s %-38s %s\n' ok filter \
-    "$(dev 'grep -c . /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/FILTERHOSTS.TXT 2>/dev/null' | tr -d '\r') entries"
-  printf '%-10s %-38s %s\n' ok vpn "$(dev 'settings get secure always_on_vpn_app' | tr -d '\r')"
+  n=$(dev 'grep -c . /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/FILTERHOSTS.TXT 2>/dev/null' | tr -d '\r')
+  if [[ ${n:-0} -gt 0 ]] 2>/dev/null; then
+    printf '%-10s %-38s %s entries\n' ok filter "$n"
+  else
+    printf '%-10s %-38s %s\n' FAIL filter "missing or empty"; fail=1
+  fi
+  vpn=$(dev 'settings get secure always_on_vpn_app' | tr -d '\r')
+  if [[ $vpn == dnsfilter.android ]]; then
+    printf '%-10s %-38s %s\n' ok vpn "$vpn"
+  else
+    printf '%-10s %-38s %s\n' FAIL vpn "${vpn:-unset}"; fail=1
+  fi
 fi
 
 if [[ $fail == 0 ]]; then

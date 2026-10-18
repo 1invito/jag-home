@@ -20,14 +20,17 @@ Yes. The filter deliberately does not touch Google, YouTube or thumbnail hosts,
 and `verify.sh` asserts that.
 
 **Will Prime Video work?**
-No. The Amazon tracker feed includes `aiv-delivery.net` / `aiv-cdn.net`, which is
-Prime's content delivery. Drop those two from the feed (or block them yourself)
-if Prime matters more than the tracking. YouTube is unaffected.
+Yes, by default. `configure.sh` defaults to keeping Prime (`PRIME=1`), and
+`dnsfilter.sh` strips `aiv-delivery.net` / `aiv-cdn.net` out of the tracker feed
+before pushing it. Answer "no" (or set `PRIME=0`) and those hosts stay blocked,
+so playback stops. YouTube is unaffected either way.
 
 **Will it remove an app I actually watch?**
-No. `configure.sh` asks about every app it would remove, one by one, and anything
-you say no to is written to `dumbtv.conf` and never touched. You can also add a
-package to the keep list later: `./scripts/configure.sh --keep com.spotify.tv.android`.
+No. `configure.sh` asks about the streaming apps this repo would uninstall, one by
+one, and anything you say no to is written to `dumbtv.conf` and never touched.
+The Amazon system packages it disables (ad service, metrics, Alexa) are listed in
+`data/fireos/packages.txt` and can all be restored. You can also add a package to
+the keep list later: `./scripts/configure.sh --keep com.spotify.tv.android`.
 
 **I keep Netflix — is anything else broken for it?**
 No. Netflix was never in the removal list; only the ad-funded regional apps are.
@@ -62,10 +65,17 @@ apps work. The DNS filter and the package states persist across reboots.
 Wi-Fi is fine: `adb connect <tv-ip>:5555`. USB is only useful for the first
 connection prompt.
 
-**Why does the home screen show Amazon's for a few seconds?**
-Amazon's launcher is a protected package and Fire OS ignores the "default home"
-setting, so the switch is done by an accessibility service reacting to the home
-window. See `docs/GOTCHAS.md`.
+**Why does pressing HOME show Amazon's home screen for a few seconds?**
+It should not: dumbtv home lands in about 0.2 s. If Amazon's home shows for ~5 s,
+the `min_futurity=0` alarm setting was reset — re-run `scripts/launcher.sh`. See
+`docs/GOTCHAS.md`.
+
+**Why your own launcher instead of Projectivy?**
+Projectivy is closed source and requests the advertising ID, ad attribution,
+install referrer, internet access and package install/delete. A home screen needs
+none of that. dumbtv home (`launcher/`) is 41 KB, has no permissions at all, and
+uses about half the RAM. Check it yourself:
+`aapt2 dump permissions dumbtv-home.apk` prints none.
 
 **Something broke. How do I undo it?**
 `./scripts/restore.sh`. It re-enables packages, clears app-ops and network rules,
@@ -81,8 +91,9 @@ not fatal.
 
 **Does it phone home itself?**
 The script downloads three things on your computer at run time: the
-personalDNSfilter APK, the Projectivy APK, and a blocklist from the HaGeZi
-repository. Nothing is uploaded. The TV downloads nothing for the filter — the
+personalDNSfilter APK, the dumbtv home APK from this repo's release (checked
+against a pinned SHA-256), and a blocklist from the HaGeZi repository. The
+launcher itself has no internet permission. Nothing is uploaded. The TV downloads nothing for the filter — the
 finished list is pushed to it — so the only traffic the filter creates is DNS
 lookups, exactly as before.
 

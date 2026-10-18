@@ -1,6 +1,6 @@
 ---
 name: firetv-debloat
-description: Debloat an Amazon Fire TV over ADB and lock down its telemetry without root — disable ad/tracking/Alexa/OTA packages, deny background work to the protected ones, install an on-device DNS filter, and replace the home screen with Projectivy. Use when asked to remove Amazon ads, tracking, bloatware or snooping from a Fire TV, or when a user wants a clean launcher on one. Not for Tizen, webOS or Roku, which expose no shell.
+description: Debloat an Amazon Fire TV over ADB and lock down its telemetry without root — disable ad/tracking/Alexa/OTA packages, deny background work to the protected ones, install an on-device DNS filter, and replace the home screen with the repo's own zero-permission launcher (dumbtv home). Use when asked to remove Amazon ads, tracking, bloatware or snooping from a Fire TV, or when a user wants a clean launcher on one. Not for Tizen, webOS or Roku, which expose no shell.
 ---
 
 # Fire TV debloat
@@ -52,7 +52,7 @@ Never paste `report/` anywhere: it contains the device IP and package list.
 
 | Symptom | Fix |
 |---|---|
-| Amazon's home screen is back | `./scripts/launcher.sh -y` |
+| Amazon's home screen is back, or shows for ~5 s on HOME | `./scripts/launcher.sh -y` |
 | Nothing is blocked, VPN exists | reboot the TV (never force-stop the filter) |
 | "Unable to Detect Your Remote" overlay | `adb shell pm enable --user 0 com.amazon.vizzini`, reboot |
 | Start over | `./scripts/restore.sh -y` |

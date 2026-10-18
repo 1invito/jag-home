@@ -1,0 +1,48 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install --quiet pyyaml
+      - run: python3 catalog/validate.py
+
+  launcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: sdk
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-28" "build-tools;34.0.0" >/dev/null
+      - name: build
+        run: ./launcher/build.sh
+      - name: no permissions
+        run: |
+          perms=$("$ANDROID_HOME/build-tools/34.0.0/aapt2" dump permissions launcher/build/dumbtv-home.apk | grep -c uses-permission || true)
+          [ "$perms" = 0 ] || { echo "the launcher must request no permissions, found $perms"; exit 1; }
+
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: syntax
+        run: for f in scripts/*.sh launcher/*.sh; do bash -n "$f" || exit 1; done
+      - name: no private addresses or hardware ids
+        run: |
+          if grep -rnE '\b(10|172|192)\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\b|\b([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}\b' \
+               --exclude-dir=.git --exclude-dir=report \
+               --include='*.md' --include='*.sh' --include='*.txt' --include='*.yaml' \
+               --include='*.yml' --include='*.json' --include='*.py' .; then
+            echo "remove the private addresses above; they belong in dumbtv.conf, not the repo"; exit 1
+          fi
