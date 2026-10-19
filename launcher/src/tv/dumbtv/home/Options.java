@@ -65,8 +65,9 @@ public final class Options extends Activity {
         about.setLineSpacing(0, 1.4f);
         about.setPadding(dp(16), dp(28), 0, 0);
         about.setText("Settings file: " + cfg.dir + "/" + Config.FILE
-                + "\nWallpaper: put wallpaper.jpg in that folder, then pick Background › Image file"
+                + "\nWallpaper: put wallpaper.jpg in that folder, then pick Background › Image file or Adaptive wallpaper tint"
                 + "\nSeveral wallpapers: put them in " + Config.WALLPAPERS + "/ and pick a rotation"
+                + "\nAdaptive wallpaper tint shows graphite until you add a wallpaper"
                 + "\nNo internet permission. No tracking, no ads, no accounts.");
         list.addView(about);
 

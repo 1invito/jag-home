@@ -121,9 +121,11 @@ Comments go on their own line; anything after `=` is the value.
 
 Back it up with `adb pull`, restore it with `adb push`. Hand edits apply the next
 time the home screen comes back. For a wallpaper, push `wallpaper.jpg` (or `.png`)
-into the same folder and set `background=image`. For several, push them into a
-`wallpapers/` subfolder instead (`.jpg`, `.png` or `.webp`, shown in name order) and
-pick a rotation; while that folder has images, `wallpaper.jpg` is ignored.
+into the same folder and set `background=image` (or `background=adaptive-tint`
+to overlay the focused app's color). There is no on-TV image picker. For several,
+push them into a `wallpapers/` subfolder instead (`.jpg`, `.png` or `.webp`, shown
+in name order) and pick a rotation; while that folder has images,
+`wallpaper.jpg` is ignored.
 `background=adaptive` picks a dark solid color from the focused app's art.
 `background=adaptive-tint` keeps the wallpaper and adds a subtle focus color overlay;
 without a wallpaper it shows graphite. HDMI, Options and Settings use a neutral color.
