@@ -5,6 +5,14 @@ Yes. You are changing settings and package states on hardware you own, over the
 debug interface the manufacturer provides. Nothing bypasses a licence check, and
 no Amazon code is modified or redistributed.
 
+**Is this only for Amazon Fire TV?**
+No — that is just where it is tested. Any TV that gives you an ADB shell can be
+debloated this way, which in practice means Fire OS and Android TV / Google TV.
+Samsung (Tizen), LG (webOS), Roku, Hisense VIDAA, Vizio, Panasonic and Philips
+Saphi give an owner no shell, no launcher hook and no way to disable their apps,
+so there is nothing to run: block them at the router instead, or boot them into
+HDMI. `docs/OTHER-TVS.md` has the per-platform detail and what is being worked on.
+
 **Does it survive an Amazon update?**
 Partly. Disabled packages usually stay disabled, but an update can re-enable
 some and will restore settings. The OTA itself is blocked at DNS by this repo, so

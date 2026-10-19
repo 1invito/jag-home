@@ -1,15 +1,28 @@
 # dumbtv
 
-Turn an Amazon Fire TV into something that behaves: no ads, no watch tracking, no
-OTA, a clean launcher — all applied over ADB from another machine, no root.
+Your TV should do what you paid for: your apps, your HDMI inputs, and nothing
+else. No ads from the TV itself, no watch tracking, no update you did not ask
+for. dumbtv applies that over ADB from another machine — **no root**, nothing
+written to `/system`, every step reversible with one script.
+
+The same idea, told to whichever TV will listen:
+
+| TV | Debloat | Own home screen | On-device DNS filter |
+|---|---|---|---|
+| **Fire OS** (Fire TV sticks, Fire TV Edition TVs) | yes | yes | yes |
+| **Android TV / Google TV** (Sony, TCL, Philips, Hisense, Xiaomi, Shield) | yes | yes, by disabling the stock launcher | yes |
+| **Samsung, LG, Roku, VIDAA, Vizio, Panasonic, Philips Saphi** | no shell, no path | no | no — block it at the router, or boot the TV straight into HDMI |
 
 Tested end to end on a Fire TV Edition television running Fire OS 7.7.1.7
-(Android 9). Fire OS 7/8 streaming devices behave the same way; Android TV keeps
-most of it but needs a different package list — see `docs/OTHER-TVS.md`.
+(Android 9). Fire OS 6 and 8 differ in small ways; Android TV needs a different
+package list and a different launcher trick. The ones that cannot be opened, and
+the honest reason for each, are in `docs/OTHER-TVS.md` — along with what we are
+working on to reach them.
 
-**What it will not do:** replace Fire OS, unlock the bootloader, or survive a
-factory reset. None of that is possible on these devices, and pretending
-otherwise is how people brick their TVs. See `docs/WHY-NOT-REPLACE-OS.md`.
+**What it will not do:** replace the operating system, unlock a bootloader, or
+survive a factory reset. Every current TV has a signed boot chain and a verified
+system partition, so there is no honest way around it. Pretending otherwise is
+how people brick their TVs. See `docs/WHY-NOT-REPLACE-OS.md`.
 
 ## Add your TV to the catalog
 
@@ -162,7 +175,7 @@ Every script takes `--dry-run` to print its commands without running them, and
 - `launcher/README.md` — the launcher: install, remote controls, settings file, HOME takeover
 - `docs/HOW-IT-WORKS.md` — the five mechanisms and why each is needed
 - `docs/GOTCHAS.md` — everything that went wrong while building this
-- `docs/OTHER-TVS.md` — Fire OS 6/7/8, Android TV, Tizen, webOS, Roku
+- `docs/OTHER-TVS.md` — which TVs can be opened, which cannot, and what is being worked on
 - `docs/WHY-NOT-REPLACE-OS.md` — the bootloader/verity wall, and the root exploit
 - `docs/FAQ.md` — factory reset, updates, Prime Video, "is this illegal" (it isn't)
 - `catalog/` — per-platform menu paths, prompts and quirks, machine-readable

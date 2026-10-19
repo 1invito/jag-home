@@ -1,9 +1,11 @@
 # dumbtv
 
-> Debloat an Amazon Fire TV over ADB without root: disable ad, tracking, Alexa
-> and OTA packages, deny background work to the ones Amazon protects, install an
-> on-device DNS filter, and replace the home screen with the repo's own
-> open-source launcher. Reversible.
+> Debloat a smart TV that lets you in — Fire OS and Android TV / Google TV — over
+> ADB without root: disable ad, tracking, Alexa and OTA packages, deny background
+> work to the ones the vendor protects, install an on-device DNS filter, and
+> replace the home screen with the repo's own open-source launcher. Reversible.
+> Tizen, webOS, Roku and the rest of the closed platforms cannot be opened this
+> way; `docs/OTHER-TVS.md` says why, and what is being worked on.
 
 Agents: read `AGENTS.md`, interview the user, then run `./scripts/preflight.sh`,
 `./scripts/configure.sh`, `./scripts/all.sh`, `./scripts/verify.sh`.
@@ -15,7 +17,7 @@ Agents: read `AGENTS.md`, interview the user, then run `./scripts/preflight.sh`,
 - [launcher/README.md](launcher/README.md): dumbtv home, the repo's own zero-permission launcher, and how it takes HOME on Fire OS
 - [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md): the five mechanisms and their limits
 - [docs/GOTCHAS.md](docs/GOTCHAS.md): every failure mode found while building this
-- [docs/OTHER-TVS.md](docs/OTHER-TVS.md): Fire OS 6/7/8, Android TV, Tizen, webOS, Roku
+- [docs/OTHER-TVS.md](docs/OTHER-TVS.md): which TVs can be opened, which cannot, and what is being worked on
 - [docs/WHY-NOT-REPLACE-OS.md](docs/WHY-NOT-REPLACE-OS.md): the bootloader and dm-verity wall
 - [docs/FAQ.md](docs/FAQ.md): revocation, updates, Prime Video, legality
 

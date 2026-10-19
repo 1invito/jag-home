@@ -4,6 +4,14 @@ You are about to change someone else's television. Read this whole file, then
 **interview the user before touching anything**. The scripts are written so an
 agent that follows this order never has to improvise.
 
+## Platform scope
+
+Fire OS is fully supported. Android TV and Google TV take the same package pass
+with their own lists and a different launcher trick. Tizen, webOS, Roku, VIDAA,
+Vizio, Panasonic and Philips Saphi give an owner no shell to work with: say so
+plainly, point at `docs/OTHER-TVS.md`, and never invent a sequence — disabling
+the wrong component on a TV takes the home screen or the input switcher with it.
+
 ## Hard rules
 
 1. **Never touch `/system`.** No `adb remount`, no `adb root`, no hosts-file
