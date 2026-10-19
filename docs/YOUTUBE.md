@@ -58,6 +58,7 @@ It also has what this repo needs for a TV shared with children:
 
 ```sh
 ./scripts/youtube.sh              # install and switch over
+./scripts/youtube.sh --remove     # ...and delete the stock app instead of disabling it
 ./scripts/youtube.sh --dry-run    # print the plan
 ```
 
@@ -66,7 +67,8 @@ It also has what this repo needs for a TV shared with children:
 2. Installs it as `org.smarttube.stable`.
 3. Disables the stock YouTube app (`com.amazon.firetv.youtube`) with
    `pm disable-user --user 0` — reversible, and it stays installed, so the
-   Appstore can hand it back.
+   Appstore can hand it back. `--remove` uninstalls it instead: it lives in
+   `/data`, so that is a real deletion, and the Appstore is the way back.
 4. Puts SmartTube in the dumbtv home app order and drops YouTube out of it.
 
 The stock app has to be disabled, not just hidden: Amazon's launcher and any
@@ -101,9 +103,13 @@ installed by this script and it is not required for anything else.
 ## Undo
 
 ```sh
-adb shell pm enable com.amazon.firetv.youtube     # the stock app comes back
+adb shell pm enable com.amazon.firetv.youtube     # if it was disabled, it comes back
 adb uninstall org.smarttube.stable                # SmartTube goes away
 ```
+
+If it was removed with `--remove`, the only way back is the Amazon Appstore
+(YouTube, free). That is the one step in this repo that is not undoable from the
+command line — everything else is.
 
 Then set the dumbtv home app order back in Options, or edit
 `/sdcard/Android/data/tv.dumbtv.home/files/home.conf`.

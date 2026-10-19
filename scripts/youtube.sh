@@ -6,7 +6,16 @@
 # Usage: ./scripts/youtube.sh [--dry-run] [-y]
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-parse_flags "$@"
+
+REMOVE=0
+args=()
+for a in "$@"; do
+  case $a in
+    --remove) REMOVE=1 ;;
+    *) args+=("$a") ;;
+  esac
+done
+parse_flags "${args[@]+"${args[@]}"}"
 need_device
 load_conf
 
@@ -19,7 +28,11 @@ HOME_DIR=/sdcard/Android/data/tv.dumbtv.home/files
 
 step "plan"
 note "install SmartTube (MIT, open source, TV-only YouTube client with no ad code)"
-note "disable $YT: reversible, the app stays installed"
+if [[ $REMOVE == 1 ]]; then
+  note "remove $YT: it lives in /data, so this is a real removal (Appstore reinstalls it)"
+else
+  note "disable $YT: reversible, the app stays installed"
+fi
 note "home screen: SmartTube in, YouTube out"
 note "two settings need the remote once: Hide shorts everywhere, and the 1080p vp9 preset"
 note "the APK comes from the SmartTube GitHub release and is checksum-verified"
@@ -51,11 +64,20 @@ esac
 
 step "stock app"
 if present "$YT"; then
-  dev "pm disable-user --user 0 $YT" | tail -1
-  if dev "pm list packages -d" | grep -qx "package:$YT"; then
-    note "disabled (the app is still installed: 'pm enable $YT' brings it back)"
+  if [[ $REMOVE == 1 ]]; then
+    dev "pm uninstall --user 0 $YT" | tail -1
+    if present "$YT"; then
+      note "could not remove $YT — update it from the Appstore and run this again"
+    else
+      note "removed (Appstore > YouTube reinstalls it)"
+    fi
   else
-    note "could not disable $YT — update it from the Appstore and run this again"
+    dev "pm disable-user --user 0 $YT" | tail -1
+    if dev "pm list packages -d" | grep -qx "package:$YT"; then
+      note "disabled (the app is still installed: 'pm enable $YT' brings it back)"
+    else
+      note "could not disable $YT — update it from the Appstore and run this again"
+    fi
   fi
 else
   note "$YT is not installed"
@@ -93,7 +115,8 @@ note "Settings > Player > Video presets > 1080p 60fps vp9 (not av01 — no hardw
 
 step "verify"
 dev "dumpsys package $PKG" | grep -m1 versionName | sed 's/^ */  /'
-if dev "pm list packages -d" | grep -qx "package:$YT"; then note "YouTube: disabled"; else note "YouTube: still enabled"; fi
+if dev "pm list packages -d" | grep -qx "package:$YT"; then note "YouTube: disabled"
+else note "YouTube: not installed"; fi
 out=$("$ADB" -s "$SERIAL" shell "monkey -p $PKG -c android.intent.category.LEANBACK_LAUNCHER 1" 2>&1)
 case $out in
   *injected*|*injected:*) note "SmartTube launches" ;;
