@@ -46,7 +46,9 @@ adb shell settings get secure accessibility_enabled             # 0 = broken
 ```
 
 Re-run `scripts/launcher.sh`. Toggling the service off and on again is what
-actually rebinds it.
+actually rebinds it. Force-stopping the launcher (`am force-stop tv.dumbtv.home`,
+which any test harness and any APK update does) is enough to lose the binding:
+the setting still reads enabled, and HOME silently goes back to Amazon's home.
 
 **Amazon's home for ~5 s on every HOME press** means
 `alarm_manager_constants` lost `min_futurity=0` (an update or a settings reset).
