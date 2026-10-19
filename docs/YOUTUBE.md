@@ -56,10 +56,15 @@ It also has what this repo needs for a TV shared with children:
 
 ## What the script does
 
+Nothing here happens by default. `configure.sh` asks about it once, the answer is
+saved as `YOUTUBE=0` unless you said yes, and `all.sh` only runs this when it is
+1. Run it directly and it will refuse, and tell you how to opt in.
+
 ```sh
 ./scripts/youtube.sh              # install and switch over
 ./scripts/youtube.sh --remove     # ...and delete the stock app instead of disabling it
 ./scripts/youtube.sh --dry-run    # print the plan
+./scripts/youtube.sh --force      # run it even though dumbtv.conf says no
 ```
 
 1. Downloads the SmartTube release APK and verifies its SHA-256 against the pin

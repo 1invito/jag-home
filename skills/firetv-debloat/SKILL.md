@@ -46,6 +46,10 @@ Never paste `report/` anywhere: it contains the device IP and package list.
   launcher, settings, TV input, device control and Bluetooth pairing.
 - Never `am force-stop dnsfilter.android`: it breaks DNS filtering until reboot.
 - Never disable `com.amazon.vizzini`: it leaves an undismissable overlay.
+- **Never touch the YouTube app unasked.** It is off by default (`YOUTUBE=0`), the
+  interview question defaults to no, and deleting it with `--remove` is the only
+  step here that the command line cannot undo. If they want it, disable it; say
+  the Appstore is the way back before deleting anything.
 - Add new package names only from the device's own `pm list packages` output.
 
 ## Recovery

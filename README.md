@@ -151,7 +151,7 @@ If anything looks wrong later, `scripts/restore.sh` puts it back.
 | `debloat.sh` | Uninstalls/disables packages, applies privacy settings. | yes |
 | `lockdown.sh` | App-ops + data-saver rules for protected packages. | no |
 | `dnsfilter.sh` | Installs and configures the on-device DNS filter. | yes |
-| `youtube.sh` | Replaces the ad-serving YouTube app with SmartTube, which has no ad code, and takes YouTube out of the home screen. | no |
+| `youtube.sh` | **Opt-in, never run by `all.sh` unless you answered yes.** Replaces the YouTube app with SmartTube (no ad code) and takes it out of the home screen. Disables the stock app; `--remove` deletes it. | no |
 | `launcher.sh` | Installs dumbtv home and takes over the HOME button. | no |
 | `verify.sh` | Checks what is blocked and what still works. | no |
 | `restore.sh` | Undoes packages, app-ops, network rules and settings. | yes |

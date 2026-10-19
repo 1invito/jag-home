@@ -31,6 +31,22 @@ the wrong component on a TV takes the home screen or the input switcher with it.
    numbers, MAC addresses, account emails and Wi-Fi names never go in a commit,
    an issue, or a screenshot. `report/` is git-ignored; keep it that way.
 8. **One device at a time.** If `adb devices` lists several, set `ADB_SERIAL`.
+9. **Never remove someone's YouTube app unless they asked for it in those words.**
+   Replacing YouTube is the most personal change in this repo — it is the app the
+   whole household actually uses, their subscriptions live in it, and deleting it
+   is the one step that cannot be undone from the command line. So:
+   - It is **off by default**. `YOUTUBE=0` in `dumbtv.conf`, the interview question
+     defaults to no, and `all.sh` skips it unless the answer was yes.
+   - **Ask, do not assume.** "Do you want YouTube replaced with SmartTube? No ads
+     and no Shorts, but it is a different app and your account still works." If
+     they say no, drop it and never mention it again in that session.
+   - **`scripts/youtube.sh` disables the stock app; it does not delete it.**
+     `--remove` deletes, and it exists only for the person who says "get it off
+     the TV". Never pass `--remove` because it seems tidier.
+   - When they do want it gone, say what it costs: the APK lives in `/data`, so
+     the Appstore is the only way back. Offer the reversible version first.
+   - Their YouTube **account and subscriptions are never touched** — SmartTube
+     signs in separately, and nothing here can read or change a Google account.
 
 ## Step 0 — interview the user (do this first)
 
@@ -54,6 +70,14 @@ Ask these, in plain language, and wait for answers:
    and updates; if they say no, say what they lose.
 5. "Anything else you want kept, or that you want removed?" — free text. Map
    names to packages with `data/apps.txt` and `adb shell pm list packages -3`.
+6. "Do you want the YouTube app replaced?" — **ask it as a question, never as a
+   plan step.** Default is **no**: the stock app stays, ads and all. If they say
+   yes, say it is a different app (SmartTube) that has no ad code and can hide
+   Shorts, that their Google account is unaffected, and that it will be disabled
+   rather than deleted unless they ask for it gone. `docs/YOUTUBE.md` has the
+   full explanation of why the stock app's ads cannot be blocked instead.
+   Never bring this up unprompted beyond that one question — somebody's YouTube
+   is not a tidy-up opportunity.
 
 Then record the answers:
 
@@ -63,10 +87,10 @@ Then record the answers:
 ./scripts/configure.sh --keep "com.netflix.ninja org.videolan.vlc" --remove "com.spotify.tv.android"
 ```
 
-That writes `dumbtv.conf` (git-ignored). `debloat.sh`, `dnsfilter.sh` and
-`launcher.sh` read it: a package in `KEEP_APPS` is never uninstalled or
-disabled, `PRIME=1` keeps Prime's CDN out of the blocklist, `LAUNCHER=0` and
-`DNSFILTER=0` skip those steps entirely.
+That writes `dumbtv.conf` (git-ignored). `debloat.sh`, `dnsfilter.sh`,
+`launcher.sh` and `youtube.sh` read it: a package in `KEEP_APPS` is never
+uninstalled or disabled, `PRIME=1` keeps Prime's CDN out of the blocklist, and
+`LAUNCHER=0`, `DNSFILTER=0`, `YOUTUBE=0` skip those steps entirely.
 
 Re-run `configure.sh` if the user changes their mind. Do not hand-edit the
 scripts for preferences.
@@ -103,7 +127,9 @@ Stepwise, if you prefer:
 2. `./scripts/lockdown.sh -y` — no reboot.
 3. `./scripts/dnsfilter.sh -y` — installs, reboots, self-tests.
 4. `./scripts/launcher.sh -y` — home screen takeover.
-5. `./scripts/verify.sh`.
+5. `./scripts/youtube.sh -y` — **only if they asked for it** (`YOUTUBE=1`). It
+   disables the stock app; add `--remove` only on an explicit request.
+6. `./scripts/verify.sh`.
 
 ## What success looks like
 

@@ -8,16 +8,25 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 REMOVE=0
+FORCE=0
 args=()
 for a in "$@"; do
   case $a in
     --remove) REMOVE=1 ;;
+    --force)  FORCE=1 ;;
     *) args+=("$a") ;;
   esac
 done
 parse_flags "${args[@]+"${args[@]}"}"
 need_device
 load_conf
+
+YOUTUBE=${YOUTUBE:-0}
+if [[ $YOUTUBE == 0 && $FORCE == 0 ]]; then
+  note "YOUTUBE=0 in dumbtv.conf — the YouTube app is left alone."
+  note "To replace it, answer yes in ./scripts/configure.sh, or pass --force."
+  exit 0
+fi
 
 PKG=org.smarttube.stable
 YT=com.amazon.firetv.youtube

@@ -56,6 +56,13 @@ fi
 
 LAUNCHER=$(yn "Replace Amazon's home screen with dumbtv home (open source, no ads, no permissions)?" 1)
 DNSFILTER=$(yn "Run the on-TV DNS filter (blocks Amazon telemetry and updates)?" 1)
+# Default no: YouTube is the app people actually watch, and the stock app stays
+# unless they say otherwise. scripts/youtube.sh is the only thing that touches it.
+if [[ $(yn "Replace the YouTube app with SmartTube (no ads, no Shorts)? Your YouTube account and subscriptions are untouched" 0) == 1 ]]; then
+  YOUTUBE=1; note "youtube: replaced with SmartTube"
+else
+  YOUTUBE=0; note "youtube: left alone"
+fi
 
 if [[ $ASSUME_YES == 0 && -z $KEEP_ARG ]]; then
   printf '\nOther apps to keep, space separated package names (Enter for none): ' >&2
@@ -73,7 +80,7 @@ if [[ $DRY_RUN == 1 ]]; then
   step "would write $CONF"
   note "KEEP_APPS=\"$KEEP\""
   note "REMOVE_EXTRA=\"$EXTRA\""
-  note "PRIME=$PRIME LAUNCHER=$LAUNCHER DNSFILTER=$DNSFILTER"
+  note "PRIME=$PRIME LAUNCHER=$LAUNCHER DNSFILTER=$DNSFILTER YOUTUBE=$YOUTUBE"
   exit 0
 fi
 
@@ -85,6 +92,7 @@ REMOVE_EXTRA="$EXTRA"
 PRIME=$PRIME
 LAUNCHER=$LAUNCHER
 DNSFILTER=$DNSFILTER
+YOUTUBE=$YOUTUBE
 EOF_CONF
 
 # Prove the file before anyone sources it.
@@ -93,10 +101,11 @@ source "$CONF"
 case $LAUNCHER in 0|1) ;; *) die "internal error: LAUNCHER=$LAUNCHER";; esac
 case $DNSFILTER in 0|1) ;; *) die "internal error: DNSFILTER=$DNSFILTER";; esac
 case $PRIME in 0|1) ;; *) die "internal error: PRIME=$PRIME";; esac
+case $YOUTUBE in 0|1) ;; *) die "internal error: YOUTUBE=$YOUTUBE";; esac
 
 step "saved"
 note "${CONF#$ROOT/}"
 note "keep:     ${KEEP:-none}"
 note "remove:   ${EXTRA:-nothing extra}"
-note "prime=$PRIME launcher=$LAUNCHER dnsfilter=$DNSFILTER"
+note "prime=$PRIME launcher=$LAUNCHER dnsfilter=$DNSFILTER youtube=$YOUTUBE"
 note "change any answer later by running this again"
