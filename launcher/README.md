@@ -5,9 +5,9 @@ A home screen for Fire TV that does one job: show your apps and your HDMI inputs
 - **41 KB APK.** Plain Java and Android views: no AndroidX, Kotlin, Compose, Play
   Services or other libraries.
 - **No network.** It has no `INTERNET` permission, so Android blocks it from
-  opening any network connection. Fire OS 7/8 builds declare no permissions at
-  all; the Fire OS 6 build declares usage access, reorder-tasks and boot-completed
-  for the Keeper described below. Check it yourself:
+  opening any network connection. The APK declares usage access, reorder-tasks
+  and boot-completed with `android:maxSdkVersion="27"`: Fire OS 6 requests them
+  for the Keeper described below, Fire OS 7/8 does not. Check it yourself:
   `aapt2 dump permissions build/dumbtv-home.apk`.
 - **No ads, no "recommended" rows, no account, no analytics, no update checks.**
 

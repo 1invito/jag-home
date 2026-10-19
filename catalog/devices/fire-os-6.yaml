@@ -53,7 +53,7 @@ known_limits:
   - "no bootloader unlock on 6.2.8.0 and later (eFuse), no /system writes (dm-verity)"
   - "protected packages can only be starved, not disabled"
   - "Prime Video stops working unless its CDN is left unblocked (PRIME=1 in dumbtv.conf)"
-  - "Keeper declares GET_USAGE_STATS, RECEIVE_BOOT_COMPLETED and REORDER_TASKS with maxSdkVersion=27, so Fire OS 7/8 stays permission-free"
+  - "Keeper declares GET_USAGE_STATS, RECEIVE_BOOT_COMPLETED and REORDER_TASKS with maxSdkVersion=27, so Fire OS 7/8 does not request them"
   - "without SYSTEM_DNS=1 the clock drifts while the filter VPN is up"
 verify:
   blocked: data/blocklists/verify-blocked.txt
