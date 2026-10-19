@@ -46,6 +46,14 @@ case $home in
 esac
 if [[ $LAUNCHER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip home "LAUNCHER=0, not checked"
+elif [[ $SDK -lt 28 ]]; then
+  # Fire OS 6: the Keeper, not the accessibility service, owns HOME.
+  keeper=$(dev 'dumpsys activity services tv.dumbtv.home' | grep -c 'isForeground=true' || true)
+  if [[ ${keeper:-0} -gt 0 ]]; then
+    printf '%-10s %-38s %s\n' ok home "Keeper armed, front is ${home:-unknown}"
+  else
+    printf '%-10s %-38s %s\n' FAIL home "Keeper not running; re-run launcher.sh"; fail=1
+  fi
 elif [[ $home_state == amazon && $a11y != *tv.dumbtv.home* ]]; then
   # Amazon's home in front and no hook armed: the launcher really is gone.
   printf '%-10s %-38s %s\n' FAIL home "${home:-unknown} (hook empty)"; fail=1
@@ -90,6 +98,8 @@ fi
 
 if [[ $LAUNCHER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip alarm "LAUNCHER=0, not checked"
+elif [[ $SDK -lt 28 ]]; then
+  printf '%-10s %-38s %s\n' skip alarm "Fire OS 6 Keeper uses moveTaskToFront"
 else
   # dumbtv home needs this to answer HOME immediately; an update can drop it.
   if dev 'settings get global alarm_manager_constants' | grep -q 'min_futurity=0'; then

@@ -77,6 +77,9 @@ sha256() {
 }
 
 if [[ $mode == undo ]]; then
+  # force-stop also keeps the Fire OS 6 Keeper from restarting at the next boot.
+  sh_ am force-stop $PKG >/dev/null 2>&1 || true
+  sh_ appops set $PKG GET_USAGE_STATS default >/dev/null 2>&1 || true
   set_futurity off
   set_guard ""
   sh_ am start -a android.intent.action.MAIN -c android.intent.category.HOME >/dev/null
@@ -122,6 +125,28 @@ esac
 echo "installed $PKG"
 
 sh_ dumpsys deviceidle whitelist +$PKG >/dev/null
+
+# Fire OS 6.7 refuses third-party accessibility services (A11yAuthorizer), so the Guard
+# cannot bind there. Keeper watches Amazon's home through UsageStats and calls
+# moveTaskToFront instead, which is not subject to the 5 s app-switch delay.
+if [[ $dev_sdk -lt 28 ]]; then
+  set_guard ""
+  sh_ appops set $PKG GET_USAGE_STATS allow
+  sh_ am start -W -n $PKG/.Home >/dev/null
+  sleep 3
+  if ! sh_ dumpsys activity services $PKG 2>/dev/null | grep -q 'isForeground=true'; then
+    echo "error: the Fire OS 6 home keeper did not start ($PKG/.Keeper)" >&2
+    exit 1
+  fi
+  front=$(sh_ dumpsys activity activities | grep -m1 mResumedActivity || true)
+  if [[ $front != *"$PKG"* ]]; then
+    echo "error: dumbtv home is installed but not in front ($front)" >&2
+    exit 1
+  fi
+  echo "home: dumbtv (Keeper, no accessibility; sdk $dev_sdk)"
+  exit 0
+fi
+
 sh_ cmd package set-home-activity $PKG/.Home >/dev/null 2>&1 || true
 set_futurity on
 set_guard $GUARD

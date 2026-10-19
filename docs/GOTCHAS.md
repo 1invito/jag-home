@@ -144,16 +144,24 @@ reload interval) after the push.
 
 **The release launcher APK needs Android 9.** `launcher/install.sh` notices sdk 25
 and builds from source with `MIN_SDK=25` (needs a JDK and `platforms;android-25`).
-The build installs and runs, but on 6.7.1.1 it cannot take HOME over, see below.
 
 **Fire OS 6.7 refuses third-party accessibility services.** `settings put secure
 enabled_accessibility_services ...` exits 0 and changes nothing; writing the row
 through `content insert --uri content://settings/secure` does store it, but the
 service is never bound (`dumpsys accessibility` shows `services:{}`), and the log
 (`logcat -b all`) has `FireOSFwk:A11yAuthorizer ... "trust"#"false" ... "package"#"tv.dumbtv.home"`.
-That is Amazon's allowlist, not a bug to work around, so dumbtv home cannot own
-HOME on this build. `install.sh` now checks the binding, says so, and undoes the
-hook and `min_futurity`. Older Fire OS 6 builds may still bind it; untested.
+That is Amazon's allowlist, not a bug to work around.
+
+**Fire OS 6 takes HOME over through the Keeper instead.** `Keeper` is a foreground
+service that reads the foreground package from `UsageStats` (granted with
+`appops set tv.dumbtv.home GET_USAGE_STATS allow`) and calls
+`ActivityManager.moveTaskToFront` when Amazon's launcher appears. That is not an
+activity launch, so the 5 s `APP_SWITCH_DELAY_TIME` does not apply: measured under
+0.25 s with a real remote key on 6.7.1.1. `install.sh` starts it and checks
+`dumpsys activity services`. At boot there is no dumbtv task yet, so the first
+start goes through an alarm-fired `PendingIntent`; `BOOT_COMPLETED` arrives about
+45–50 s after power-on, and dumbtv is front right after that. Older Fire OS 6
+builds may still bind the accessibility service; the Keeper is harmless there.
 
 **`monkey` exits with `SYS_KEYS has no physical keys`** when the remote has gone
 to sleep, so it launches nothing. Pass `--pct-syskeys 0`, or launch apps with

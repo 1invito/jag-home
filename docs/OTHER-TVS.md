@@ -5,7 +5,7 @@ ADB shell.
 
 | Platform | Packages | Launcher | On-device DNS filter | Notes |
 |---|---|---|---|---|
-| Fire OS 6 (2017–2018 devices) | yes, disable only | no on 6.7: Amazon's A11yAuthorizer refuses the HOME guard | yes | own lists in `data/fireos6/`; see `catalog/devices/fire-os-6.yaml` |
+| Fire OS 6 (2017–2018 devices) | yes, disable only | yes on 6.7 via Keeper (UsageStats + moveTaskToFront; accessibility refused) | yes | own lists in `data/fireos6/`; see `catalog/devices/fire-os-6.yaml` |
 | Fire OS 7 (Android 9) | yes | dumbtv home + accessibility | yes | what this repo was built on |
 | Fire OS 8 (Android 11) | yes | varies; accessibility sometimes ignored | yes | protected list differs; check `pm disable-user` output |
 | Android TV / Google TV | yes | dumbtv home via `set-home-activity` (untested) | yes, or built-in Private DNS | telemetry is Google's, not Amazon's |
