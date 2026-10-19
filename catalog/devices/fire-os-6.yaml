@@ -1,8 +1,8 @@
 id: fire-os-6
 title: Fire OS 6 (Android 7.1)
 platform: fireos
-status: partial
-tested_on: "Fire TV Stick 4K 1st gen (mantis), Fire OS 6.7.1.1: debloat, lockdown and DNS filter ran and verify.sh exited 0 with LAUNCHER=0; the launcher cannot take HOME on this build"
+status: tested
+tested_on: "Fire TV Stick 4K 1st gen (mantis), Fire OS 6.7.1.1: debloat, lockdown, DNS filter and the Keeper launcher; verify.sh exited 0; HOME lands on dumbtv in under 0.3 s with a real remote; boot takes ~45–50 s (BOOT_COMPLETED)"
 models:
   - AFTMM
 adb:
@@ -34,11 +34,11 @@ data:
   settings: data/fireos/settings.txt
   settings_restore: data/fireos/settings.restore.txt
 launcher:
-  mechanism: accessibility_service
+  mechanism: usage_stats_keeper
   package: tv.dumbtv.home
-  reason: "same Amazon home activity as Fire OS 7 (com.amazon.tv.launcher/.ui.HomeActivity_vNext)"
-  fallback: "holding HOME opens Fire OS's quick menu; launcher Options can open Amazon's home"
-  quirk: "6.7.1.1 never binds a third-party accessibility service (FireOSFwk A11yAuthorizer, trust=false), so HOME stays Amazon's; the APK itself builds with MIN_SDK=25 and runs"
+  reason: "6.7.1.1 never binds a third-party accessibility service (FireOSFwk A11yAuthorizer, trust=false); the Keeper reads UsageStats and calls moveTaskToFront, which is not an activity launch and skips the 5 s app-switch delay"
+  fallback: "holding HOME opens Fire OS's quick menu; Options > Open Amazon's home screen pauses the Keeper"
+  quirk: "needs appops set tv.dumbtv.home GET_USAGE_STATS allow (install.sh grants it); only reacts to HomeActivity_vNext, so Settings and search are not treated as home"
 quirks:
   - "no cmd package install-existing: system apps are only disabled, never uninstalled"
   - "com.amazon.firebat is Prime Video, not an OTA helper"
@@ -47,10 +47,14 @@ quirks:
   - "no RUN_ANY_IN_BACKGROUND app-op; RUN_IN_BACKGROUND ignore blocks background starts only"
   - "always_on_vpn_app is dropped at boot; the DNS filter starts from its own boot receiver once it has been opened"
   - "settings put secure enabled_accessibility_services is silently ignored; content insert stores it, Fire OS still refuses to bind"
+  - "Keeper must match the home activity class, not just com.amazon.tv.launcher: MainSettingsActivity lives in the same package"
+  - "SYSTEM_DNS=1 optionally adds android to androidAppWhiteList so the system can sync NTP past the filter VPN; apps and OTA stay filtered"
 known_limits:
   - "no bootloader unlock on 6.2.8.0 and later (eFuse), no /system writes (dm-verity)"
   - "protected packages can only be starved, not disabled"
   - "Prime Video stops working unless its CDN is left unblocked (PRIME=1 in dumbtv.conf)"
+  - "Keeper declares GET_USAGE_STATS, RECEIVE_BOOT_COMPLETED and REORDER_TASKS with maxSdkVersion=27, so Fire OS 7/8 stays permission-free"
+  - "without SYSTEM_DNS=1 the clock drifts while the filter VPN is up"
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
