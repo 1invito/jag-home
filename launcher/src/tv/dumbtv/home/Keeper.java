@@ -10,16 +10,17 @@ import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 
 /**
  * Watches for Amazon's launcher coming back to the foreground and puts dumbtv home back on top.
  *
  * Fire OS 6.7 refuses third-party accessibility services, so Guard cannot run there. This service
  * needs no accessibility: it reads the foreground package from UsageStats (granted with
- * `appops set tv.dumbtv.home GET_USAGE_STATS allow`) and starts Home through an AlarmManager
- * PendingIntent, which keeps the launch out of the 5 s app-switch delay.
+ * `appops set tv.dumbtv.home GET_USAGE_STATS allow`) and calls moveTaskToFront, which is not an
+ * activity launch and therefore escapes the 5 s app-switch delay. The alarm path is only the
+ * first-start fallback, before a Home task exists.
  */
 public final class Keeper extends Service {
     private static final String AMAZON_HOME = "com.amazon.tv.launcher";
@@ -27,7 +28,8 @@ public final class Keeper extends Service {
     private static final long DEBOUNCE_MS = 1500;
 
     private static volatile boolean paused;
-    private final Handler ui = new Handler(Looper.getMainLooper());
+    private HandlerThread thread;
+    private Handler worker;
     private UsageStatsManager usage;
     private long lastLaunch;
 
@@ -50,7 +52,7 @@ public final class Keeper extends Service {
             } catch (Throwable ignored) {
                 // Never let one bad query kill the watchdog.
             }
-            ui.postDelayed(this, POLL_MS);
+            worker.postDelayed(this, POLL_MS);
         }
     };
 
@@ -63,8 +65,18 @@ public final class Keeper extends Service {
                 .setContentTitle("dumbtv")
                 .setContentText("home keeper")
                 .build());
-        ui.post(poll);
-        ui.postDelayed(this::firstStart, 2500);
+        // Keep the binder queries off the UI thread: this process draws the home screen.
+        thread = new HandlerThread("keeper");
+        thread.start();
+        worker = new Handler(thread.getLooper());
+        worker.post(poll);
+        worker.postDelayed(this::firstStart, 2500);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (thread != null) thread.quitSafely();
+        super.onDestroy();
     }
 
     /** After a boot or an update there is no Home task yet, and UsageStats saw no new event. */
