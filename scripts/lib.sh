@@ -182,6 +182,18 @@ reboot_wait() {
   die "device did not report boot_completed; check the TV by hand before running anything else"
 }
 
+# A network adb session can drop when the TV's network changes under it (an app that
+# holds the VPN being replaced). Brings it back, or stops the run.
+adb_reconnect() {
+  local i
+  for i in $(seq 1 12); do
+    [[ $("$ADB" -s "$SERIAL" get-state 2>/dev/null) == device ]] && return 0
+    [[ $SERIAL == *:* ]] && "$ADB" connect "$SERIAL" >/dev/null 2>&1
+    sleep 3
+  done
+  die "lost adb to $SERIAL; check the TV is on, then run this again"
+}
+
 list_of() { sed 's/#.*//; s/[[:space:]]*$//' "$1" | awk 'NF'; }
 # Compare on the first field: list entries carry trailing spaces after comments
 # are stripped, and an exact match would silently fail to protect anything.

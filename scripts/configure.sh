@@ -60,7 +60,7 @@ DNSFILTER=$(yn "Run the on-TV DNS filter (blocks Amazon telemetry and updates)?"
 if [[ -n $SYSTEM_DNS_ARG ]]; then
   SYSTEM_DNS=$SYSTEM_DNS_ARG
 else
-  SYSTEM_DNS=$(yn "Let the system bypass the filter to sync its clock (system DNS becomes unfiltered)?" 0)
+  SYSTEM_DNS=$(yn "Fire OS 6 only: let system apps bypass the filter so the clock syncs? Amazon's system-user apps go unfiltered too" 0)
 fi
 # Default no: YouTube is the app people actually watch, and the stock app stays
 # unless they say otherwise. scripts/youtube.sh is the only thing that touches it.

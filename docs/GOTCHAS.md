@@ -190,10 +190,38 @@ only the package pulls the user out of Settings. Check the event's class against
 **The clock drifts while the filter VPN is up.** Fire OS 6 sends its time sync over
 the active network, and the filter's VPN only carries DNS, so NTP and HTTP time
 never answer. `SYSTEM_DNS=1` in `dumbtv.conf` adds `android` to the filter's
-`androidAppWhiteList`; the system bypasses the tunnel and the clock syncs. Apps
-and the OTA package keep their own UID and stay filtered. This is opt-in: the
-default `SYSTEM_DNS=0` leaves system DNS filtered and the clock free to drift.
+`androidAppWhiteList`; the system bypasses the tunnel and the clock syncs. The cost:
+every package that runs as the system user (uid 1000) bypasses it too. On a Fire OS 7
+TV that is 25 packages, including `com.amazon.device.logmanager`,
+`com.amazon.media.recommendations` and `com.amazon.connectivitydiag`. Apps with their
+own UID, and the OTA package, stay filtered. It is opt-in and honoured on Fire OS 6
+only: Fire OS 7/8 keep their clock through the filter, so there it stays off.
 
 **`monkey` exits with `SYS_KEYS has no physical keys`** when the remote has gone
 to sleep, so it launches nothing. Pass `--pct-syskeys 0`, or launch apps with
 `am start -n`.
+
+## Fire OS 8 (Android 11)
+
+From a Fire TV Stick 4K Max (AFTKM, Fire OS 8.1.8.2) in issue #8; the catalog entry is
+`catalog/devices/fire-os-8-aftkm.yaml`.
+
+**adb cannot see `/sdcard/Android/data/<app>`.** Listing, reading and pushing all get
+`Permission denied`, so the filter's config and list cannot be pushed. `dnsfilter.sh`
+detects this, pushes the list to `/sdcard/Android/media/dnsfilter.android/` instead
+(adb can still write there) and prints the one step only the app's own screen can do:
+Advanced settings > Configure filter update, add
+`file://storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt`, untick
+the rest, reboot. The routing tweaks (`detectDNS = false`, `routeIPs`) cannot be set this
+way. `verify.sh` skips the list count there and relies on the blocked-host lookups.
+
+**HOME does not move to dumbtv home yet.** Android 11 blocks the Guard's alarm-fired
+launch as a background activity start (logcat: `Background activity start ...
+callingUidHasAnyVisibleWindow: false`). The service is bound, so `verify.sh` reports it
+as bound; press HOME to see the truth. Android's documented way past this is the
+"display over other apps" permission (`SYSTEM_ALERT_WINDOW`), which the launcher does
+not declare. Adding it is open: it would end the launcher's no-permissions rule, and it
+needs testing on a Fire OS 8 device.
+
+**`com.amazon.dummy.settings` and `com.android.traceur` come back enabled after a
+reboot.** Re-run `debloat.sh` after a reboot to switch them off again.
