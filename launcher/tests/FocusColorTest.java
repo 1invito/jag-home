@@ -21,6 +21,12 @@ public final class FocusColorTest {
         for (int i = 0; i < blueIcon.length; i++) blueIcon[i] = 0xFF2050E0;
         color = FocusColor.representative(blueIcon);
         check((color & 255) > (color >> 16 & 255), "blue stays blue");
+        check((FocusColor.tint(color) >>> 24) == 61, "tint is 24 percent opaque");
+        check((FocusColor.tint(color) & 0xFFFFFF) == (color & 0xFFFFFF), "tint keeps color");
+        check("black".equals(Config.BACKGROUND.fallback), "default background unchanged");
+        check("Adaptive wallpaper tint".equals(Config.BACKGROUND.name("adaptive-tint")),
+                "tint is an Options choice");
+        check("Amber".equals(Config.ACCENT.name("amber")), "amber accent unchanged");
         System.out.println("FocusColorTest passed");
     }
 }

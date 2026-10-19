@@ -80,7 +80,7 @@ update one with the other: `install.sh` says so and tells you to
 
 **Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, app names
 (on focus / always / never), clock format, inputs row, background (black, graphite,
-midnight, an image, or adaptive solid), image dim and wallpaper rotation, and **Next wallpaper**
+midnight, an image, adaptive solid, or adaptive wallpaper tint), image dim and wallpaper rotation, and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
 the home screen. Apps without a TV banner, like the Appstore or Downloads, start
 hidden; tick them there to add them.
@@ -104,7 +104,7 @@ labels=focus
 clock=auto
 # on off
 inputs=on
-# black graphite midnight image adaptive
+# black graphite midnight image adaptive adaptive-tint
 background=black
 # 0 20 40 60 80, image background only
 dim=40
@@ -124,6 +124,10 @@ time the home screen comes back. For a wallpaper, push `wallpaper.jpg` (or `.png
 into the same folder and set `background=image`. For several, push them into a
 `wallpapers/` subfolder instead (`.jpg`, `.png` or `.webp`, shown in name order) and
 pick a rotation; while that folder has images, `wallpaper.jpg` is ignored.
+`background=adaptive` picks a dark solid color from the focused app's art.
+`background=adaptive-tint` keeps the wallpaper and adds a subtle focus color overlay;
+without a wallpaper it shows graphite. HDMI, Options and Settings use a neutral color.
+Both modes leave the focus accent (`accent=amber`, for example) unchanged.
 
 ```sh
 adb shell mkdir -p /sdcard/Android/data/tv.dumbtv.home/files/wallpapers

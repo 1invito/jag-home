@@ -113,7 +113,8 @@ public final class Options extends Activity {
             }
             value.setTextColor(focused ? Ui.TEXT : Ui.MUTED);
             boolean off = (c == Config.DIM || c == Config.ROTATE)
-                    && !"image".equals(cfg.get(Config.BACKGROUND));
+                    && !"image".equals(cfg.get(Config.BACKGROUND))
+                    && !"adaptive-tint".equals(cfg.get(Config.BACKGROUND));
             row.setAlpha(off ? 0.4f : 1f);
         };
         row.setOnFocusChangeListener((v, has) -> show.run());
