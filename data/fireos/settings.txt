@@ -16,4 +16,6 @@ global com.amazon.tv.settings.featured_item_video_enabled 0
 global com.amazon.tv.settings.featured_item_video_volume 0.0
 global window_animation_scale 0.5
 global transition_animation_scale 0.5
-global animator_duration_scale 0.5
+# animator_duration_scale is left at 1.0 on purpose: at 0.5 the Fire OS 8
+# launcher's slide-out menu closes without acting, so Settings (menu and gear
+# icon) becomes unreachable from the remote. Seen on a Hisense 40A4NF (2025).
