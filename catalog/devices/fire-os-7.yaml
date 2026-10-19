@@ -9,9 +9,16 @@ adb:
   transport: wifi
   first_connection_prompt: "Allow USB debugging? — must be accepted on the TV with the remote"
 developer_mode: >-
-  Settings > My Fire TV > About > click the device name row 7 times, then back to
-  My Fire TV > Developer Options > ADB debugging: ON
-ip_location: Settings > My Fire TV > About > Network
+  Fire TV Stick / Cube: Settings > My Fire TV > About > click the device name row 7
+  times, then My Fire TV > Developer Options > ADB debugging: ON.
+  Fire TV Edition televisions (Onida, Toshiba, AmazonBasics) use a different
+  settings app with no "My Fire TV": Settings > Device & Software > About, then
+  click the device name 7 times. On some of those builds the Developer Options
+  row never renders even with development_settings_enabled=1; ADB can still be
+  on (settings global adb_enabled=1) and everything in this repo works.
+ip_location: >-
+  Stick / Cube: Settings > My Fire TV > About > Network. Fire TV Edition:
+  Settings > Network > the connected network > SELECT to customise/details.
 prompts:
   - name: USB debugging authorization
     when: first adb connect from a new machine
