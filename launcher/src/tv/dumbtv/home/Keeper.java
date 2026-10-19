@@ -23,7 +23,9 @@ import android.os.IBinder;
  * first-start fallback, before a Home task exists.
  */
 public final class Keeper extends Service {
-    private static final String AMAZON_HOME = "com.amazon.tv.launcher";
+    private static final String AMAZON_PKG = "com.amazon.tv.launcher";
+    // Only the home activity, never Settings/search/other KFTV screens.
+    private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     private static final long POLL_MS = 250;
     private static final long DEBOUNCE_MS = 1500;
 
@@ -32,6 +34,7 @@ public final class Keeper extends Service {
     private Handler worker;
     private UsageStatsManager usage;
     private long lastLaunch;
+    private String topClass;
 
     /** Lets Amazon's home stay on screen until the user opens another app, like Guard.pause(). */
     static void pause() {
@@ -91,10 +94,11 @@ public final class Keeper extends Service {
         long now = System.currentTimeMillis();
         String top = top(now);
         if (top == null) return;
-        if (!AMAZON_HOME.equals(top)) {
+        if (!AMAZON_PKG.equals(top)) {
             if (!"com.android.systemui".equals(top) && !"android".equals(top)) paused = false;
             return;
         }
+        if (!AMAZON_HOME.equals(topClass)) return;
         if (paused) return;
         if (now - lastLaunch < DEBOUNCE_MS) return;
         launch(now);
@@ -107,7 +111,10 @@ public final class Keeper extends Service {
         String top = null;
         while (events.hasNextEvent()) {
             events.getNextEvent(e);
-            if (e.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) top = e.getPackageName();
+            if (e.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                top = e.getPackageName();
+                topClass = e.getClassName();
+            }
         }
         return top;
     }
