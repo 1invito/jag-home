@@ -49,13 +49,16 @@ install/delete. Measured on an Onida Fire TV Edition (Fire OS 7.7, 1.4 GB RAM):
 
 ## Build it yourself
 
-Needs a JDK 17 and the Android SDK (`platforms;android-28`, `build-tools`). No
-Gradle: `build.sh` calls aapt2, javac, d8, zipalign and apksigner directly.
+Needs a JDK 17 and the Android SDK (`platforms;android-25`, `build-tools`). No
+Gradle: `build.sh` calls aapt2, javac, d8, zipalign and apksigner directly. The
+default build has `minSdkVersion 25`, so one APK serves Fire OS 6, 7 and 8;
+compiling against android-25 is what keeps it from calling an API Android 7.1
+lacks.
 
 ```sh
 brew install openjdk@17
 brew install --cask android-commandlinetools
-sdkmanager "platforms;android-28" "build-tools;34.0.0"
+sdkmanager "platforms;android-25" "build-tools;34.0.0"
 ./launcher/build.sh              # → launcher/build/dumbtv-home.apk
 ./launcher/install.sh --build    # build, install, take over HOME
 ```
