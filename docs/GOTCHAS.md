@@ -163,6 +163,18 @@ start goes through an alarm-fired `PendingIntent`; `BOOT_COMPLETED` arrives abou
 45–50 s after power-on, and dumbtv is front right after that. Older Fire OS 6
 builds may still bind the accessibility service; the Keeper is harmless there.
 
+**The Keeper must match the home activity, not just the package.** Fire TV
+Settings (`MainSettingsActivity`) also lives in `com.amazon.tv.launcher`; matching
+only the package pulls the user out of Settings. Check the event's class against
+`com.amazon.tv.launcher.ui.HomeActivity_vNext`.
+
+**The clock drifts while the filter VPN is up.** Fire OS 6 sends its time sync over
+the active network, and the filter's VPN only carries DNS, so NTP and HTTP time
+never answer. `SYSTEM_DNS=1` in `dumbtv.conf` adds `android` to the filter's
+`androidAppWhiteList`; the system bypasses the tunnel and the clock syncs. Apps
+and the OTA package keep their own UID and stay filtered. This is opt-in: the
+default `SYSTEM_DNS=0` leaves system DNS filtered and the clock free to drift.
+
 **`monkey` exits with `SYS_KEYS has no physical keys`** when the remote has gone
 to sleep, so it launches nothing. Pass `--pct-syskeys 0`, or launch apps with
 `am start -n`.

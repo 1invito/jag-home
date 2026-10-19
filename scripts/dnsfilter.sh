@@ -96,9 +96,24 @@ if [[ $DRY_RUN == 0 ]]; then
     -e 's|^reloadIntervalDays = .*|reloadIntervalDays = 3650|' \
     -e 's|^filterHostsFile = .*|filterHostsFile = FILTERHOSTS.TXT|' \
     "$CONF_OUT"
+  # Fire OS 6 sends its time sync over the active network, which is this DNS-only
+  # VPN. Whitelisting the system lets its clock reach NTP; apps and the OTA
+  # package keep their own UID and stay filtered. Opt-in: SYSTEM_DNS=1.
+  if [[ ${SYSTEM_DNS:-0} == 1 ]]; then
+    sed -i.dumbtv2 's|^androidAppWhiteList = .*|androidAppWhiteList = android|' "$CONF_OUT"
+  else
+    sed -i.dumbtv2 's|^androidAppWhiteList = .*|androidAppWhiteList = <none>|' "$CONF_OUT"
+  fi
   for want in '^#filterAutoUpdateURL' '^detectDNS = false' '^routeUnderlyingDNS = true' '^previousAutoUpdateURL = $'; do
     grep -Eq "$want" "$CONF_OUT" || die "config template changed upstream (missing: $want) — update scripts/dnsfilter.sh"
   done
+  if [[ ${SYSTEM_DNS:-0} == 1 ]]; then
+    grep -Eq '^androidAppWhiteList = android' "$CONF_OUT" ||
+      die "config template changed upstream (androidAppWhiteList did not take)"
+  else
+    grep -Eq '^androidAppWhiteList = <none>' "$CONF_OUT" ||
+      die "config template changed upstream (androidAppWhiteList did not take)"
+  fi
   grep -Fqx "routeIPs = $GW" "$CONF_OUT" ||
     die "config template changed upstream (routeIPs did not take) — update scripts/dnsfilter.sh"
   note "patched; no list downloads on the TV"
