@@ -12,7 +12,12 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 source version.env
 MIN_SDK=${MIN_SDK:-28}
 
-SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/opt/homebrew/share/android-commandlinetools}}
+SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}
+if [[ -z $SDK ]]; then
+  for d in /opt/homebrew/share/android-commandlinetools "$HOME/Library/Android/sdk"; do
+    if [[ -f $d/platforms/android-$MIN_SDK/android.jar ]]; then SDK=$d; break; fi
+  done
+fi
 JAR=$SDK/platforms/android-$MIN_SDK/android.jar
 BT=$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -V | tail -1 || true)
 [[ -f $JAR ]] || { echo "error: $JAR missing — sdkmanager 'platforms;android-$MIN_SDK'" >&2; exit 1; }
