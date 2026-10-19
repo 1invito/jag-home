@@ -15,8 +15,11 @@ The same idea, told to whichever TV will listen:
 
 Tested end to end on a Fire TV Edition television running Fire OS 7.7.1.7
 (Android 9). Fire OS 6 and 8 differ in small ways; Android TV needs a different
-package list and a different launcher trick. The ones that cannot be opened, and
-the honest reason for each, are in `docs/OTHER-TVS.md` — along with what we are
+package list and a different launcher trick. Fire OS 6 (Android 7.1, e.g. the 2018
+Fire TV Stick 4K) uses its own lists in `data/fireos6/`, picked up from the device,
+and the launcher holds HOME there with a small foreground service instead of the
+accessibility hook Amazon refuses on 6.7. The ones that cannot be opened, and the
+honest reason for each, are in `docs/OTHER-TVS.md` — along with what we are
 working on to reach them.
 
 **What it will not do:** replace the operating system, unlock a bootloader, or

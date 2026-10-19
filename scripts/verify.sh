@@ -41,6 +41,14 @@ wake=$(dev 'dumpsys power' | sed -n 's/.*mWakefulness=\([A-Za-z]*\).*/\1/p' | he
 alarms=$(dev 'settings get global alarm_manager_constants' | tr -d '\r')
 if [[ $LAUNCHER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip home "LAUNCHER=0, not checked"
+elif [[ $SDK -lt 28 ]]; then
+  # Fire OS 6: the Keeper, not the accessibility service, owns HOME.
+  keeper=$(dev 'dumpsys activity services tv.dumbtv.home' | grep -c 'isForeground=true' || true)
+  if [[ ${keeper:-0} -gt 0 ]]; then
+    printf '%-10s %-38s %s\n' ok home "Keeper armed, front is ${home:-unknown}"
+  else
+    printf '%-10s %-38s %s\n' FAIL home "Keeper not running; re-run launcher.sh"; fail=1
+  fi
 else
   # An enabled setting can outlive the process/binding. Check the current user's
   # exact component AND the live bound-service section, without sending HOME.
@@ -90,7 +98,14 @@ else
     printf '%-10s %-38s %s\n' FAIL filter "missing or empty"; fail=1
   fi
   vpn=$(dev 'settings get secure always_on_vpn_app' | tr -d '\r')
-  if [[ $vpn == dnsfilter.android ]]; then
+  if [[ $SDK -lt 28 ]]; then
+    # Fire OS 6 forgets always_on_vpn_app at boot; the app starts itself, so check the tunnel.
+    if dev 'ip addr show tun0' | grep -q 'tun0:.*UP'; then
+      printf '%-10s %-38s %s\n' ok vpn "tun0 up (started by its boot receiver)"
+    else
+      printf '%-10s %-38s %s\n' FAIL vpn "tun0 down; open personalDNSfilter once, then reboot"; fail=1
+    fi
+  elif [[ $vpn == dnsfilter.android ]]; then
     printf '%-10s %-38s %s\n' ok vpn "$vpn"
   else
     printf '%-10s %-38s %s\n' FAIL vpn "${vpn:-unset}"; fail=1
@@ -99,6 +114,8 @@ fi
 
 if [[ $LAUNCHER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip alarm "LAUNCHER=0, not checked"
+elif [[ $SDK -lt 28 ]]; then
+  printf '%-10s %-38s %s\n' skip alarm "Fire OS 6 Keeper uses moveTaskToFront"
 else
   # dumbtv home needs this to answer HOME immediately; an update can drop it.
   if dev 'settings get global alarm_manager_constants' | grep -q 'min_futurity=0'; then

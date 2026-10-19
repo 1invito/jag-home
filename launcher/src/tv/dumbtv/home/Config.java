@@ -2,6 +2,7 @@ package tv.dumbtv.home;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -178,7 +179,8 @@ final class Config {
     }
 
     void setList(String key, List<String> items) {
-        set(key, String.join(",", items));
+        // String.join is Android 8+; TextUtils.join keeps Fire OS 6 (Android 7.1) working.
+        set(key, TextUtils.join(",", items));
     }
 
     void removePrefix(String... prefixes) {

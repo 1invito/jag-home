@@ -101,7 +101,7 @@ scripts for preferences.
 adb connect <TV_IP>:5555
 adb devices                                  # the line must end in "device"
 adb shell getprop ro.product.manufacturer    # "Amazon" = Fire OS
-adb shell getprop ro.build.version.sdk       # 28 = Fire OS 7
+adb shell getprop ro.build.version.sdk       # 25 = Fire OS 6, 28 = Fire OS 7, 30 = Fire OS 8
 ```
 
 `unauthorized` means the TV is showing an "Allow USB debugging" prompt — a human

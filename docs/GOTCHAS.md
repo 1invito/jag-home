@@ -120,3 +120,80 @@ factory-resets, re-run the pass.
 - Writing `/system/etc/hosts` — dm-verity, and the documented brick path.
 - `pm hide`, `pm suspend`, `pm clear` on protected packages — missing permissions.
 - Disabling the launcher — protected, and it leaves the TV with no home screen.
+
+## Fire OS 6 (Android 7.1)
+
+Found on a Fire TV Stick 4K (mantis, 2018) on Fire OS 6.7.1.1. The scripts read
+the API level at connect time and switch to `data/fireos6/` on their own.
+
+**No `cmd package install-existing`.** An Amazon app uninstalled with
+`pm uninstall -k --user 0` would only come back with a factory reset, so
+`debloat.sh` only disables system apps there. `restore.sh` then needs nothing but
+`pm enable`.
+
+**`com.amazon.firebat` is Prime Video**, not an OTA helper: launching it opens
+`com.amazon.pyrocore.IgnitionActivity`. It is in `data/fireos6/never-disable.txt`.
+
+**`com.amazon.vizzini` re-enables itself at every boot.** `pm disable-user`
+answers `disabled-user`, and after a reboot it is enabled and running again. Leave
+it alone either way.
+
+**`ps -A -o NAME` answers `bad pid '-A'`.** Fire OS 6 still has the toolbox `ps`;
+`running_names` in `scripts/lib.sh` falls back to its last column.
+
+**No `RUN_ANY_IN_BACKGROUND`.** That app-op arrived in Android 9. `RUN_IN_BACKGROUND
+ignore` exists and refuses background service starts (look for `rejectTime` in
+`appops get`), but a service that started while the app was open keeps running
+until the system needs the memory.
+
+**`always_on_vpn_app` is gone after the reboot.** Fire OS 6 does not keep the
+value `settings put` writes, so nothing starts the filter at boot except its own
+receiver (`AUTOSTART = true` in its config). Android 7.1 sends no BOOT_COMPLETED
+to an app that was force-stopped and not opened since, so `dnsfilter.sh` opens it
+once more before the reboot. `verify.sh` checks `tun0` there instead of the setting.
+
+**The app can write an empty list over the pushed one** (84 bytes: a
+`# Downloaded by personalDNSFilter at:` header and nothing else). At start it
+reloads at once when `previousAutoUpdateURL` differs from the update URL, or when
+`FILTERHOSTS.TXT.DLD_CNT` is missing; with no `filterAutoUpdateURL` that reload
+downloads nothing. The upstream template ships `previousAutoUpdateURL = <none>`,
+which never equals the emptied URL, so this is not Fire OS 6 only. `dnsfilter.sh`
+now empties `previousAutoUpdateURL` and writes `DLD_CNT` (whose mtime starts the
+reload interval) after the push.
+
+**The release launcher APK needs Android 9.** `launcher/install.sh` notices sdk 25
+and builds from source with `MIN_SDK=25` (needs a JDK and `platforms;android-25`).
+
+**Fire OS 6.7 refuses third-party accessibility services.** `settings put secure
+enabled_accessibility_services ...` exits 0 and changes nothing; writing the row
+through `content insert --uri content://settings/secure` does store it, but the
+service is never bound (`dumpsys accessibility` shows `services:{}`), and the log
+(`logcat -b all`) has `FireOSFwk:A11yAuthorizer ... "trust"#"false" ... "package"#"tv.dumbtv.home"`.
+That is Amazon's allowlist, not a bug to work around.
+
+**Fire OS 6 takes HOME over through the Keeper instead.** `Keeper` is a foreground
+service that reads the foreground package from `UsageStats` (granted with
+`appops set tv.dumbtv.home GET_USAGE_STATS allow`) and calls
+`ActivityManager.moveTaskToFront` when Amazon's launcher appears. That is not an
+activity launch, so the 5 s `APP_SWITCH_DELAY_TIME` does not apply: measured under
+0.25 s with a real remote key on 6.7.1.1. `install.sh` starts it and checks
+`dumpsys activity services`. At boot there is no dumbtv task yet, so the first
+start goes through an alarm-fired `PendingIntent`; `BOOT_COMPLETED` arrives about
+45–50 s after power-on, and dumbtv is front right after that. Older Fire OS 6
+builds may still bind the accessibility service; the Keeper is harmless there.
+
+**The Keeper must match the home activity, not just the package.** Fire TV
+Settings (`MainSettingsActivity`) also lives in `com.amazon.tv.launcher`; matching
+only the package pulls the user out of Settings. Check the event's class against
+`com.amazon.tv.launcher.ui.HomeActivity_vNext`.
+
+**The clock drifts while the filter VPN is up.** Fire OS 6 sends its time sync over
+the active network, and the filter's VPN only carries DNS, so NTP and HTTP time
+never answer. `SYSTEM_DNS=1` in `dumbtv.conf` adds `android` to the filter's
+`androidAppWhiteList`; the system bypasses the tunnel and the clock syncs. Apps
+and the OTA package keep their own UID and stay filtered. This is opt-in: the
+default `SYSTEM_DNS=0` leaves system DNS filtered and the clock free to drift.
+
+**`monkey` exits with `SYS_KEYS has no physical keys`** when the remote has gone
+to sleep, so it launches nothing. Pass `--pct-syskeys 0`, or launch apps with
+`am start -n`.

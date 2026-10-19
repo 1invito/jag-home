@@ -161,6 +161,7 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_PACKAGE_CHANGED);
         f.addDataScheme("package");
         registerReceiver(packages, f);
+        Keeper.start(this);
         if (tv != null) tv.registerCallback(inputWatch, ui);
         firstApps(catalog);
         loadInputs();
