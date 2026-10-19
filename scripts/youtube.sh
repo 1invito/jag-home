@@ -82,7 +82,7 @@ if present "$YT"; then
     fi
   else
     dev "pm disable-user --user 0 $YT" | tail -1
-    if dev "pm list packages -d" | grep -qx "package:$YT"; then
+    if grep -qx "package:$YT" <<<"$(dev "pm list packages -d")"; then
       note "disabled (the app is still installed: 'pm enable $YT' brings it back)"
     else
       note "could not disable $YT — update it from the Appstore and run this again"
@@ -124,7 +124,7 @@ note "Settings > Player > Video presets > 1080p 60fps vp9 (not av01 — no hardw
 
 step "verify"
 dev "dumpsys package $PKG" | grep -m1 versionName | sed 's/^ */  /'
-if dev "pm list packages -d" | grep -qx "package:$YT"; then note "YouTube: disabled"
+if grep -qx "package:$YT" <<<"$(dev "pm list packages -d")"; then note "YouTube: disabled"
 else note "YouTube: not installed"; fi
 out=$("$ADB" -s "$SERIAL" shell "monkey -p $PKG -c android.intent.category.LEANBACK_LAUNCHER 1" 2>&1)
 case $out in
