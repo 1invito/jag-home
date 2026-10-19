@@ -22,7 +22,7 @@ data:
   user_apps: data/fireos/user-apps.txt
 quirks:
   - "DNS filter: after dnsfilter.sh's adb reboot the ACTIVATE_VPN app-op was back to default (ignore), always_on_vpn_app was null and the app was stopped=true notLaunched=true, so no tun0 and nothing blocked. Same symptom as issue #15 on a Sony Google TV. Fix that worked: appops set dnsfilter.android ACTIVATE_VPN allow, settings put secure always_on_vpn_app dnsfilter.android, am start -n dnsfilter.android/.DNSProxyActivity, then reboot; the VPN came up by itself on the next boot"
-  - "com.android.nfc is installed (system uid 1027) and pm disable-user refuses it: 'Shell cannot change component state for com.android.nfc/null to 3'. debloat.sh reports it as SUSPECT; it is harmless and the rest of the pass is unaffected"
+  - "com.android.nfc ships disabled by the system (dumpsys: enabled=2), so pm disable-user fails with 'Shell cannot change component state for com.android.nfc/null to 3' and debloat.sh reports SUSPECT. It is off already and the rest of the pass is unaffected; #24 reports it as already disabled"
   - "No package in packages.txt was refused as protected. Absent on this model: media.recommendations, perfc, neo.minerva.logcat, device_remote_config_sync_service, alexadirectivebrokerservice, firetv.androidskillconnectioncapability, rtcsessioncontroller, tv.democontent.provider, tv.localgallery"
   - "com.amazon.tv.developer.dataservice keeps running after its disable; the residual-process pass turns its ops off and blocks its data"
   - "Launcher: the accessibility HOME takeover works as on Fire OS 7.7; HOME from inside Netflix lands on dumbtv home"
