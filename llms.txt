@@ -18,6 +18,7 @@ Agents: read `AGENTS.md`, interview the user, then run `./scripts/preflight.sh`,
 - [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md): the five mechanisms and their limits
 - [docs/GOTCHAS.md](docs/GOTCHAS.md): every failure mode found while building this
 - [docs/OTHER-TVS.md](docs/OTHER-TVS.md): which TVs can be opened, which cannot, and what is being worked on
+- [docs/YOUTUBE.md](docs/YOUTUBE.md): why YouTube ads cannot be blocked at the network, and the client that replaces the app
 - [docs/WHY-NOT-REPLACE-OS.md](docs/WHY-NOT-REPLACE-OS.md): the bootloader and dm-verity wall
 - [docs/FAQ.md](docs/FAQ.md): revocation, updates, Prime Video, legality
 

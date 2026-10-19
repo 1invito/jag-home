@@ -151,6 +151,7 @@ If anything looks wrong later, `scripts/restore.sh` puts it back.
 | `debloat.sh` | Uninstalls/disables packages, applies privacy settings. | yes |
 | `lockdown.sh` | App-ops + data-saver rules for protected packages. | no |
 | `dnsfilter.sh` | Installs and configures the on-device DNS filter. | yes |
+| `youtube.sh` | Replaces the ad-serving YouTube app with SmartTube, which has no ad code, and takes YouTube out of the home screen. | no |
 | `launcher.sh` | Installs dumbtv home and takes over the HOME button. | no |
 | `verify.sh` | Checks what is blocked and what still works. | no |
 | `restore.sh` | Undoes packages, app-ops, network rules and settings. | yes |
@@ -176,6 +177,7 @@ Every script takes `--dry-run` to print its commands without running them, and
 - `docs/HOW-IT-WORKS.md` — the five mechanisms and why each is needed
 - `docs/GOTCHAS.md` — everything that went wrong while building this
 - `docs/OTHER-TVS.md` — which TVs can be opened, which cannot, and what is being worked on
+- `docs/YOUTUBE.md` — why YouTube ads cannot be blocked at the network, and what to replace the app with
 - `docs/WHY-NOT-REPLACE-OS.md` — the bootloader/verity wall, and the root exploit
 - `docs/FAQ.md` — factory reset, updates, Prime Video, "is this illegal" (it isn't)
 - `catalog/` — per-platform menu paths, prompts and quirks, machine-readable
