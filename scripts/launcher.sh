@@ -18,7 +18,7 @@ fi
 PKG=tv.dumbtv.home
 
 step "plan"
-note "install dumbtv home: open source, 41 KB, no internet permission, no ad ID"
+note "install dumbtv home: open source, 45 KB, no internet permission, no ad ID"
 if [[ $SDK -lt 28 ]]; then
   note "$(fireos_name): built from source with MIN_SDK=$SDK (the release APK needs Android 9)"
   note "take over HOME: Keeper (UsageStats + moveTaskToFront, no accessibility)"

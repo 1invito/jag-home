@@ -2,7 +2,7 @@
 
 A home screen for Fire TV that does one job: show your apps and your HDMI inputs.
 
-- **41 KB APK.** Plain Java and Android views: no AndroidX, Kotlin, Compose, Play
+- **45 KB APK.** Plain Java and Android views: no AndroidX, Kotlin, Compose, Play
   Services or other libraries.
 - **No network.** It has no `INTERNET` permission, so Android blocks it from
   opening any network connection. The APK declares usage access, reorder-tasks
@@ -41,7 +41,7 @@ install/delete. Measured on an Onida Fire TV Edition (Fire OS 7.7, 1.4 GB RAM):
 
 | | dumbtv home | Projectivy 4.72 |
 |---|---|---|
-| APK | 41 KB | several MB |
+| APK | 45 KB | several MB |
 | Permissions requested | 0 (Fire OS 7/8); usage access (Fire OS 6) | 20+, incl. advertising ID |
 | RAM, home on screen | 57–72 MB PSS | 135 MB PSS |
 | RAM, while an app plays | ~37 MB PSS | — |

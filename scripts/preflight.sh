@@ -43,7 +43,7 @@ note "remove $(list_of "$(fos user-apps.txt)" | wc -l | tr -d ' ') third-party a
 note "deny background work + data to $(list_of "$(fos protected.txt)" | wc -l | tr -d ' ') protected packages"
 note "apply $(list_of "$(fos settings.txt)" | wc -l | tr -d ' ') privacy settings"
 note "install a DNS filter that blocks Amazon telemetry, Alexa and the OTA servers"
-note "replace the home screen with dumbtv home (this repo's own launcher, no permissions)"
+note "replace the home screen with dumbtv home (this repo's own launcher, no internet access)"
 note "reboot twice (about 5 minutes)"
 
 step "not touched, ever"
