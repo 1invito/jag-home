@@ -80,7 +80,7 @@ update one with the other: `install.sh` says so and tells you to
 
 **Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, app names
 (on focus / always / never), clock format, inputs row, background (black, graphite,
-midnight, or an image), image dim and wallpaper rotation, and **Next wallpaper**
+midnight, an image, or adaptive solid), image dim and wallpaper rotation, and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
 the home screen. Apps without a TV banner, like the Appstore or Downloads, start
 hidden; tick them there to add them.
@@ -104,7 +104,7 @@ labels=focus
 clock=auto
 # on off
 inputs=on
-# black graphite midnight image
+# black graphite midnight image adaptive
 background=black
 # 0 20 40 60 80, image background only
 dim=40
