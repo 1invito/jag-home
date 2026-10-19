@@ -134,7 +134,7 @@ if [[ $dev_sdk -lt 28 ]]; then
   sh_ appops set $PKG GET_USAGE_STATS allow
   sh_ am start -W -n $PKG/.Home >/dev/null
   sleep 3
-  if ! sh_ dumpsys activity services $PKG 2>/dev/null | grep -q 'isForeground=true'; then
+  if ! grep -q 'isForeground=true' <<<"$(sh_ dumpsys activity services $PKG 2>/dev/null)"; then
     echo "error: the Fire OS 6 home keeper did not start ($PKG/.Keeper)" >&2
     exit 1
   fi
