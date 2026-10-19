@@ -562,6 +562,8 @@ public final class Home extends Activity {
         }
         Locale locale = Locale.getDefault();
         date.setText(DateFormat.format(DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM"), now));
+        // hourly and time-of-day rotations change while the screen stays open; a no-op otherwise
+        background();
     }
 
     private void background() {
