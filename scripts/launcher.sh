@@ -18,7 +18,11 @@ PKG=tv.dumbtv.home
 
 step "plan"
 note "install dumbtv home: open source, 41 KB, no permissions (no internet, no ad ID)"
-note "the prebuilt APK comes from this repo's GitHub release and is checksum-verified"
+if [[ $SDK -lt 28 ]]; then
+  note "$(fireos_name): built from source with MIN_SDK=$SDK (the release APK needs Android 9)"
+else
+  note "the prebuilt APK comes from this repo's GitHub release and is checksum-verified"
+fi
 note "take over HOME: accessibility service + settings global alarm_manager_constants min_futurity=0"
 note "Amazon's launcher stays installed: hold HOME for Fire OS's menu, or Options > Open Amazon's home screen"
 if [[ $DRY_RUN == 1 ]]; then

@@ -43,6 +43,16 @@ set_futurity() {
   else sh_ settings delete global alarm_manager_constants >/dev/null; fi
 }
 
+# Fire OS 6's `settings` command silently drops writes to enabled_accessibility_services
+# (exit code 0, value unchanged); the settings content provider still takes them.
+put_secure() {
+  local got
+  sh_ settings put secure "$1" "${2:-\"\"}"
+  got=$(sh_ settings get secure "$1" | tr -d '\r')
+  [[ $got == "$2" || ( -z $2 && $got == null ) ]] && return 0
+  sh_ content insert --uri content://settings/secure --bind "name:s:$1" --bind "value:s:$2"
+}
+
 # Puts $1 (or nothing) in place of any launcher's service, keeping every other service.
 set_guard() {
   local cur
@@ -51,13 +61,13 @@ set_guard() {
   cur=$(printf '%s' "$cur" | tr ':' '\n' | { grep -vxF -e "$GUARD" -e "$OLD_GUARD" -e '' || true; } | paste -sd: -)
   if [[ -n ${1:-} ]]; then cur=${cur:+$cur:}$1; fi
   # Clearing first makes the accessibility manager rebind a service whose process died.
-  sh_ settings put secure enabled_accessibility_services '""'
+  put_secure enabled_accessibility_services ""
   sleep 1
   if [[ -n $cur ]]; then
-    sh_ settings put secure enabled_accessibility_services "$cur"
-    sh_ settings put secure accessibility_enabled 1
+    put_secure enabled_accessibility_services "$cur"
+    put_secure accessibility_enabled 1
   else
-    sh_ settings put secure accessibility_enabled 0
+    put_secure accessibility_enabled 0
   fi
 }
 
@@ -72,6 +82,15 @@ if [[ $mode == undo ]]; then
   sh_ am start -a android.intent.action.MAIN -c android.intent.category.HOME >/dev/null
   echo "HOME handed back to Amazon's launcher (dumbtv home stays installed: adb uninstall $PKG)"
   exit 0
+fi
+
+# The release APK is built for Android 9+. Fire OS 6 (Android 7.1) gets a build from source.
+dev_sdk=$(sh_ getprop ro.build.version.sdk | tr -d '\r')
+case $dev_sdk in ''|*[!0-9]*) dev_sdk=28 ;; esac
+if [[ $dev_sdk -lt 28 ]]; then
+  [[ $mode == release ]] && echo "Fire OS 6 (sdk $dev_sdk): the release APK needs Android 9, building from source"
+  mode=build
+  export MIN_SDK=${MIN_SDK:-$dev_sdk}
 fi
 
 if [[ $mode == build ]]; then
@@ -106,6 +125,23 @@ sh_ dumpsys deviceidle whitelist +$PKG >/dev/null
 sh_ cmd package set-home-activity $PKG/.Home >/dev/null 2>&1 || true
 set_futurity on
 set_guard $GUARD
+sleep 2
+# The setting alone proves nothing: Fire OS decides whether the service is bound. On
+# Fire OS 6.7 its A11yAuthorizer refuses services from packages Amazon does not trust.
+# Captured first: under pipefail, `grep -q` closing the pipe early would fail the test.
+bound=$(sh_ dumpsys accessibility || true)
+if [[ $bound != *"$PKG"* ]]; then
+  echo "error: Fire OS did not bind the HOME guard ($GUARD)." >&2
+  denied=$(sh_ logcat -d -b all | grep A11yAuthorizer | grep -c "$PKG" || true)
+  if [[ ${denied:-0} -gt 0 ]]; then
+    echo "  this build only runs accessibility services Amazon trusts (FireOSFwk A11yAuthorizer)," >&2
+    echo "  so HOME cannot be taken over here. dumbtv home stays installed as a normal app;" >&2
+    echo "  remove it with: adb uninstall $PKG" >&2
+  fi
+  set_futurity off
+  set_guard ""
+  exit 1
+fi
 sh_ am start -W -n $PKG/.Home >/dev/null
 if installed com.spocky.projengmenu; then
   echo "note: Projectivy is still installed but no longer used — adb uninstall com.spocky.projengmenu"

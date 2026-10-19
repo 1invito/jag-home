@@ -24,7 +24,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - name: sdk
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-28" "build-tools;34.0.0" >/dev/null
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "platforms;android-28" "build-tools;34.0.0" >/dev/null
+      - name: build for fire os 6 (fails on any android.* API that Android 7.1 lacks)
+        run: MIN_SDK=25 ./launcher/build.sh
       - name: build
         run: ./launcher/build.sh
       - name: no permissions

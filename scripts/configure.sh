@@ -46,7 +46,7 @@ while IFS= read -r -u 3 p; do
   else
     note "remove $name ($p)"
   fi
-done 3< <(list_of "$DATA/fireos/user-apps.txt")
+done 3< <(list_of "$(fos user-apps.txt)")
 
 if [[ $(yn "Do you watch Prime Video? (keeps its CDN out of the filter)" 1) == 1 ]]; then
   PRIME=1; note "prime: kept"

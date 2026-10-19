@@ -5,7 +5,10 @@ OTA, a clean launcher — all applied over ADB from another machine, no root.
 
 Tested end to end on a Fire TV Edition television running Fire OS 7.7.1.7
 (Android 9). Fire OS 7/8 streaming devices behave the same way; Android TV keeps
-most of it but needs a different package list — see `docs/OTHER-TVS.md`.
+most of it but needs a different package list — see `docs/OTHER-TVS.md`. Fire OS 6
+(Android 7.1, e.g. the 2018 Fire TV Stick 4K) uses its own lists in `data/fireos6/`
+and the scripts pick that up from the device. On Fire OS 6.7 Amazon refuses the
+launcher's accessibility hook, so the home screen stays Amazon's (`LAUNCHER=0`).
 
 **What it will not do:** replace Fire OS, unlock the bootloader, or survive a
 factory reset. None of that is possible on these devices, and pretending

@@ -74,7 +74,14 @@ else
     printf '%-10s %-38s %s\n' FAIL filter "missing or empty"; fail=1
   fi
   vpn=$(dev 'settings get secure always_on_vpn_app' | tr -d '\r')
-  if [[ $vpn == dnsfilter.android ]]; then
+  if [[ $SDK -lt 28 ]]; then
+    # Fire OS 6 forgets always_on_vpn_app at boot; the app starts itself, so check the tunnel.
+    if dev 'ip addr show tun0' | grep -q 'tun0:.*UP'; then
+      printf '%-10s %-38s %s\n' ok vpn "tun0 up (started by its boot receiver)"
+    else
+      printf '%-10s %-38s %s\n' FAIL vpn "tun0 down; open personalDNSfilter once, then reboot"; fail=1
+    fi
+  elif [[ $vpn == dnsfilter.android ]]; then
     printf '%-10s %-38s %s\n' ok vpn "$vpn"
   else
     printf '%-10s %-38s %s\n' FAIL vpn "${vpn:-unset}"; fail=1

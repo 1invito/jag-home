@@ -5,7 +5,7 @@ ADB shell.
 
 | Platform | Packages | Launcher | On-device DNS filter | Notes |
 |---|---|---|---|---|
-| Fire OS 6 (2017–2018 devices) | yes | Launcher Manager Mini | yes | older package set, different HA |
+| Fire OS 6 (2017–2018 devices) | yes, disable only | no on 6.7: Amazon's A11yAuthorizer refuses the HOME guard | yes | own lists in `data/fireos6/`; see `catalog/devices/fire-os-6.yaml` |
 | Fire OS 7 (Android 9) | yes | dumbtv home + accessibility | yes | what this repo was built on |
 | Fire OS 8 (Android 11) | yes | varies; accessibility sometimes ignored | yes | protected list differs; check `pm disable-user` output |
 | Android TV / Google TV | yes | dumbtv home via `set-home-activity` (untested) | yes, or built-in Private DNS | telemetry is Google's, not Amazon's |
@@ -17,7 +17,8 @@ ADB shell.
 ## Fire OS 6 and 8
 
 Run `scripts/preflight.sh`, then `scripts/debloat.sh --dry-run`, then for real.
-`PROTECTED` lines tell you what to add to `data/fireos/protected.txt`. Anything
+`PROTECTED` lines tell you what to add to `data/fireos/protected.txt` (Fire OS 8)
+or `data/fireos6/protected.txt` (Fire OS 6). Anything
 `absent` simply is not on that device. Do not copy lists from the internet —
 package names and protections moved between releases, and TV-specific packages
 (panel, tuner, backlight) exist only on televisions.
