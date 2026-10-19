@@ -240,7 +240,7 @@ final class Config {
     private static final String[][] PERIOD_WORDS = {
         {"morning", "day"},
         {"afternoon", "evening"},
-        {"night"},
+        {"night", "midnight"},
     };
 
     /**
@@ -251,10 +251,11 @@ final class Config {
         List<File> fit = new ArrayList<>();
         boolean tagged = false;
         for (File f : pool) {
-            String n = f.getName().toLowerCase(Locale.ROOT);
+            // Whole words only, so "sunday.jpg" or "holiday.jpg" is not a morning picture.
+            List<String> words = Arrays.asList(f.getName().toLowerCase(Locale.ROOT).split("[^a-z]+"));
             for (int p = 0; p < PERIOD_WORDS.length; p++) {
                 for (String w : PERIOD_WORDS[p]) {
-                    if (n.contains(w)) {
+                    if (words.contains(w)) {
                         tagged = true;
                         if (p == period && !fit.contains(f)) fit.add(f);
                     }

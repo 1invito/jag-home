@@ -58,7 +58,7 @@ set_guard() {
   local cur
   cur=$(sh_ settings get secure enabled_accessibility_services | tr -d '\r')
   [[ $cur == null ]] && cur=
-  cur=$(printf '%s' "$cur" | tr ':' '\n' | { grep -vxF -e "$GUARD" -e "$OLD_GUARD" -e '' || true; } | paste -sd: -)
+  cur=$(printf '%s' "$cur" | tr ':' '\n' | { grep -vxF -e "$GUARD" -e "$PKG/.Guard" -e "$OLD_GUARD" -e '' || true; } | paste -sd: -)
   if [[ -n ${1:-} ]]; then cur=${cur:+$cur:}$1; fi
   # Clearing first makes the accessibility manager rebind a service whose process died.
   put_secure enabled_accessibility_services ""
@@ -153,9 +153,16 @@ set_guard $GUARD
 sleep 2
 # The setting alone proves nothing: Fire OS decides whether the service is bound. On
 # Fire OS 6.7 its A11yAuthorizer refuses services from packages Amazon does not trust.
-# Captured first: under pipefail, `grep -q` closing the pipe early would fail the test.
-bound=$(sh_ dumpsys accessibility || true)
-if [[ $bound != *"$PKG"* ]]; then
+# The dump names the service by its label, not its package, so match the label inside the
+# current user's bound-services section (same parser verify.sh uses).
+source ../scripts/accessibility.sh
+user=$(sh_ am get-current-user | tr -d '\r')
+bound=0
+for _ in 1 2 3 4 5; do
+  if sh_ dumpsys accessibility | guard_bound "${user:-0}"; then bound=1; break; fi
+  sleep 1
+done
+if [[ $bound == 0 ]]; then
   echo "error: Fire OS did not bind the HOME guard ($GUARD)." >&2
   denied=$(sh_ logcat -d -b all | grep A11yAuthorizer | grep -c "$PKG" || true)
   if [[ ${denied:-0} -gt 0 ]]; then
