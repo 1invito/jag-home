@@ -33,6 +33,8 @@ YT=com.amazon.firetv.youtube
 APK_URL=https://github.com/yuliskov/SmartTube/releases/download/32.56s/SmartTube_stable_32.56_universal.apk
 # Pinned: releases are immutable, so this hash identifies the exact build.
 APK_SHA256=4a35b90940612e048e4e9cb9e10379f7db1e84f30375994129f10a571ee04ce5
+# versionCode of that build. Update it with the URL and hash.
+APK_VERSION_CODE=2446
 HOME_DIR=/sdcard/Android/data/tv.dumbtv.home/files
 
 step "plan"
@@ -57,19 +59,28 @@ step "download"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/dumbtv-yt.XXXXXX") || die "could not create a temp dir"
 trap 'rm -rf "$WORK"' EXIT
 APK=$WORK/smarttube.apk
-curl -fsSL -o "$APK" "$APK_URL" || die "could not download $APK_URL"
+fetch "$APK" "$APK_URL" || die "could not download $APK_URL"
 if command -v sha256sum >/dev/null; then got=$(sha256sum "$APK" | awk '{print $1}')
 else got=$(shasum -a 256 "$APK" | awk '{print $1}'); fi
 [[ $got == "$APK_SHA256" ]] || die "checksum mismatch for $APK_URL (got $got) — not installing"
 note "checksum ok"
 
 step "app"
-out=$("$ADB" -s "$SERIAL" install -r "$APK" 2>&1 | tail -1)
-printf '  %s\n' "$out"
-case $out in
-  *Success*|*"already exists"*) ;;
-  *) die "adb install failed: $out" ;;
-esac
+installed_code() { dev "dumpsys package $PKG" | sed -n 's/.*versionCode=\([0-9]*\).*/\1/p' | head -1; }
+# adb's last line is not proof either way: over Wi-Fi the session can drop after the
+# ~30 MB push but before "Success" prints, and the app is installed anyway. That made
+# the first run fail and a re-run pass. What the TV reports afterwards is the answer;
+# a SmartTube newer than the pinned build (updated from inside the app) also counts.
+for attempt in 1 2; do
+  out=$("$ADB" -s "$SERIAL" install -r "$APK" 2>&1 | tail -1)
+  printf '  %s\n' "$out"
+  adb_reconnect
+  code=$(installed_code)
+  [[ ${code:-0} -ge $APK_VERSION_CODE ]] && break
+  [[ $attempt == 1 ]] && note "not installed yet; trying once more"
+done
+[[ ${code:-0} -ge $APK_VERSION_CODE ]] || die "SmartTube is not installed after two attempts: $out"
+note "SmartTube installed (versionCode $code)"
 
 step "stock app"
 if present "$YT"; then
