@@ -1,0 +1,36 @@
+id: fireos-aftolcbc82
+title: "Amazon AFTOLCBC82"
+platform: fireos
+status: tested
+tested_on: "RS8153.3202N, then RS8180.3746N after a staged OTA applied on the first reboot"
+models:
+  - "AFTOLCBC82 (codename ginza; Fire TV Edition television)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Enabled by the owner before the session. On this build Developer Options is under Settings > Device & Software > Developer Options, with separate ADB debugging (network) and USB debugging toggles; ADB debugging is the one adb connect needs. The usual Fire OS unlock (About > click the device name 7 times) was not re-verified here.
+ip_location: "Settings > Device & Software > About > Network (the owner supplied the address; path not re-verified)"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "human presses Allow on the TV and ticks Always allow. adb devices then shows authorizing and offline for about 30 s before device; keep polling, do not reconnect in a loop"
+  - name: "Fire TV full-screen keyboard"
+    blocks_automation: true
+    fix: "opens over personalDNSfilter's text fields and hides the dialog. Type with adb shell input text, close it with KEYCODE_BACK; the next tap after typing reopens the field instead of pressing the button, so press BACK and tap again"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "After the first reboot network ADB did not come back (port 5555 refused, nothing on mDNS) until the owner toggled ADB debugging off and on in Developer Options; after a later reboot it came back by itself. all.sh stops with 'device did not report boot_completed' when this happens; reconnect and continue with lockdown.sh, dnsfilter.sh and verify.sh"
+  - "personalDNSfilter's screen cannot be navigated with the remote on this TV. Drive it with adb shell input tap at the 1920x1080 override size and check state with uiautomator dump. Edit the first filter entry's URL to the file:// path, untick the other two, then press RESTART: RELOAD FILTER reruns the previously saved config and downloads the default lists again. The log then shows 'Building index for 415 entries'"
+  - "Three packages that debloat.sh reported absent (com.amazon.device_remote_config_sync_service, com.amazon.perfc, com.android.traceur) were present and enabled after the first reboot; pm disable-user --user 0 fixed them and they stayed disabled through a second reboot. 56 packages disabled in total, protected 0"
+  - "Only Prime Video is preinstalled; nothing from user-apps.txt exists on this model. Absent from packages.txt on this build: media.recommendations, tv.fw.metrics, neo.minerva.logcat, tigris, vizzini.ftvcds, firetv.androidskillconnectioncapability, wha.mediabrowserservice, printspooler, bips, nfc"
+  - "On a weak Wi-Fi link (70 percent packet loss) adb shell stalled and every script died with 'not responding'; moving the TV to a better network fixed it. The TV also advertises _adb-tls-connect on mDNS on a random port, which answers offline without pairing and Fire OS has no pairing screen: use port 5555"
+  - "A staged OTA that had been downloaded before the pass was applied on the first reboot (Fire OS 8.1.5.3 RS8153.3202N to 8.1.8.0 RS8180.3746N). Disabled packages, app-ops, the always-on VPN and the DNS filter all survived it and verify.sh still exited 0; softwareupdates.amazon.com is blocked afterwards. The update reset two settings, alexa_wake_word_disabled and voice_disabled, back to 0; settings put secure restored them, the other 13 held"
+notes: "Fire OS 8.1.5.3 (Android 11) television: debloat, lockdown and the DNS filter via the file:// list all worked, verify.sh exit 0 before and after a reboot. Launcher skipped by the owner's choice (HOME takeover does not work on Fire OS 8); YouTube is not installed on this model"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
