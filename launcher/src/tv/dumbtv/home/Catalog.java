@@ -57,7 +57,11 @@ final class Catalog {
         if (it.banner == null) it.icon = it.info.loadIcon(pm);
     }
 
-    /** HDMI, AV and other passthrough inputs; HDMI first in port order. */
+    /**
+     * HDMI, AV and other passthrough inputs; HDMI first in port order. The intent is the TV's own
+     * app for the input; {@link Input#intent} decides whether a tile opens that or the built-in
+     * screen.
+     */
     static List<Item> inputs(Context c, TvInputManager tv) {
         List<Item> out = new ArrayList<>();
         if (tv == null) return out;
