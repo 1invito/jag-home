@@ -5,4 +5,4 @@
 # Verify each candidate by hand on your device before uncommenting it, then open
 # a PR. Do not copy a list from another TV.
 # For one build's documented choices and feature tradeoffs (not an executable
-# removal list), see docs/TCL-G08-PACKAGES.md.
+# removal list), see docs/TCL-G08-PACKAGES.md and docs/TCL-G10-PACKAGES.md.
