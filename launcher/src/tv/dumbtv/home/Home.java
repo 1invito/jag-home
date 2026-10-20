@@ -106,6 +106,7 @@ public final class Home extends Activity {
         final TextView title;
         final HorizontalScrollView scroll;
         final LinearLayout strip;
+        final Grid grid;
         List<Item> all = new ArrayList<>();
 
         Row(String kind, String name, LinearLayout parent) {
@@ -136,14 +137,23 @@ public final class Home extends Activity {
             scroll.setClipToPadding(false);
             scroll.setPadding(edge - bleed, 0, edge - bleed, 0);
             scroll.addView(strip, new FrameLayout.LayoutParams(WRAP, WRAP));
+            grid = new Grid(Home.this);
+            grid.setPadding(edge, dp(12), edge, dp(8));
             parent.addView(title, new LinearLayout.LayoutParams(MATCH, WRAP));
             parent.addView(scroll, new LinearLayout.LayoutParams(MATCH, WRAP));
+            parent.addView(grid, new LinearLayout.LayoutParams(MATCH, WRAP));
+        }
+
+        /** Whichever container currently holds the tiles, following Options › Layout. */
+        ViewGroup tiles() {
+            return "grid".equals(cfg.get(Config.LAYOUT)) ? grid : strip;
         }
 
         void setVisible(boolean on) {
-            int v = on ? View.VISIBLE : View.GONE;
-            title.setVisibility(v);
-            scroll.setVisibility(v);
+            boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
+            title.setVisibility(on ? View.VISIBLE : View.GONE);
+            scroll.setVisibility(on && !gridMode ? View.VISIBLE : View.GONE);
+            grid.setVisibility(on && gridMode ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -271,6 +281,11 @@ public final class Home extends Activity {
                     break;
                 case KeyEvent.KEYCODE_DPAD_UP:
                 case KeyEvent.KEYCODE_DPAD_DOWN:
+                    // In a grid, up and down move the tile a whole line; a strip has no lines.
+                    if (moving.getParent() instanceof Grid) {
+                        int cols = ((Grid) moving.getParent()).columns();
+                        shift(e.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP ? -cols : cols);
+                    }
                     break;
                 default:
                     stopMoving();
@@ -306,12 +321,26 @@ public final class Home extends Activity {
         return Math.max(0, Math.min(range, stopFor(at, rows, page.getHeight())));
     }
 
-    /** Title top and strip bottom of each visible row, in {@code content}'s coordinates. */
+    /**
+     * Title top and strip bottom of each visible row, in {@code content}'s coordinates. In grid
+     * mode every line of tiles is its own block (the first one starting at the row title), so
+     * a grid taller than the screen still scrolls a whole line at a time.
+     */
     private List<int[]> rowBlocks(View content) {
         List<int[]> rows = new ArrayList<>();
         for (Row row : new Row[] {apps, inputs}) {
-            if (row.scroll.getVisibility() != View.VISIBLE) continue;
-            rows.add(new int[] {topIn(row.title, content), topIn(row.scroll, content) + row.scroll.getHeight()});
+            if (row.scroll.getVisibility() == View.VISIBLE) {
+                rows.add(new int[] {topIn(row.title, content), topIn(row.scroll, content) + row.scroll.getHeight()});
+            } else if (row.grid.getVisibility() == View.VISIBLE) {
+                int gridTop = topIn(row.grid, content), lastTop = Integer.MIN_VALUE;
+                for (int i = 0; i < row.grid.getChildCount(); i++) {
+                    View t = row.grid.getChildAt(i);
+                    if (t.getTop() == lastTop) continue;
+                    int start = lastTop == Integer.MIN_VALUE ? topIn(row.title, content) : gridTop + t.getTop() - dp(12);
+                    lastTop = t.getTop();
+                    rows.add(new int[] {start, gridTop + t.getBottom() + dp(8)});
+                }
+            }
         }
         return rows;
     }
@@ -406,7 +435,7 @@ public final class Home extends Activity {
             @Override
             public View focusSearch(View focused, int direction) {
                 if (direction == View.FOCUS_DOWN && chips.contains(focused)) {
-                    View below = nearest(apps.strip, focused);
+                    View below = nearest(apps.tiles(), focused);
                     if (below != null) return below;
                 }
                 return super.focusSearch(focused, direction);
@@ -438,14 +467,27 @@ public final class Home extends Activity {
         return root;
     }
 
-    /** The child of {@code strip} horizontally closest to {@code from}, or null when empty. */
-    private static View nearest(LinearLayout strip, View from) {
+    /**
+     * The child of {@code strip} horizontally closest to {@code from}, restricted to its top
+     * visual row so a wrapped grid does not match a tile several rows further down.
+     */
+    private static View nearest(ViewGroup strip, View from) {
+        int n = strip.getChildCount();
+        if (n == 0) return null;
         int[] at = new int[2];
         from.getLocationOnScreen(at);
         int x = at[0] + from.getWidth() / 2;
+        int[] ys = new int[n];
+        int topY = Integer.MAX_VALUE;
+        for (int i = 0; i < n; i++) {
+            strip.getChildAt(i).getLocationOnScreen(at);
+            ys[i] = at[1];
+            topY = Math.min(topY, at[1]);
+        }
         View best = null;
         int bestGap = Integer.MAX_VALUE;
-        for (int i = 0; i < strip.getChildCount(); i++) {
+        for (int i = 0; i < n; i++) {
+            if (ys[i] != topY) continue;
             View c = strip.getChildAt(i);
             c.getLocationOnScreen(at);
             int gap = Math.abs(at[0] + c.getWidth() / 2 - x);
@@ -517,7 +559,10 @@ public final class Home extends Activity {
         View focused = getCurrentFocus();
         String keep = focused instanceof Tile && ((Tile) focused).kind.equals(row.kind)
                 ? ((Tile) focused).item.id : null;
+        boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
+        ViewGroup target = gridMode ? row.grid : row.strip;
         row.strip.removeAllViews();
+        row.grid.removeAllViews();
 
         boolean enabled = !Catalog.INPUTS.equals(row.kind) || "on".equals(cfg.get(Config.INPUTS));
         List<Item> shown = enabled ? Catalog.visible(cfg, row.kind, row.all) : new ArrayList<>();
@@ -533,18 +578,22 @@ public final class Home extends Activity {
                 menu((Tile) v);
                 return true;
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
-            lp.rightMargin = dp(18);
-            row.strip.addView(t, lp);
+            if (gridMode) {
+                target.addView(t, new ViewGroup.LayoutParams(WRAP, WRAP));
+            } else {
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
+                lp.rightMargin = dp(18);
+                target.addView(t, lp);
+            }
             if (it.id.equals(keep)) restore = index;
             index++;
             if (Catalog.APPS.equals(row.kind) && !it.artRequested) loadArt(it);
         }
         row.setVisible(!shown.isEmpty());
         if (restore >= 0) {
-            row.strip.getChildAt(restore).requestFocus();
-        } else if (keep != null && row.strip.getChildCount() > 0) {
-            row.strip.getChildAt(0).requestFocus();
+            target.getChildAt(restore).requestFocus();
+        } else if (keep != null && target.getChildCount() > 0) {
+            target.getChildAt(0).requestFocus();
         } else if (getCurrentFocus() == null || !landed) {
             focusFirst();
         }
@@ -555,7 +604,8 @@ public final class Home extends Activity {
         io.execute(() -> {
             Catalog.art(getPackageManager(), it);
             ui.post(() -> {
-                for (int i = 0; i < apps.strip.getChildCount(); i++) apps.strip.getChildAt(i).invalidate();
+                ViewGroup tiles = apps.tiles();
+                for (int i = 0; i < tiles.getChildCount(); i++) tiles.getChildAt(i).invalidate();
             });
         });
     }
@@ -574,9 +624,9 @@ public final class Home extends Activity {
     private void focusFirst() {
         apps.scroll.scrollTo(0, 0);
         inputs.scroll.scrollTo(0, 0);
-        View first = apps.strip.getChildAt(0);
-        if (first == null) first = inputs.strip.getChildAt(0);
-        landed = apps.strip.getChildCount() > 0;
+        View first = apps.tiles().getChildAt(0);
+        if (first == null) first = inputs.tiles().getChildAt(0);
+        landed = apps.tiles().getChildCount() > 0;
         if (first == null) first = chips.get(0);
         first.requestFocus();
     }
@@ -715,7 +765,7 @@ public final class Home extends Activity {
     }
 
     private void shift(int by) {
-        LinearLayout strip = (LinearLayout) moving.getParent();
+        ViewGroup strip = (ViewGroup) moving.getParent();
         int from = strip.indexOfChild(moving), to = from + by;
         if (to < 0 || to >= strip.getChildCount()) return;
         ViewGroup.LayoutParams lp = moving.getLayoutParams();
@@ -728,7 +778,7 @@ public final class Home extends Activity {
         Tile t = moving;
         moving = null;
         t.setMoving(false);
-        LinearLayout strip = (LinearLayout) t.getParent();
+        ViewGroup strip = (ViewGroup) t.getParent();
         if (strip == null) return;
         List<String> ids = new ArrayList<>();
         for (int i = 0; i < strip.getChildCount(); i++) ids.add(((Tile) strip.getChildAt(i)).item.id);

@@ -60,7 +60,9 @@ sdkmanager "platforms;android-28" "build-tools;34.0.0"
 ./launcher/install.sh --build    # build, install, take over HOME
 ```
 
-On Linux set `JAVA_HOME` and `ANDROID_HOME`; the defaults are Homebrew's paths.
+On Linux set `ANDROID_HOME`; `build.sh` picks up a JDK 17 from `/usr/lib/jvm/java-17-openjdk`
+by itself (Arch: `pacman -S jdk17-openjdk`). Use JDK 17: build-tools 34's `d8` crashed with
+an internal error on classes compiled by JDK 27, so `build.sh` prefers a JDK 17 over any JDK 21+.
 
 `build.sh` creates `launcher/release.keystore` the first time it runs. Your build
 is signed with your key, the release with the project's, and Android will not
@@ -73,12 +75,13 @@ update one with the other: `install.sh` says so and tells you to
 |---|---|
 | OK | open the app, or switch to the input |
 | Hold OK, or ☰ Menu | Move, Rename, Hide, App info |
-| Move mode | ◀ ▶ moves the tile, any other key drops it |
+| Move mode | ◀ ▶ moves the tile, ▲ ▼ moves it a whole line in the grid layout, any other key drops it |
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
-**Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, app names
+**Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, layout (rows, or a
+grid that wraps to as many columns as the tile size fits on screen), app names
 (on focus / always / never), clock format, inputs row, background (black, graphite,
 midnight, or an image), image dim and wallpaper rotation, and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
@@ -98,6 +101,8 @@ Everything is stored in one plain text file on the TV:
 accent=blue
 # small medium large
 tiles=medium
+# rows grid (grid wraps the tiles into as many columns as fit the screen)
+layout=rows
 # focus always never
 labels=focus
 # auto 24h 12h
@@ -179,6 +184,7 @@ until another app is opened.
 |---|---|
 | `src/.../Home.java` | the home screen: clock, Apps row, Inputs row, tile menu, move mode |
 | `src/.../Tile.java` | one tile, drawn in a single `onDraw`: banner or icon, focus ring |
+| `src/.../Grid.java` | the grid layout: wraps same-size tiles into as many columns as fit |
 | `src/.../Catalog.java` | which apps and inputs exist, and which are shown in what order |
 | `src/.../Config.java` | the `home.conf` reader and writer |
 | `src/.../Options.java` | the settings screen |
