@@ -8,10 +8,12 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -122,7 +124,33 @@ public final class Guard extends AccessibilityService {
         if (now - lastLaunch < REPEAT_MS) return;
         lastLaunch = now;
         cover();
-        home(this);
+        if (Build.VERSION.SDK_INT >= 29 && cover != null) homeWhenCovered();
+        else home(this);
+    }
+
+    /**
+     * Android 10+ blocks an alarm-fired launch unless one of our windows is visible
+     * (logcat: "Background activity start ... callingUidHasAnyVisibleWindow: false").
+     * The cover is that window, so launch only after it has been laid out on screen.
+     */
+    private void homeWhenCovered() {
+        final Runnable go = new Runnable() {
+            private boolean done;
+            @Override public void run() {
+                if (done) return;
+                done = true;
+                home(Guard.this);
+            }
+        };
+        cover.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                cover.getViewTreeObserver().removeOnPreDrawListener(this);
+                handler.postDelayed(go, 16);
+                return true;
+            }
+        });
+        // The cover may already be up (no new frame), so do not wait for one forever.
+        handler.postDelayed(go, 150);
     }
 
     /** The overlay window exists from service start; a GONE root keeps its surface hidden. */
