@@ -8,7 +8,7 @@ does the TV let a normal owner (no root, no soldering) run commands on it.
 |---|---|---|---|---|
 | **Fire OS 6** (2017–2018 devices) | yes, some are protected | yes, `Keeper` + usage stats | yes | tested on a Stick 4K (AFTMM); own lists in `data/fireos6/` |
 | **Fire OS 7** (Android 9) | yes, some are protected | yes, accessibility `Guard` | yes | **tested end to end, what this repo was built on** |
-| **Fire OS 8** (Android 11) | yes, protected list differs | not yet — Android 11 blocks the launch (`docs/GOTCHAS.md`) | yes, with one step in the app | partly works on a Stick 4K Max (AFTKM), community report |
+| **Fire OS 8** (Android 11) | yes, protected list differs | yes, accessibility `Guard` (builds after launcher 1.1, see `docs/GOTCHAS.md`) | yes, with one step in the app | tested end to end on a Fire TV Edition television (AFTOLCBC82); Stick 4K Max (AFTKM) community report |
 | **Android TV / Google TV** (Sony, TCL, Philips, Hisense, Xiaomi, Shield…) | yes, `pm disable-user` | yes, by disabling the stock launcher | yes, Private DNS or a local-VPN app | method documented, no verified package list yet |
 | **Samsung Tizen** | store apps only | no | no | a wall without root |
 | **LG webOS** | no | no | no | dev mode installs apps, nothing else |

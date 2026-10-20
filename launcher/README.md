@@ -155,6 +155,13 @@ protected package. Three things combine to make HOME land here, measured on this
 
 What you see on HOME: the app, then about 0.3 s of black, then this home screen.
 
+4. **Fire OS 8 (Android 11) only lets an app with a visible window start an activity**,
+   alarm or not. The cover from step 3 is that window, so `Guard` fires the launch from
+   the cover's first draw pass instead of in the same call that shows it. Measured on a
+   Fire TV Edition television: dumbtv home is in front 0.3 s after Amazon's home starts.
+   From an HDMI input the TV itself takes about 4.5 s to release the display first;
+   the screen is black until then and Amazon's home never shows.
+
 ### Fire OS 6
 
 Fire OS 6.7 goes further: its `A11yAuthorizer` refuses third-party accessibility
