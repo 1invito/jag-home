@@ -7,6 +7,7 @@
 com.amazon.tv.acr                      # Automatic Content Recognition: fingerprints what's on screen, HDMI included
 com.amazon.hybridadidservice           # advertising ID
 com.amazon.shoptv.client               # shopping on the TV
+com.amazon.shoptv.firetv.client        # "Amazon Live Shopping" tile; seen enabled on Fire OS 7.7.1.3 and 7.7.1.7
 com.amazon.sneakpeek                   # autoplaying promos
 com.amazon.minitv.android.app          # ad-supported video service
 com.amazon.media.recommendations       # sponsored rows
@@ -47,6 +48,7 @@ com.amazon.vizzini.ftvcds
 com.amazon.firetv.androidskillconnectioncapability
 com.amazon.audiohome
 com.amazon.rtcsessioncontroller        # Alexa calling
+com.amazon.smarthomemapviewapp         # "Alexa Smart Home" tile, the smart-home dashboard; seen on Fire OS 7.7.1.7
 
 # --- OTA helpers (the real updater is protected, see protected.txt) ---
 com.amazon.tv.forcedotaupdater.v2
