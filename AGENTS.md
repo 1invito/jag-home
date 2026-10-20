@@ -165,7 +165,7 @@ Read the recovery table instead of disabling more packages.
 | Amazon's home is back | accessibility service cleared, or its process died | `./scripts/launcher.sh -y` |
 | HOME works but shows Amazon's home for ~5 s first | `alarm_manager_constants` lost `min_futurity=0` (reset or update) | `./scripts/launcher.sh -y` |
 | Settings or another screen bounces back to the home screen | something opened Amazon's home activity | open Fire OS settings with `adb shell am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_SETTINGS`; report the screen |
-| Nothing blocked but `tun0` exists | the filter app was `force-stop`ped | reboot the TV — never `am force-stop dnsfilter.android` |
+| Nothing blocked but a `tunN` interface exists | the filter app was `force-stop`ped | reboot the TV — never `am force-stop dnsfilter.android` |
 | "Unable to Detect Your Remote" over everything | `com.amazon.vizzini` was disabled | `adb shell pm enable --user 0 com.amazon.vizzini`, reboot |
 | A streaming app stops working | a host it needs is blocked | unblock that exact host in `data/blocklists/extra-hosts.txt`, re-run `dnsfilter.sh` |
 | Start over | — | `./scripts/restore.sh -y` |

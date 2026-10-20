@@ -146,11 +146,16 @@ ignore` exists and refuses background service starts (look for `rejectTime` in
 `appops get`), but a service that started while the app was open keeps running
 until the system needs the memory.
 
-**`always_on_vpn_app` is gone after the reboot.** Fire OS 6 does not keep the
+**`always_on_vpn_app` is gone after the reboot.** Fire OS 6 never keeps the
 value `settings put` writes, so nothing starts the filter at boot except its own
 receiver (`AUTOSTART = true` in its config). Android 7.1 sends no BOOT_COMPLETED
 to an app that was force-stopped and not opened since, so `dnsfilter.sh` opens it
-once more before the reboot. `verify.sh` checks `tun0` there instead of the setting.
+once more before the reboot. At least one Fire OS 7 build (7.7.1.3 / PS7713) has
+also been seen losing the setting on some reboots and not others — same recovery,
+just not tied to the SDK version the way Fire OS 6 is. Either way `verify.sh`
+falls back to checking that a `tunN` interface is up instead of the setting.
+The interface name is not stable across boots (seen `tun0`, then `tun1` on the
+same device after the next reboot), so match any `tunN`, never a hardcoded `tun0`.
 
 **The app can write an empty list over the pushed one** (84 bytes: a
 `# Downloaded by personalDNSFilter at:` header and nothing else). At start it
