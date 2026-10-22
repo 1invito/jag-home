@@ -1,5 +1,6 @@
 package tv.dumbtv.home;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -51,6 +52,7 @@ public final class Home extends Activity {
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
     private Config cfg;
     private TvInputManager tv;
@@ -63,6 +65,9 @@ public final class Home extends Activity {
     private Row apps, inputs;
     private Tile moving;
     private String wallKey;
+    private String backgroundMode;
+    private ValueAnimator colorAnimation;
+    private int displayedColor, targetColor;
 
     private final BroadcastReceiver packages = new BroadcastReceiver() {
         @Override
@@ -227,6 +232,8 @@ public final class Home extends Activity {
     protected void onPause() {
         super.onPause();
         resumed = false;
+        stopColorAnimation();
+        targetColor = 0;
         unregisterReceiver(time);
         if (moving != null) stopMoving();
     }
@@ -236,6 +243,7 @@ public final class Home extends Activity {
         unregisterReceiver(packages);
         if (tv != null) tv.unregisterCallback(inputWatch);
         io.shutdownNow();
+        colorIo.shutdownNow();
         super.onDestroy();
     }
 
@@ -507,8 +515,10 @@ public final class Home extends Activity {
         v.setFocusable(true);
         v.setClickable(true);
         v.setOnClickListener(click);
-        v.setOnFocusChangeListener((view, has) ->
-                view.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f).setDuration(110).start());
+        v.setOnFocusChangeListener((view, has) -> {
+            view.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f).setDuration(110).start();
+            if (has) focusBackground(null);
+        });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
         lp.leftMargin = dp(10);
         lp.topMargin = dp(6);
@@ -540,6 +550,7 @@ public final class Home extends Activity {
                             fresh.banner = old.banner;
                             fresh.icon = old.icon;
                             fresh.artRequested = true;
+                            fresh.backgroundColor = old.backgroundColor;
                         }
                     }
                 }
@@ -574,6 +585,9 @@ public final class Home extends Activity {
         for (Item it : shown) {
             Tile t = new Tile(this, it, row.kind, Catalog.label(cfg, it), w, h, labels, accent);
             t.setOnClickListener(v -> open((Tile) v));
+            t.setOnFocusChangeListener((v, has) -> {
+                if (has) focusBackground(((Tile) v).item);
+            });
             t.setOnLongClickListener(v -> {
                 menu((Tile) v);
                 return true;
@@ -606,8 +620,53 @@ public final class Home extends Activity {
             ui.post(() -> {
                 ViewGroup tiles = apps.tiles();
                 for (int i = 0; i < tiles.getChildCount(); i++) tiles.getChildAt(i).invalidate();
+                if (focusedItem() == it) focusBackground(it);
             });
         });
+    }
+
+    private Item focusedItem() {
+        View focused = getCurrentFocus();
+        return focused instanceof Tile ? ((Tile) focused).item : null;
+    }
+
+    private void focusBackground(Item it) {
+        if (!resumed || !"adaptive".equals(cfg.get(Config.BACKGROUND))) return;
+        if (it != null && it.info != null && it.backgroundColor == 0 && !it.colorRequested
+                && (it.banner != null || it.icon != null)) {
+            it.colorRequested = true;
+            colorIo.execute(() -> {
+                int color = FocusColor.from(it.banner != null ? it.banner : it.icon);
+                ui.post(() -> {
+                    it.backgroundColor = color;
+                    if (focusedItem() == it) focusBackground(it);
+                });
+            });
+        }
+        int color = it == null || it.backgroundColor == 0 ? FocusColor.FALLBACK : it.backgroundColor;
+        if (color == targetColor) return;
+        targetColor = color;
+        stopColorAnimation();
+        if (Settings.Global.getFloat(getContentResolver(), "animator_duration_scale", 1f) == 0f) {
+            setSolidColor(color);
+            return;
+        }
+        colorAnimation = ValueAnimator.ofArgb(displayedColor, color);
+        colorAnimation.setDuration(250);
+        colorAnimation.addUpdateListener(a -> setSolidColor((Integer) a.getAnimatedValue()));
+        colorAnimation.start();
+    }
+
+    private void setSolidColor(int color) {
+        displayedColor = color;
+        root.setBackgroundColor(color);
+    }
+
+    private void stopColorAnimation() {
+        if (colorAnimation != null) {
+            colorAnimation.cancel();
+            colorAnimation = null;
+        }
     }
 
     private int[] cardSize() {
@@ -650,9 +709,23 @@ public final class Home extends Activity {
     }
 
     private void background() {
-        boolean image = "image".equals(cfg.get(Config.BACKGROUND));
+        String mode = cfg.get(Config.BACKGROUND);
+        boolean image = "image".equals(mode);
         File file = image ? cfg.wallpaper() : null;
-        root.setBackgroundColor(cfg.background());
+        if ("adaptive".equals(mode)) {
+            if (!mode.equals(backgroundMode)) {
+                stopColorAnimation();
+                targetColor = 0;
+                setSolidColor(FocusColor.FALLBACK);
+            }
+            backgroundMode = mode;
+            focusBackground(focusedItem());
+        } else {
+            stopColorAnimation();
+            targetColor = 0;
+            backgroundMode = mode;
+            setSolidColor(cfg.background());
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
         shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();

@@ -88,8 +88,8 @@ update one with the other: `install.sh` says so and tells you to
 **Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, layout (rows, or a
 grid that wraps to as many columns as the tile size fits on screen), app names
 (on focus / always / never), clock format, inputs row, what opens inputs (see below),
-background (black, graphite, midnight, or an image), image dim and wallpaper rotation,
-and **Next wallpaper**
+background (black, graphite, midnight, an image, or adaptive solid), image dim and
+wallpaper rotation, and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
 the home screen. Apps without a TV banner, like the Appstore or Downloads, start
 hidden; tick them there to add them.
@@ -140,7 +140,7 @@ clock=auto
 inputs=on
 # tv home: what an input tile opens, the TV's own app or the launcher's input screen
 switch=tv
-# black graphite midnight image
+# black graphite midnight image adaptive
 background=black
 # 0 20 40 60 80, image background only
 dim=40
