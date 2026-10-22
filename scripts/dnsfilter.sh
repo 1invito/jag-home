@@ -48,7 +48,7 @@ step "blocklist"
 if [[ $DRY_RUN == 1 ]]; then
   note "[dry-run] download, compose and push a blocklist"
 else
-  curl -fsSL -o "$RAW" "$HAGEZI_URL" || die "could not download the tracker list"
+  fetch "$RAW" "$HAGEZI_URL" || die "could not download the tracker list"
   grep -v '^#' "$RAW" | awk 'NF' > "$LIST"
   if [[ $PRIME == 1 ]]; then
     # grep exits 1 when it selects nothing; that must not skip the rename.
@@ -66,7 +66,7 @@ if [[ $DRY_RUN == 0 && $(app_version) == "$APK_VERSION" ]]; then
   # mid-install. The pinned version is already there, so there is nothing to gain.
   note "personalDNSfilter $APK_VERSION already installed"
 elif [[ $DRY_RUN == 0 ]]; then
-  curl -fsSL -o "$APK" "$APK_URL" || die "could not download $APK_URL"
+  fetch "$APK" "$APK_URL" || die "could not download $APK_URL"
   if command -v sha256sum >/dev/null; then got=$(sha256sum "$APK" | awk '{print $1}')
   else got=$(shasum -a 256 "$APK" | awk '{print $1}'); fi
   [[ $got == "$APK_SHA256" ]] || die "checksum mismatch for $APK_URL (got $got) — not installing"
@@ -86,7 +86,7 @@ acmd dumpsys deviceidle whitelist +$PKG >/dev/null
 
 step "config"
 if [[ $DRY_RUN == 0 ]]; then
-  curl -fsSL -o "$CONF_OUT" "$CONF_URL" || die "could not download the upstream config"
+  fetch "$CONF_OUT" "$CONF_URL" || die "could not download the upstream config"
   # No filterAutoUpdateURL: the list is pushed by this script, so the TV never
   # downloads a blocklist and cannot end up with a half-written one.
   # previousAutoUpdateURL must match the (now empty) update URL: the template ships "<none>",

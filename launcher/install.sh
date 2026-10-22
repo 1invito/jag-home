@@ -104,7 +104,9 @@ else
   APK=build/dumbtv-home-$VERSION.apk
   if [[ ! -f $APK || $(sha256 "$APK") != "$APK_SHA256" ]]; then
     echo "downloading dumbtv home $VERSION"
-    curl -fL --progress-bar -o "$APK.part" "$APK_URL" || { echo "error: could not download $APK_URL" >&2; exit 1; }
+    # --retry-all-errors: GitHub's release CDN sometimes resets the first connection.
+    curl -fL --retry 4 --retry-delay 3 --retry-all-errors --connect-timeout 20 --progress-bar \
+      -o "$APK.part" "$APK_URL" || { echo "error: could not download $APK_URL" >&2; exit 1; }
     mv "$APK.part" "$APK"
   fi
   got=$(sha256 "$APK")

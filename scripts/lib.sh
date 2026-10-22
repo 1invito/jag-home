@@ -195,6 +195,12 @@ adb_reconnect() {
 }
 
 list_of() { sed 's/#.*//; s/[[:space:]]*$//' "$1" | awk 'NF'; }
+
+# Downloads $2 to $1. GitHub's release CDN sometimes resets the first connection
+# ("curl: (35) Recv failure: Connection reset by peer"), so a run failed and the
+# re-run passed. Plain --retry skips connection resets; --retry-all-errors (curl
+# 7.71+) retries them too. -f still fails on a 404 once the retries are spent.
+fetch() { curl -fsSL --retry 4 --retry-delay 3 --retry-all-errors --connect-timeout 20 -o "$1" "$2"; }
 # Compare on the first field: list entries carry trailing spaces after comments
 # are stripped, and an exact match would silently fail to protect anything.
 protected_by_policy() { list_of "$(fos never-disable.txt)" | awk '{print $1}' | grep -qx "$1"; }
