@@ -87,18 +87,21 @@ if [[ $mode == undo ]]; then
   exit 0
 fi
 
-# The release APK is built for Android 9+. Fire OS 6 (Android 7.1) gets a build from source.
 dev_sdk=$(sh_ getprop ro.build.version.sdk | tr -d '\r')
 case $dev_sdk in ''|*[!0-9]*) dev_sdk=28 ;; esac
-if [[ $dev_sdk -lt 28 ]]; then
-  [[ $mode == release ]] && echo "Fire OS 6 (sdk $dev_sdk): the release APK needs Android 9, building from source"
-  mode=build
-  export MIN_SDK=${MIN_SDK:-$dev_sdk}
-fi
 
-if [[ $mode == build ]]; then
+build_apk() {
   ./build.sh
   APK=build/dumbtv-home.apk
+}
+
+# adb ends its output with a blank line, so take the line that carries the result.
+install_apk() {
+  out=$(adb_ install -r "$APK" 2>&1 | grep -m1 -E 'Success|Failure|failed' || true)
+}
+
+if [[ $mode == build ]]; then
+  build_apk
 else
   mkdir -p build
   APK=build/dumbtv-home-$VERSION.apk
@@ -114,8 +117,15 @@ else
   echo "checksum ok"
 fi
 
-# Newer adb prints "Install command complete in N ms" after "Success", so read the whole output.
-out=$(adb_ install -r "$APK" 2>&1 || true)
+install_apk
+# Releases up to 1.1 were built for Android 9+. On Fire OS 6 (sdk 25) fall back to a
+# source build; the default build already targets sdk 25.
+if [[ $mode == release && $out == *INSTALL_FAILED_OLDER_SDK* ]]; then
+  echo "release $VERSION needs a newer Android than sdk $dev_sdk, building from source"
+  mode=build
+  build_apk
+  install_apk
+fi
 case $out in
   *Success*) ;;
   *INSTALL_FAILED_UPDATE_INCOMPATIBLE*)

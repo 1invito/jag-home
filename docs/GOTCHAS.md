@@ -168,8 +168,10 @@ which never equals the emptied URL, so this is not Fire OS 6 only. `dnsfilter.sh
 now empties `previousAutoUpdateURL` and writes `DLD_CNT` (whose mtime starts the
 reload interval) after the push.
 
-**The release launcher APK needs Android 9.** `launcher/install.sh` notices sdk 25
-and builds from source with `MIN_SDK=25` (needs a JDK and `platforms;android-25`).
+**Launcher releases up to 1.1 need Android 9.** From the next release one APK is
+built for sdk 25 and installs on Fire OS 6 as is. With an older release pinned,
+`launcher/install.sh` sees `INSTALL_FAILED_OLDER_SDK` and builds from source
+instead (needs a JDK and `platforms;android-25`).
 
 **Fire OS 6.7 refuses third-party accessibility services.** `settings put secure
 enabled_accessibility_services ...` exits 0 and changes nothing; writing the row
