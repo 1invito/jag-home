@@ -47,6 +47,20 @@ class ConfigureKeepTest(unittest.TestCase):
         self.assertIn("PRIME=1", conf)
         self.assertIn("YOUTUBE=0", conf)
 
+    def test_flags_answer_every_question(self):
+        result, conf = self.configure(
+            "--prime", "0", "--alexa", "0", "--launcher", "0",
+            "--dnsfilter", "0", "--youtube", "1", "--system-dns", "1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for line in ("PRIME=0", "ALEXA=0", "LAUNCHER=0", "DNSFILTER=0",
+                     "YOUTUBE=1", "SYSTEM_DNS=1"):
+            self.assertIn(line, conf)
+
+    def test_a_yes_no_flag_takes_only_0_or_1(self):
+        result, conf = self.configure("--youtube", "yes")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(conf)
+
     def test_named_app_is_recorded_for_removal(self):
         result, conf = self.configure("--remove", "in.startv.hotstar")
         self.assertEqual(result.returncode, 0, result.stderr)

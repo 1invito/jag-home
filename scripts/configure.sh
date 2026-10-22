@@ -2,18 +2,26 @@
 # The interview. Writes dumbtv.conf (git-ignored), which debloat.sh, dnsfilter.sh,
 # launcher.sh and youtube.sh read. Every default is the safe one: no app is removed
 # unless it is named, and Prime Video and Alexa keep working.
-# Usage: ./scripts/configure.sh [--remove "pkg pkg"] [--keep "pkg pkg"] [--alexa 0|1]
-#                               [--system-dns 0|1] [-y] [--dry-run]
+# Usage: ./scripts/configure.sh [--remove "pkg pkg"] [--keep "pkg pkg"] [--prime 0|1]
+#          [--alexa 0|1] [--launcher 0|1] [--dnsfilter 0|1] [--youtube 0|1]
+#          [--system-dns 0|1] [-y] [--dry-run]
+# A flag answers its question without asking; -y takes the default for the rest.
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 KEEP_ARG=""; REMOVE_ARG=""; ALEXA_ARG=""; SYSTEM_DNS_ARG=""
+PRIME_ARG=""; LAUNCHER_ARG=""; DNSFILTER_ARG=""; YOUTUBE_ARG=""
+flag01() { case $2 in 0|1) ;; *) die "$1 takes 0 or 1, got '$2'" ;; esac; }
 while [[ $# -gt 0 ]]; do
   case $1 in
     --keep)       KEEP_ARG=$2; shift 2 ;;
     --remove)     REMOVE_ARG=$2; shift 2 ;;
-    --alexa)      ALEXA_ARG=$2; shift 2 ;;
-    --system-dns) SYSTEM_DNS_ARG=$2; shift 2 ;;
+    --prime)      flag01 "$1" "${2:-}"; PRIME_ARG=$2; shift 2 ;;
+    --alexa)      flag01 "$1" "${2:-}"; ALEXA_ARG=$2; shift 2 ;;
+    --launcher)   flag01 "$1" "${2:-}"; LAUNCHER_ARG=$2; shift 2 ;;
+    --dnsfilter)  flag01 "$1" "${2:-}"; DNSFILTER_ARG=$2; shift 2 ;;
+    --youtube)    flag01 "$1" "${2:-}"; YOUTUBE_ARG=$2; shift 2 ;;
+    --system-dns) flag01 "$1" "${2:-}"; SYSTEM_DNS_ARG=$2; shift 2 ;;
     -y|--yes)     ASSUME_YES=1; shift ;;
     --dry-run)    DRY_RUN=1; shift ;;
     *) die "unknown flag: $1" ;;
@@ -33,31 +41,27 @@ yn() {
   case $a in y|Y|yes|YES) printf 1 ;; *) printf 0 ;; esac
 }
 
+answer() {
+  if [[ -n $1 ]]; then printf '%s' "$1"; else yn "$2" "$3"; fi
+}
+
 step "what dumbtv does either way"
 note "Disables Amazon's ads, sponsored rows, screen fingerprinting (ACR), telemetry and"
 note "experiments, and turns off ad tracking. Your apps are not touched."
 
 step "a few choices"
-if [[ $(yn "Do you watch Prime Video? (keeps the servers it needs reachable)" 1) == 1 ]]; then
+if [[ $(answer "$PRIME_ARG" "Do you watch Prime Video? (keeps the servers it needs reachable)" 1) == 1 ]]; then
   PRIME=1; note "prime: kept"
 else
   PRIME=0; note "prime: its servers are blocked, so it will not play"
 fi
-if [[ -n $ALEXA_ARG ]]; then
-  ALEXA=$ALEXA_ARG
-else
-  ALEXA=$(yn "Keep Alexa and the remote's voice button? (no = Alexa and the microphone app are switched off)" 1)
-fi
-LAUNCHER=$(yn "Replace Amazon's home screen with dumbtv home (open source, no ads, no internet access)?" 1)
-DNSFILTER=$(yn "Run the DNS filter on the TV (blocks Amazon telemetry and stops automatic updates)?" 1)
-if [[ -n $SYSTEM_DNS_ARG ]]; then
-  SYSTEM_DNS=$SYSTEM_DNS_ARG
-else
-  SYSTEM_DNS=$(yn "Fire OS 6 only: let system apps bypass the filter so the clock syncs? Amazon's system-user apps go unfiltered too" 0)
-fi
+ALEXA=$(answer "$ALEXA_ARG" "Keep Alexa and the remote's voice button? (no = Alexa and the microphone app are switched off)" 1)
+LAUNCHER=$(answer "$LAUNCHER_ARG" "Replace Amazon's home screen with dumbtv home (open source, no ads, no internet access)?" 1)
+DNSFILTER=$(answer "$DNSFILTER_ARG" "Run the DNS filter on the TV (blocks Amazon telemetry and stops automatic updates)?" 1)
+SYSTEM_DNS=$(answer "$SYSTEM_DNS_ARG" "Fire OS 6 only: let system apps bypass the filter so the clock syncs? Amazon's system-user apps go unfiltered too" 0)
 # Default no: YouTube is the app people actually watch. scripts/youtube.sh is the
 # only thing that touches it, and only when this is 1.
-if [[ $(yn "Replace the YouTube app with SmartTube (no ads, no Shorts)? Your YouTube account and subscriptions are untouched" 0) == 1 ]]; then
+if [[ $(answer "$YOUTUBE_ARG" "Replace the YouTube app with SmartTube (no ads, no Shorts)? Your YouTube account and subscriptions are untouched" 0) == 1 ]]; then
   YOUTUBE=1; note "youtube: replaced with SmartTube"
 else
   YOUTUBE=0; note "youtube: left alone"
