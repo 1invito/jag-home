@@ -25,14 +25,29 @@ BT=$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort 
 [[ -f $JAR ]] || { echo "error: $JAR missing — sdkmanager 'platforms;android-$MIN_SDK'" >&2; exit 1; }
 [[ -x $BT/aapt2 ]] || { echo "error: no build-tools in $SDK — sdkmanager 'build-tools;34.0.0'" >&2; exit 1; }
 
+JDK17_PATHS=(/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /usr/lib/jvm/java-17-openjdk)
+javac_major() { "$1/bin/javac" -version 2>&1 | sed -n 's/^javac \([0-9]*\).*/\1/p'; }
+
 if [[ -z ${JAVA_HOME:-} || ! -x ${JAVA_HOME:-}/bin/javac ]]; then
-  for j in /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home \
-           /opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home \
+  for j in "${JDK17_PATHS[@]}" /opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home \
            "$(/usr/libexec/java_home 2>/dev/null || true)"; do
     if [[ -n $j && -x $j/bin/javac ]]; then JAVA_HOME=$j; break; fi
   done
 fi
-[[ -x ${JAVA_HOME:-}/bin/javac ]] || { echo "error: no JDK found — brew install openjdk@17" >&2; exit 1; }
+# build-tools 34's bundled d8 threw an internal NullPointerException dexing an anonymous inner
+# class (Keeper$1) compiled by JDK 27, even with --release 8. JDK 17 builds it cleanly. Only 27
+# was seen failing; 21 is a conservative cut-off, since macOS's java_home and a Linux distro's
+# default javac both commonly land on something newer than 17 now.
+if [[ -z ${JAVA_HOME:-} ]] || [[ $(javac_major "$JAVA_HOME") -ge 21 ]]; then
+  for j in "${JDK17_PATHS[@]}"; do [[ -x $j/bin/javac ]] && { JAVA_HOME=$j; break; }; done
+fi
+[[ -x ${JAVA_HOME:-}/bin/javac ]] || {
+  echo "error: no JDK found — brew install openjdk@17 (macOS) or pacman -S jdk17-openjdk (Arch)" >&2
+  exit 1
+}
+if [[ $(javac_major "$JAVA_HOME") -ge 21 ]]; then
+  echo "warning: $JAVA_HOME is JDK $(javac_major "$JAVA_HOME"); build-tools' d8 crashed on JDK 27 output — install a JDK 17 if this fails" >&2
+fi
 export JAVA_HOME
 
 KEYSTORE=${DUMBTV_KEYSTORE:-$PWD/release.keystore}
