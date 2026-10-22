@@ -27,6 +27,12 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "build-tools;34.0.0" >/dev/null
       - name: build (sdk 25 for fire os 6-8; fails on any android.* API that Android 7.1 lacks)
         run: ./launcher/build.sh
+      - name: host-side launcher tests
+        run: |
+          jar="$ANDROID_HOME/platforms/android-25/android.jar"
+          javac -d /tmp/host -cp "$jar" launcher/src/tv/dumbtv/home/FocusColor.java \
+            launcher/src/tv/dumbtv/home/Config.java launcher/tests/FocusColorTest.java
+          java -cp "/tmp/host:$jar" tv.dumbtv.home.FocusColorTest
       - name: the release apk installs on fire os 6
         run: |
           min=$("$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging launcher/build/dumbtv-home.apk | sed -nE "s/^(minSdkVersion|sdkVersion):'([0-9]+)'.*/\2/p")
