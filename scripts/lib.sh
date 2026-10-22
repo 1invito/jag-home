@@ -12,7 +12,8 @@ ASSUME_YES=${ASSUME_YES:-0}
 NO_REBOOT=${NO_REBOOT:-0}
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DATA="$ROOT/data"
-REPORT="$ROOT/report"
+REPORT=${REPORT:-$ROOT/report}
+BOOT_SECONDS=${BOOT_SECONDS:-45}
 CONF=${CONF:-$ROOT/dumbtv.conf}
 # Both names are accepted; ADB_SERIAL is what the docs tell people to set.
 SERIAL=${SERIAL:-${ADB_SERIAL:-}}
@@ -216,27 +217,48 @@ reboot_wait() {
     return 0
   fi
   note "rebooting the TV"
-  dev reboot >/dev/null 2>&1 || true
-  sleep 45
-  local i
+  adb_reconnect
+  local i before retried=0
+  before=$(boot_id)
+  ask_reboot
+  sleep "$BOOT_SECONDS"
   for i in $(seq 1 30); do
     "$ADB" connect "$SERIAL" >/dev/null 2>&1 || true
     if [[ $(dev1 getprop sys.boot_completed) == 1 ]]; then
-      note "booted"
-      return 0
+      if [[ $(boot_id) != "$before" ]]; then
+        note "booted"
+        return 0
+      fi
+      [[ $retried == 1 ]] && die "the TV did not restart; restart it by hand, then run this again"
+      retried=1
+      note "the TV is still up from before; asking again"
+      dev reboot >/dev/null 2>&1 || true
+      sleep "$BOOT_SECONDS"
+      continue
     fi
     sleep 5
   done
   die "device did not report boot_completed; check the TV by hand before running anything else"
 }
 
+boot_id() { dev1 cat /proc/sys/kernel/random/boot_id; }
+
+# A plain `reboot` cuts the power without letting Android save its state, so a package
+# enabled or disabled in the last few seconds comes back as it was. `svc power reboot`
+# shuts down properly. It is killed part-way through the shutdown, so chaining a
+# fallback after it with || would cut that shutdown short.
+ask_reboot() { dev svc power reboot >/dev/null 2>&1 || true; }
+
 # A network adb session can drop when the TV's network changes under it (an app that
 # holds the VPN being replaced). Brings it back, or stops the run.
 adb_reconnect() {
   local i
   for i in $(seq 1 12); do
-    [[ $("$ADB" -s "$SERIAL" get-state 2>/dev/null) == device ]] && return 0
-    [[ $SERIAL == *:* ]] && "$ADB" connect "$SERIAL" >/dev/null 2>&1
+    [[ $("$ADB" -s "$SERIAL" get-state 2>/dev/null) == device && $(dev1 echo ok) == ok ]] && return 0
+    if [[ $SERIAL == *:* ]]; then
+      "$ADB" disconnect "$SERIAL" >/dev/null 2>&1
+      "$ADB" connect "$SERIAL" >/dev/null 2>&1
+    fi
     sleep 3
   done
   die "lost adb to $SERIAL; check the TV is on, then run this again"

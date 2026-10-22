@@ -93,25 +93,13 @@ step "on-device hooks"
 # Without this the TV keeps sending DNS through a filter the user just tried to
 # undo, and HOME stays hijacked.
 acmd settings delete secure always_on_vpn_app >/dev/null 2>&1
-# Fire OS 6 starts the filter from its own boot receiver, not from always_on_vpn_app, so
-# it would keep filtering after a restore unless it is disabled too.
-if [[ $SDK -lt 28 ]] && present dnsfilter.android; then
-  acmd pm disable-user --user 0 dnsfilter.android >/dev/null 2>&1
-  note "personalDNSfilter disabled (Fire OS 6 would start it again at boot)"
-fi
-acmd settings put secure enabled_accessibility_services "" >/dev/null 2>&1
-acmd settings put secure accessibility_enabled 0 >/dev/null 2>&1
-if [[ $SDK -lt 28 ]] && present tv.dumbtv.home; then
-  acmd appops set tv.dumbtv.home GET_USAGE_STATS default >/dev/null 2>&1
-  acmd am force-stop tv.dumbtv.home >/dev/null 2>&1
-fi
-alarms=$(restore_value global alarm_manager_constants "")
-if [[ -n $alarms && $alarms != null && $alarms != *min_futurity=0* ]]; then
-  acmd settings put global alarm_manager_constants "$alarms" >/dev/null 2>&1
+if [[ $DRY_RUN == 1 ]]; then
+  note "[dry-run] ADB=$ADB ADB_SERIAL=$SERIAL launcher/install.sh --undo"
 else
-  acmd settings delete global alarm_manager_constants >/dev/null 2>&1
+  ADB=$ADB ADB_SERIAL=$SERIAL "$ROOT/launcher/install.sh" --undo >/dev/null ||
+    die "could not hand HOME back to Amazon's launcher; run ./launcher/install.sh --undo"
 fi
-note "always_on_vpn_app cleared, accessibility hook detached, alarm timing restored (apps stay installed)"
+note "always_on_vpn_app cleared, HOME handed back to Amazon's launcher (apps stay installed)"
 
 step "settings"
 while read -r ns key value; do
@@ -120,6 +108,16 @@ while read -r ns key value; do
   acmd settings put "$ns" "$key" "$want" >/dev/null
   printf '  %-46s %s\n' "$key" "$want"
 done < <(list_of "$(fos settings.restore.txt)" | sed 's/ = / /')
+
+# The filter also starts from its own boot receiver, so clearing always_on_vpn_app
+# alone leaves it filtering after the reboot. Disabling it stops the VPN, which can
+# cut a network adb session, so it goes last.
+if present dnsfilter.android; then
+  step "DNS filter"
+  acmd pm disable-user --user 0 dnsfilter.android >/dev/null 2>&1
+  note "personalDNSfilter disabled (it would start again at boot); dnsfilter.sh turns it back on"
+  [[ $DRY_RUN == 1 ]] || { sleep 3; adb_reconnect; }
+fi
 
 [[ $DRY_RUN == 1 ]] && { note "[dry-run] done"; exit 0; }
 reboot_wait

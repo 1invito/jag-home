@@ -78,6 +78,8 @@ elif [[ $DRY_RUN == 0 ]]; then
   [[ $(app_version) == "$APK_VERSION" ]] || die "adb install failed: $out"
 fi
 
+# restore.sh disables the app; setting it up again turns it back on.
+acmd pm enable --user 0 $PKG >/dev/null 2>&1
 # The VPN consent dialog renders phone-sized on TVs and often ignores the
 # remote. Pre-granting the app-op skips it entirely.
 acmd appops set $PKG ACTIVATE_VPN allow >/dev/null
@@ -167,7 +169,7 @@ if [[ $DRY_RUN == 0 ]]; then
     note "  2. add an entry: file:///storage/emulated/0/Android/media/$PKG/dumbtv-blocklist.txt"
     note "  3. untick every other entry, go back, and reboot the TV"
     note "  4. run ./scripts/verify.sh: the Amazon hosts should answer 127.0.0.1"
-    note "the routing tweaks (detectDNS=false, routeIPs) cannot be applied this way; see docs/GOTCHAS.md"
+    note "the routing tweaks (detectDNS=false, routeIPs) cannot be applied this way; see docs/TROUBLESHOOTING.md"
     exit 0
   fi
   dev "test -d $DIR" >/dev/null 2>&1 || die "the app did not create $DIR — is it installed?"
@@ -205,7 +207,7 @@ if [[ $DRY_RUN == 1 ]]; then
   exit 0
 fi
 
-# adb reboot skips the framework shutdown, so save the VPN app-op and always-on setting first
+# If the TV refuses `svc power reboot`, the plain reboot skips saving state, so save the VPN app-op first
 acmd appops write-settings >/dev/null
 sleep 3
 step "reboot and wait"
@@ -248,7 +250,7 @@ esac
 
 if [[ $fail == 1 ]]; then
   note "the filter is not in the DNS path. Do not force-stop the app — reboot the TV,"
-  note "then run ./scripts/verify.sh. See docs/GOTCHAS.md."
+  note "then run ./scripts/verify.sh. See docs/TROUBLESHOOTING.md."
   if [[ $(dev1 settings get secure always_on_vpn_app) == "$PKG" ]] &&
      dev 'ip addr show' | grep -Eq '^[0-9]+: tun[0-9]+:.*UP'; then
     note "the tunnel is up and always-on is set, yet DNS goes around it: if a reboot does not"
