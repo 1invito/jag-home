@@ -1,16 +1,15 @@
 # Which TVs this works on
 
-One idea covers every TV here: **the TV should do what you paid for, not what the
-vendor wants to sell you.** Whether that is possible is decided by one thing —
-does the TV let a normal owner (no root, no soldering) run commands on it.
+Whether a TV can be cleaned up comes down to one question: does it let its owner
+run commands on it, without root and without opening the case?
 
 | Platform | Disable vendor apps | Replace the home screen | On-device DNS filter | Status |
 |---|---|---|---|---|
 | **Fire OS 5** (Android 5.1, e.g. Fire TV Stick 2nd gen) | no, `pm disable-user` is refused | no, the launcher needs Android 7.1 | yes, privacy settings work too | not supported: the scripts stop on it (issue #42) |
 | **Fire OS 6** (2017–2018 devices) | yes, some are protected | yes, `Keeper` + usage stats | yes | tested on a Stick 4K (AFTMM); own lists in `data/fireos6/` |
 | **Fire OS 7** (Android 9) | yes, some are protected | yes, accessibility `Guard` | yes | **tested end to end, what this repo was built on** |
-| **Fire OS 8** (Android 11) | yes, protected list differs | yes, accessibility `Guard` (launcher 1.2 and later, see `docs/GOTCHAS.md`) | yes, with one step in the app | tested end to end on a Fire TV Edition television (AFTOLCBC82); Stick 4K Max (AFTKM) community report |
-| **Android TV / Google TV** (Sony, TCL, Philips, Hisense, Xiaomi, Shield…) | yes, `pm disable-user` | yes, by disabling the stock launcher | yes, Private DNS or a local-VPN app | method documented, no verified package list yet |
+| **Fire OS 8** (Android 11) | yes, protected list differs | yes, accessibility `Guard` (launcher 1.2 and later) | yes, with one step in the app | tested end to end on a Fire TV Edition television (AFTOLCBC82), plus four stick reports |
+| **Android TV / Google TV** (Sony, TCL, Philips, Hisense, Xiaomi, onn…) | yes, by hand with `pm disable-user` | yes, by hand: disable the stock launcher | yes, Private DNS or a local-VPN app | nine devices done by hand in the catalog; the scripts are Fire OS only |
 | **Samsung Tizen** | store apps only | no | no | a wall without root |
 | **LG webOS** | no | no | no | dev mode installs apps, nothing else |
 | **Roku TV** (TCL/Hisense/Sharp) | no | no | no | control API only |
@@ -19,28 +18,25 @@ does the TV let a normal owner (no root, no soldering) run commands on it.
 | **Panasonic My Home Screen** | no | no | no | closed, no dev path |
 | **Philips Saphi** (cheap sets) | no | no | no | control API only |
 
-"Network-level blocking" works on every one of them, including the closed ones:
-point the TV's DNS at NextDNS, AdGuard Home or Pi-hole and it stops reaching the
-vendors' ad and telemetry hosts. That is not this repository, but it is the honest
-answer for a TV that refuses to be opened.
+Blocking at the network works on every one of them, including the closed ones:
+point the TV's DNS at a blocker such as Pi-hole or AdGuard Home and it stops
+reaching the vendor's ad and telemetry servers.
 
 ## Fire OS
 
 This is the platform the scripts in `scripts/` are written for.
 
 Run `scripts/preflight.sh`, then `scripts/debloat.sh --dry-run`, then for real.
-`PROTECTED` lines tell you what to add to `data/fireos/protected.txt` (Fire OS 8)
-or `data/fireos6/protected.txt` (Fire OS 6). Anything
-`absent` simply is not on that device. Do not copy lists from the internet —
-package names and protections moved between releases, and TV-specific packages
-(panel, tuner, backlight) exist only on televisions.
+`PROTECTED` lines tell you what to add to `data/fireos/protected.txt` (Fire OS 7
+and 8) or `data/fireos6/protected.txt` (Fire OS 6). Anything `absent` is not on
+that device. Package names and protections change between releases, and
+televisions carry panel, tuner and backlight packages that sticks do not.
 
 **Fire TV Edition televisions** (Onida, Toshiba, JVC, Insignia, Croma — an
-integrated panel, not a Stick) expose the same ADB shell and behave the same way.
-Two differences: they carry extra panel, tuner and live-TV packages that belong on
-the never-disable list, and on some of them Developer Options is hidden in a
-submenu your model may not have — `adb_enabled` is already set, so ADB keeps
-working either way.
+integrated panel, not a stick) expose the same ADB shell and behave the same way.
+Two differences: they carry extra panel, tuner and live-TV packages, which are on
+the never-disable list, and on some of them Developer Options sits under Settings ›
+Device & Software instead of My Fire TV.
 
 ## Android TV and Google TV
 
@@ -65,12 +61,16 @@ Same shell, same `pm disable-user`, different targets.
 - Fire OS settings keys (`amz_limit_ad_tracking` and friends) do nothing here.
 - A few China-market TCL sets refuse to install any third-party launcher at all.
 
-The generic Android TV bloat list is deliberately not included here. A bad list
-can remove the input switcher or the settings app. Build it per device from
-`pm list packages` on that device, with `./scripts/discover.sh`.
+`data/androidtv/packages.txt` has the first entries verified on real hardware (an
+onn 4K Pro and a Philips 24NA), and `catalog/devices/androidtv-*.yaml` records
+nine devices. No script applies them yet: `debloat.sh` refuses anything that is
+not Fire OS, because a wrong list can remove the input switcher or the settings
+app. Build a list for your TV with `./scripts/discover.sh` and check each entry by
+hand.
 
-Reference lists from people who did this on real hardware:
-[Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) (30+ models) and
+For Android TV and Google TV, [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv)
+is the project to use: tested lists for 200+ models and its own launcher. Also
+see
 [seun-novodev/android-tv-debloat-toolkit](https://github.com/seun-novodev/android-tv-debloat-toolkit).
 
 ## Samsung Tizen
@@ -128,7 +128,7 @@ blocking at the router.
 No ADB. Older firmware exposes Chrome DevTools on port 9223; newer sets expose an
 MQTT broker on 36669 for remote control. Both are control surfaces. Web apps can
 be installed by DNS-spoofing `vidaahub.com` ([trialuser/vidaa-appstore](https://github.com/trialuser/vidaa-appstore)),
-which is a neat trick and not a debloat.
+That installs apps; it does not remove any.
 
 Hidden menus: service menu via Settings → Sound → Advanced Audio Settings →
 highlight Balance → **1969** (works on some models only), and a separate hotel
@@ -161,14 +161,10 @@ fighting, no OTA risk, nothing to re-apply after an update.
 
 ## What we are working on
 
-Honest list, no dates:
-
-1. **A verified Android TV package list.** `data/androidtv/` has the safety list
-   and nothing else. One careful run of `discover.sh` on one real Sony/TCL/Philips
-   set, checked by hand, is worth more than any amount of code here.
-2. **Launcher takeover without the accessibility service on Android TV**, using
-   the stock-launcher disable instead, so `dumbtv home` works there the way it
-   does on Fire OS.
+1. **Android TV in the scripts.** The package list has started; `debloat.sh` and
+   `launcher.sh` still only run on Fire OS.
+2. **Launcher takeover on Android TV** by disabling the stock launcher, so dumbtv
+   home works there the way it does on Fire OS.
 3. **A `dumb-panel.sh` script** that sets the vendor's own boot-to-HDMI option
    where it exists (Samsung hospitality, LG installer menu, VIDAA hotel mode) and
    tells you the remote sequence on models where it does not.
@@ -183,8 +179,8 @@ Honest list, no dates:
 - "ADB works on Samsung." It does not — Tizen uses `sdb`, and retail firmware
   gives no shell.
 - "`set-home-activity` replaces the launcher." It is ignored on Fire OS (the
-  launcher is protected, HOME priority 950) and on Android TV (stock launcher
-  priority 2). The launcher has to be disabled.
+  launcher is protected) and on Android TV (the stock launcher has a higher
+  priority). On Android TV the stock launcher has to be disabled.
 - "Dev mode on webOS/Roku lets you disable things." It installs your own app.
 - "On-device DNS filtering works everywhere." It needs an Android-style local VPN
   or Private DNS, so: Fire OS and Android TV only. Everywhere else the filter

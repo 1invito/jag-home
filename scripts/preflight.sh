@@ -22,8 +22,8 @@ if is_fireos; then
   note "platform      $(fireos_name)"
   note "lists         ${DATA#$ROOT/}/$(basename "$(dirname "$(fos packages.txt)")")"
   if [[ $SDK -lt 28 ]]; then
-    note "fire os 6     system apps are disabled only (no install-existing), no RUN_ANY_IN_BACKGROUND,"
-    note "              and the launcher must be built from source; 6.7 refuses its HOME hook (A11yAuthorizer)"
+    note "fire os 6     own package lists, no RUN_ANY_IN_BACKGROUND, and HOME is held by the"
+    note "              launcher's Keeper because 6.7 refuses accessibility services"
   fi
 else
   note "platform      NOT Amazon hardware — read docs/OTHER-TVS.md before running debloat.sh"

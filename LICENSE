@@ -23,5 +23,5 @@ SOFTWARE.
 The launcher in launcher/ is part of this repository and covered by this licence.
 
 Third-party software is not covered by this licence and is not bundled:
-personalDNSfilter (GPL-3.0) and the HaGeZi blocklists are downloaded by the
-scripts from their upstream releases under their own terms.
+personalDNSfilter (GPL-2.0), the HaGeZi blocklists (GPL-3.0) and SmartTube (MIT)
+are downloaded by the scripts from their upstream releases under their own terms.

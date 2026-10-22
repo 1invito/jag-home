@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Troubleshooting
+    url: https://github.com/humblemuzzu/dumbtv/blob/main/docs/TROUBLESHOOTING.md
+    about: The common problems and their fixes, sorted by what you see on the TV

@@ -1,214 +1,302 @@
-# dumbtv
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <img src="docs/assets/logo-light.svg" alt="dumbtv" width="300">
+  </picture>
+</p>
 
-Your TV should do what you paid for: your apps, your HDMI inputs, and nothing
-else. No ads from the TV itself, no watch tracking, no update you did not ask
-for. dumbtv applies that over ADB from another machine — **no root**, nothing
-written to `/system`, every step reversible with one script.
+<p align="center"><b>Your TV should do what you paid for.</b><br>
+Ads, tracking and clutter out of your Fire TV. Your apps and HDMI inputs stay.</p>
 
-The same idea, told to whichever TV will listen:
+<p align="center">
+  <a href="https://github.com/humblemuzzu/dumbtv/stargazers"><img src="https://img.shields.io/github/stars/humblemuzzu/dumbtv?style=flat&color=4C8DFF" alt="Stars"></a>
+  <a href="https://github.com/humblemuzzu/dumbtv/releases/latest"><img src="https://img.shields.io/github/v/release/humblemuzzu/dumbtv?label=dumbtv%20home&color=4C8DFF" alt="Latest launcher release"></a>
+  <a href="https://github.com/humblemuzzu/dumbtv/actions/workflows/validate.yml"><img src="https://github.com/humblemuzzu/dumbtv/actions/workflows/validate.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4C8DFF" alt="MIT licence"></a>
+  <a href="#thanks"><img src="https://img.shields.io/github/contributors/humblemuzzu/dumbtv?color=4C8DFF" alt="Contributors"></a>
+</p>
 
-| TV | Debloat | Own home screen | On-device DNS filter |
-|---|---|---|---|
-| **Fire OS** (Fire TV sticks, Fire TV Edition TVs) | yes | yes | yes |
-| **Android TV / Google TV** (Sony, TCL, Philips, Hisense, Xiaomi, Shield) | yes | yes, by disabling the stock launcher | yes |
-| **Samsung, LG, Roku, VIDAA, Vizio, Panasonic, Philips Saphi** | no shell, no path | no | no — block it at the router, or boot the TV straight into HDMI |
+<p align="center">
+  <img src="docs/assets/hero.png" alt="dumbtv home on a television: a clock, an Apps row and an Inputs row" width="880">
+</p>
 
-Tested end to end on a Fire TV Edition television running Fire OS 7.7.1.7
-(Android 9). Fire OS 6 and 8 differ in small ways; Android TV needs a different
-package list and a different launcher trick. Fire OS 6 (Android 7.1, e.g. the 2018
-Fire TV Stick 4K) uses its own lists in `data/fireos6/`, picked up from the device,
-and the launcher holds HOME there with a small foreground service instead of the
-accessibility hook Amazon refuses on 6.7. The ones that cannot be opened, and the
-honest reason for each, are in `docs/OTHER-TVS.md` — along with what we are
-working on to reach them.
+<p align="center"><sub>As seen in
+<a href="https://techcrunch.com/2026/10/19/people-are-using-ai-to-make-their-smart-tvs-dumb-again/">TechCrunch</a> ·
+<a href="https://www.techradar.com/entertainment/streaming/your-tv-should-do-what-you-paid-for-people-are-vibe-coding-apps-to-banish-ads-from-their-smart-tvs-and-android-tv-and-its-catching-on">TechRadar</a> ·
+<a href="https://www.tomsguide.com/ai/people-are-using-ai-to-turn-their-smart-tvs-into-dumb-tvs-and-you-might-want-to-do-the-same">Tom's Guide</a> ·
+<a href="https://gizmodo.com/people-using-ai-to-make-smart-tvs-dumb-again-is-the-most-2026-thing-ever-2000828213">Gizmodo</a> ·
+<a href="https://www.xda-developers.com/people-are-now-vibe-coding-their-smart-tvs-to-strip-them-of-ads-and-unwanted-features/">XDA</a> ·
+<a href="https://itsfoss.com/news/debloat-smart-tv/">It's FOSS</a> ·
+<a href="docs/PRESS.md">and more than 100 others</a></sub></p>
 
-**What it will not do:** replace the operating system, unlock a bootloader, or
-survive a factory reset. Every current TV has a signed boot chain and a verified
-system partition, so there is no honest way around it. Pretending otherwise is
-how people brick their TVs. See `docs/WHY-NOT-REPLACE-OS.md`.
+---
 
-## Add your TV to the catalog
+## The story
 
-At the end of a session — or any time something surprised you — record it:
+I had a Fire TV Edition television that had become painful to use. Menus lagged,
+apps took ages to open, and the home screen was mostly ads. When I looked, it had
+129 MB of free memory, and much of the rest went to apps that started on their own
+and to Amazon services that report what you watch.
+
+So I asked a coding agent to clean it up over ADB, and
+[posted what happened](https://x.com/DevMuzzammil/status/2111595814099591535). People
+asked for the scripts, so I put them here and
+[shared them](https://x.com/DevMuzzammil/status/2111912547318395338). Since then,
+owners of about twenty other TVs and sticks have run it and sent back what they
+found.
+
+dumbtv is that cleanup, made safe to run on someone else's TV.
+
+## What it does
+
+On a Fire TV stick, Cube or Fire TV Edition television, from your computer, with
+no root:
+
+- **Removes the ads and tracking.** Disables Amazon's sponsored rows, ad
+  services, screen fingerprinting (ACR), telemetry and experiments, and turns off
+  ad tracking and usage reporting.
+- **Blocks what cannot be disabled.** A small open-source DNS filter on the TV
+  stops Amazon's telemetry and automatic updates from reaching their servers.
+  Everything else, including your streaming apps, works as before.
+- **Replaces the home screen** with [dumbtv home](launcher/README.md): your apps,
+  your inputs and a clock. 54 KB, open source, no internet access, no permissions.
+- **Leaves your apps alone.** Nothing you watch is removed unless you name it.
+- **Can all be undone** with one command.
+
+## Quick start
+
+You need a computer with [`adb`](https://developer.android.com/tools/releases/platform-tools)
+and about ten minutes. On the TV, turn on ADB: **Settings → My Fire TV → About**,
+press OK on the device name 7 times, then **Developer Options → ADB debugging**.
+The TV's IP address is under **Settings → My Fire TV → About → Network** (on a
+Fire TV Edition television: **Settings → Network**, then the connected network).
+
+**With a coding agent** (Claude Code, Codex, Cursor, Gemini and others): clone this
+repository, open the agent in it, and say:
+
+> Clean up my Fire TV. Its IP address is _(the address from the Network screen)_.
+
+It reads [AGENTS.md](AGENTS.md), asks you a few questions, and runs the steps
+below.
+
+**By hand:**
 
 ```sh
-./scripts/contribute.sh
+git clone https://github.com/humblemuzzu/dumbtv && cd dumbtv
+adb connect <tv-ip>:5555        # press Allow on the TV
+./scripts/preflight.sh          # what the TV is and what would change; changes nothing
+./scripts/configure.sh          # a few questions
+./scripts/all.sh                # asks before each step, reboots the TV twice
+./scripts/verify.sh             # checks the result
 ```
 
-It reads the model, OS build and kernel from the TV, then asks only what a robot
-cannot know: how developer mode was enabled, where the IP address was shown,
-which dialogs blocked automation and what dismissed each one. It writes
-`catalog/devices/<id>.yaml`, validates it, and prints the `git` / `gh` commands
-for a pull request. No git? `.github/ISSUE_TEMPLATE/device-report.yml` asks the
-same questions in a browser.
+Works from macOS, Linux and Windows (WSL or Git Bash).
 
-That file is the part this repo cannot generate: per-model knowledge. Code is
-cheap; someone's evening is not.
+## What you choose
 
-## It asks what you want to keep
+`configure.sh` asks, and nothing is decided for you:
 
-Nothing is decided for you:
-
-```sh
-./scripts/configure.sh
-```
-
-It goes through the apps this repo would remove (`data/fireos/user-apps.txt`,
-with readable names from `data/apps.txt`) and asks, one by one, whether to remove
-each. Answer "no" and that app is never touched. It also asks whether you watch
-Prime Video — Prime stays installed either way, but if you say yes its video CDN
-is left out of the blocklist so playback keeps working — and whether you want the
-launcher replaced and the DNS filter installed.
-
-The answers go into `dumbtv.conf` (git-ignored). Re-run it any time to change
-your mind; the scripts read that file, so nothing has to be edited by hand.
-
-Ads, telemetry, experiments and Alexa are removed regardless. This step is only
-about apps a person might actually watch.
-
-## Reversibility
-
-`scripts/restore.sh` puts back package state, app-ops, network rules and every
-setting the pass touched — using the snapshot `preflight.sh` took first, so the
-values are the ones this TV actually had, not generic defaults. The snapshot is
-taken once: run `preflight.sh` before the first pass, and a later run cannot
-overwrite the originals.
-
-Two things are not reversible:
-
-1. **Apps that live in `/data`.** The streaming apps the pass uninstalls (JioHotstar,
-   Zee5, JioCinema, SonyLIV, Discovery+, Aaj Tak, Twitch, FastScreen, MX Player)
-   have their APKs deleted; they come back from the store, not from a script. The
-   keep-list in `configure.sh` exists so you only lose what you agreed to lose.
-2. **Anything uninstalled after the fact.** `restore.sh` restores the lists in
-   `data/`, so an app removed by hand is still gone.
-
-Everything else — the ~65 disabled packages, the launcher, the DNS filter, the
-settings — is undoable, and a factory reset also undoes it (including this repo's
-work).
-
-## What it changes
-
-| Layer | Result |
+| Question | Default |
 |---|---|
-| Packages | ~65 disabled: ACR (screen fingerprinting), ad-ID service, sponsored rows, watch-time analytics, A/B experiment engines, Alexa/mic app, promo screensaver, OTA helpers. Ad-funded streaming apps uninstalled. YouTube and VLC kept. |
-| Protected packages | The handful Amazon refuses to disable get their background execution and background data removed instead. |
-| Settings | Ad tracking limited, interest-based ads off, app/device usage reporting off, wake word and voice off, promo autoplay off. |
-| DNS | personalDNSfilter runs on the TV: Amazon telemetry, Alexa endpoints and the OTA servers answer `127.0.0.1`. YouTube and the app store still resolve. |
-| Launcher | [dumbtv home](launcher/README.md), this repo's own launcher, replaces Amazon's home screen — no promo tiles, no sponsored rows. 54 KB, open source, no permissions on Fire OS 7/8. |
+| Do you watch Prime Video? | yes: its servers stay reachable |
+| Keep Alexa and the voice button? | yes |
+| Replace Amazon's home screen with dumbtv home? | yes |
+| Run the DNS filter on the TV? | yes |
+| Any apps you want removed? | none |
+| Replace the YouTube app with SmartTube (no ads, no Shorts)? | no |
 
-Every step is reversible with `scripts/restore.sh`.
+Your answers are saved in `dumbtv.conf`; run `configure.sh` again to change them.
 
-## The launcher
+## What changes
 
-`launcher/` is a home screen written for this repo: your apps, your HDMI inputs,
-a clock, and nothing else. Plain Java with no libraries, and **no internet
-permission** — it cannot phone home even if it wanted to. On Fire OS 7/8 it requests
-no permissions at all; on Fire OS 6 it asks for usage access, boot and task order,
-which its HOME keeper needs there. HOME lands on it in about 0.2 s, with no flash of Amazon's home.
+| | |
+|---|---|
+| **Amazon packages** | About 50 disabled: ads, sponsored content, ACR, telemetry, crash and usage uploads, experiments, update nags. Disabled, never deleted. |
+| **Protected packages** | The few Amazon will not let anyone disable lose background running and background data. |
+| **Settings** | Ad tracking limited, interest-based ads off, usage reporting off, home-screen autoplay off. |
+| **DNS** | [personalDNSfilter](https://github.com/IngoZenz/personaldnsfilter) runs on the TV and blocks about 400 Amazon telemetry, ad and update hosts. YouTube, the Appstore and your other apps are not blocked. |
+| **Home screen** | dumbtv home instead of Amazon's: no promo tiles, no sponsored rows. |
+| **Your apps** | Untouched. |
 
-It replaced Projectivy, which this repo used to install: Projectivy is closed
-source and asks for the advertising ID, ad attribution, install referrer,
-internet and package install/delete — far more than a home screen needs.
+[How it works](docs/HOW-IT-WORKS.md) explains each part and why it is needed.
 
-Just the launcher, without the rest of the pass:
+## dumbtv home
 
-```sh
-adb connect <tv-ip>:5555
-./launcher/install.sh            # downloads the release APK, checks it, installs it
-```
-
-No Java or Android SDK needed: the APK comes from the
-[GitHub release](https://github.com/humblemuzzu/dumbtv/releases/latest), and its
-SHA-256 is pinned in `launcher/install.sh`. `--build` builds it from source instead.
-Details, settings and how the HOME takeover works: `launcher/README.md`.
-
-## Requirements
-
-- A machine with `adb` (macOS, Linux, Windows via WSL/Git Bash).
-- The TV on the same network, with **Developer Options → ADB debugging** on
-  (Settings → My Fire TV → About → click the device name 7×, then back to
-  My Fire TV → Developer Options).
-- ~10 minutes. The scripts reboot the TV twice.
-
-## Quickstart
-
-```sh
-adb connect <tv-ip>:5555
-adb devices                      # must show "device", not "unauthorized"
-
-./scripts/preflight.sh           # read-only: device facts + what would change
-./scripts/configure.sh           # asks what to keep, writes dumbtv.conf
-./scripts/all.sh                 # the full pass, asks before touching anything
-./scripts/verify.sh              # proof: blocked vs still-working domains
-```
-
-If anything looks wrong later, `scripts/restore.sh` puts it back.
-
-## Run one piece at a time
-
-| Script | Does | Reboot needed |
+| Rows | Grid | Options |
 |---|---|---|
-| `preflight.sh` | Prints device facts, snapshots the current settings, shows the plan. Changes nothing else. | no |
-| `discover.sh` | Read-only inventory for a TV with no verified package list: flags likely ads/analytics packages and writes a commented block for `data/<platform>/packages.txt`. | no |
-| `configure.sh` | Asks what to keep and writes `dumbtv.conf`. | no |
-| `debloat.sh` | Uninstalls/disables packages, applies privacy settings. | yes |
-| `lockdown.sh` | App-ops + data-saver rules for protected packages. | no |
-| `dnsfilter.sh` | Installs and configures the on-device DNS filter. | yes |
-| `youtube.sh` | **Opt-in, never run by `all.sh` unless you answered yes.** Replaces the YouTube app with SmartTube (no ad code) and takes it out of the home screen. Disables the stock app; `--remove` deletes it. | no |
-| `launcher.sh` | Installs dumbtv home and takes over the HOME button. | no |
-| `verify.sh` | Checks what is blocked and what still works. | no |
-| `restore.sh` | Undoes packages, app-ops, network rules and settings. | yes |
-| `all.sh` | Runs the above in order. | yes |
+| ![Rows layout](docs/assets/screens/home.png) | ![Grid layout](docs/assets/screens/grid.png) | ![Options](docs/assets/screens/options.png) |
 
-Every script takes `--dry-run` to print its commands without running them, and
-`-y` to skip confirmation.
+A home screen that shows your apps and your HDMI inputs, and nothing else. Accent
+colours, tile sizes, rows or a grid, wallpapers, adaptive backgrounds, renaming and
+hiding, all from the remote. HOME lands on it in a fraction of a second.
 
-## Safety rules the scripts enforce
+It is plain Java with no libraries and no internet permission, so it cannot send
+anything anywhere. On Fire OS 7 and 8 it asks for no permissions at all. It works
+on its own, without the rest of dumbtv:
 
-- A hard-coded **never-disable** list (launcher, settings, TV input/routing,
-  device control, Bluetooth pairing, system UI). Disabling those is how a TV ends
-  up with a black screen and no working remote.
-- Nothing writes to `/system`. No `adb remount`, no `pm uninstall` without
-  `--user 0`, no hosts-file editing — Fire OS verifies `/system` with dm-verity
-  and modifying it is the documented brick path.
-- The DNS filter only runs if the app's VPN consent was pre-granted, and it is
-  verified after a reboot before the script reports success.
+```sh
+adb connect <tv-ip>:5555
+./launcher/install.sh
+```
+
+[launcher/README.md](launcher/README.md) covers the settings, wallpapers and how
+it takes over the HOME button.
+
+## Tested on
+
+Each row is a report from the person who ran it. **tested** means the whole pass ran
+and `verify.sh` passed on that device.
+
+| Device | Fire OS | Status | Tested by |
+|---|---|---|---|
+| [Fire TV Stick 4K, 1st gen (AFTMM)](catalog/devices/fireos-amazon-aftmm.yaml) | 6.7 | tested | [@niz-coder](https://github.com/niz-coder) |
+| [Insignia Fire TV Edition (AFTEAMR311)](catalog/devices/fireos-insignia-afteamr311.yaml) | 6.7 | tested | [@gtalusan](https://github.com/gtalusan) |
+| [Fire TV Cube, 2nd gen (AFTR)](catalog/devices/fireos-amazon-aftr.yaml) | 7.7 | tested | [@podulator](https://github.com/podulator) |
+| [Insignia 50" F30 (AFTDCT31)](catalog/devices/fireos-insignia-aftdct31.yaml) | 7.7 | tested | [@timcunningham-sv](https://github.com/timcunningham-sv) |
+| [Onida 43" Fire TV Edition (AFTGRO001)](catalog/devices/fireos-onida-aftgro001.yaml) | 7.7 | tested | [@humblemuzzu](https://github.com/humblemuzzu) |
+| [Fire TV Edition television (AFTOLCBC82)](catalog/devices/fireos-amazon-aftolcbc82.yaml) | 8.1 | tested | [@koconnorgit](https://github.com/koconnorgit), [@iotemylabs](https://github.com/iotemylabs) |
+| [Fire TV Stick, 3rd gen (AFTSSS)](catalog/devices/fireos-amazon-aftsss.yaml) | 7.7 | partial | [@B3NR1S](https://github.com/B3NR1S) |
+| [Fire TV Stick 4K Max, 1st gen (AFTKA)](catalog/devices/fireos-amazon-aftka-ps7697.yaml) | 7.6 | partial | [@dchuk](https://github.com/dchuk) |
+| [Fire TV Stick 4K Max, 1st gen (AFTKA)](catalog/devices/fireos-amazon-aftka-ps7713.yaml) | 7.7 | partial | [@harupong](https://github.com/harupong) |
+| [Hisense 58U6HF (AFTHA001)](catalog/devices/fireos-hisense-aftha001.yaml) | 7.7 | partial | [@murilaiooo](https://github.com/murilaiooo) |
+| [Fire TV Stick 4K, 2nd gen (AFTKM)](catalog/devices/fireos-amazon-aftkm.yaml) | 8.1 | partial | [@gleesonb](https://github.com/gleesonb), [@humblemuzzu](https://github.com/humblemuzzu) |
+| [Fire TV Stick 4K Max, 2nd gen (AFTKRT)](catalog/devices/fireos-amazon-aftkrt.yaml) | 8.1 | partial | [@gerardo-galvez-hl](https://github.com/gerardo-galvez-hl) |
+| [Fire TV Stick 4K Plus (AFTMA08C15)](catalog/devices/fireos-amazon-aftma08c15.yaml) | 8.1 | partial | [@edrmundy](https://github.com/edrmundy) |
+
+Android TV and Google TV reports, run by hand from the lists in
+`data/androidtv/`:
+
+| Device | Android | Tested by |
+|---|---|---|
+| [Changhong AI PONT](catalog/devices/androidtv-changhong-ai-pont.yaml) | 14 | [@frogu](https://github.com/frogu) |
+| [Hisense SmartTV 4K FFM](catalog/devices/androidtv-hisense-smarttv-4k-ffm.yaml) | 11 | [@aswinaasokan18-spec](https://github.com/aswinaasokan18-spec) |
+| [onn. Streaming Device 4K Pro](catalog/devices/androidtv-onn-streaming-device-4k-pro.yaml) | 14 | [@OSikorsky](https://github.com/OSikorsky) |
+| [Philips 24NA 4K](catalog/devices/androidtv-philips-24na-4k.yaml) | 14 | [@lsukev](https://github.com/lsukev) |
+| [Philips TA6 LT](catalog/devices/androidtv-philips-ta6-lt.yaml) | 14 | [@fabricio00101](https://github.com/fabricio00101) |
+| [Philips OLED705 (TPM191E)](catalog/devices/androidtv-philips-tpm191e.yaml) | 12 | [@tkightly](https://github.com/tkightly) |
+| [TCL Smart TV Pro G08](catalog/devices/androidtv-tcl-g08.yaml) | 14 | [@maam00](https://github.com/maam00) |
+| [Xiaomi Mi TV Stick](catalog/devices/androidtv-xiaomi-mi-tv-stick.yaml) | 9 | [@pfTheTrial](https://github.com/pfTheTrial) |
+| [Xiaomi Mi TV (MSSP3)](catalog/devices/androidtv-xiaomi-mitv-mssp3.yaml) | 9 | [@frogu](https://github.com/frogu) |
+
+For a full Android TV and Google TV tool, see
+[cleanyourtv](https://github.com/Gathin23/cleanyourtv). Samsung, LG, Roku and other
+TVs give owners no way in; [docs/OTHER-TVS.md](docs/OTHER-TVS.md) explains each
+one and what you can still do.
+
+**Your TV not here?** Run it, then `./scripts/contribute.sh`. It writes the report
+for you. [CONTRIBUTING.md](CONTRIBUTING.md) has the details.
+
+## Undo
+
+```sh
+./scripts/restore.sh
+```
+
+It re-enables every package, clears the app and network rules, puts back the
+settings the TV had before (from the snapshot `preflight.sh` takes), removes the
+filter and gives HOME back to Amazon. An app you asked to have uninstalled comes
+back from the Appstore.
+
+## Good to know
+
+- **Nothing is written to `/system`**, the part of the TV whose modification
+  bricks it. A factory reset removes everything dumbtv did.
+- **Fire OS updates are blocked** while the DNS filter runs, since an update would
+  switch a lot of this back on. [The FAQ](docs/FAQ.md) explains how to update
+  anyway.
+- **It cannot replace Fire OS.** The boot chain is locked by Amazon.
+  [Here is why](docs/WHY-NOT-REPLACE-OS.md).
+- **YouTube ads can't be blocked by DNS.** They come from the same servers as the
+  videos. [docs/YOUTUBE.md](docs/YOUTUBE.md) explains, and what to use instead.
 
 ## Documentation
 
-- `launcher/README.md` — the launcher: install, remote controls, settings file, HOME takeover
-- `docs/HOW-IT-WORKS.md` — the five mechanisms and why each is needed
-- `docs/GOTCHAS.md` — everything that went wrong while building this
-- `docs/OTHER-TVS.md` — which TVs can be opened, which cannot, and what is being worked on
-- `docs/YOUTUBE.md` — why YouTube ads cannot be blocked at the network, and what to replace the app with
-- `docs/WHY-NOT-REPLACE-OS.md` — the bootloader/verity wall, and the root exploit
-- `docs/FAQ.md` — factory reset, updates, Prime Video, "is this illegal" (it isn't)
-- `catalog/` — per-platform menu paths, prompts and quirks, machine-readable
+| | |
+|---|---|
+| [How it works](docs/HOW-IT-WORKS.md) | each part and why it is needed |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | symptoms and fixes |
+| [FAQ](docs/FAQ.md) | updates, Prime Video, factory reset, is this legal |
+| [Other TVs](docs/OTHER-TVS.md) | Android TV, Samsung, LG, Roku and the rest |
+| [YouTube](docs/YOUTUBE.md) | why its ads cannot be blocked, and SmartTube |
+| [Why not replace the OS](docs/WHY-NOT-REPLACE-OS.md) | the locked boot chain |
+| [dumbtv home](launcher/README.md) | the launcher |
+| [Device catalog](catalog/README.md) | per-model notes |
+| [AGENTS.md](AGENTS.md) | instructions for coding agents |
+| [Press](docs/PRESS.md) | coverage |
 
-## For AI agents
+## Thanks
 
-`AGENTS.md` is the machine-readable contract: preconditions, the user interview,
-exact ordering, guardrails, verification and recovery. Point an agent at this
-repository and it can run the whole thing without improvising.
+To everyone who tested a TV, wrote code, or reported a problem. dumbtv works on all
+the devices above because of you.
 
-`llms.txt` is the short index for agents that look for one, and
-`catalog/devices/` holds the part that isn't automatable — developer-mode menu
-path, where the IP is shown, which dialogs block a bot — one YAML per platform or
-model. Adding a TV to the catalog is how this gets better for the next person.
+<a href="https://github.com/humblemuzzu/dumbtv/graphs/contributors"><img src="https://contrib.rocks/image?repo=humblemuzzu/dumbtv" alt="Contributors"></a>
 
-There is also a skill file at `skills/firetv-debloat/SKILL.md` for agents that
-load skills.
+**Code, fixes and device reports:**
+[@fabricio00101](https://github.com/fabricio00101),
+[@MrVoicer](https://github.com/MrVoicer),
+[@Jovci](https://github.com/Jovci),
+[@niz-coder](https://github.com/niz-coder),
+[@centsandcode](https://github.com/centsandcode),
+[@maam00](https://github.com/maam00),
+[@alfibi](https://github.com/alfibi),
+[@theChef613](https://github.com/theChef613),
+[@rachit-jain](https://github.com/rachit-jain),
+[@daviavmello](https://github.com/daviavmello),
+[@yuriwc](https://github.com/yuriwc),
+[@lsukev](https://github.com/lsukev),
+[@dchuk](https://github.com/dchuk),
+[@gerardo-galvez-hl](https://github.com/gerardo-galvez-hl),
+[@koconnorgit](https://github.com/koconnorgit),
+[@pfTheTrial](https://github.com/pfTheTrial),
+[@frogu](https://github.com/frogu),
+[@podulator](https://github.com/podulator),
+[@tkightly](https://github.com/tkightly),
+[@OSikorsky](https://github.com/OSikorsky),
+[@nolanvargas](https://github.com/nolanvargas),
+[@harupong](https://github.com/harupong),
+[@gtalusan](https://github.com/gtalusan),
+[@B3NR1S](https://github.com/B3NR1S),
+[@bglaszcz](https://github.com/bglaszcz),
+[@murilaiooo](https://github.com/murilaiooo),
+[@dnpkuk](https://github.com/dnpkuk),
+[@timcunningham-sv](https://github.com/timcunningham-sv),
+[@iotemylabs](https://github.com/iotemylabs),
+[@aswinaasokan18-spec](https://github.com/aswinaasokan18-spec),
+[@edrmundy](https://github.com/edrmundy),
+[@MarioMartReq](https://github.com/MarioMartReq),
+[@ravishan16](https://github.com/ravishan16),
+[@jonathanrzarzuela-cloud](https://github.com/jonathanrzarzuela-cloud),
+[@Loadedrakeman](https://github.com/Loadedrakeman)
 
-## Credits and licences
+**Bug reports:**
+[@gleesonb](https://github.com/gleesonb),
+[@dennus280-ship-it](https://github.com/dennus280-ship-it),
+[@FyllyMan](https://github.com/FyllyMan),
+[@nairyash](https://github.com/nairyash),
+[@PWannop](https://github.com/PWannop),
+[@jt-at-home](https://github.com/jt-at-home),
+[@thearchivist9778-ai](https://github.com/thearchivist9778-ai),
+[@GrackleCrow](https://github.com/GrackleCrow)
 
-Scripts, docs and the launcher: MIT (`LICENSE`). Device catalog: CC BY-SA 4.0
-(`catalog/LICENSE`).
+And to the projects dumbtv stands on:
+[personalDNSfilter](https://github.com/IngoZenz/personaldnsfilter) by Ingo Zenz,
+[HaGeZi's DNS blocklists](https://github.com/hagezi/dns-blocklists),
+[SmartTube](https://github.com/yuliskov/SmartTube) by Yuriy Liskov, and
+[cleanyourtv](https://github.com/Gathin23/cleanyourtv) by
+[@Gathin23](https://github.com/Gathin23) for Android TV and Google TV.
 
-Installed but not bundled: [personalDNSfilter](https://github.com/IngoZenz/personaldnsfilter)
-(GPL), downloaded from its upstream release at run time. The launcher APK is
-built from `launcher/` and published on this repo's releases. The Amazon tracker list
-is fetched from [HaGeZi DNS blocklists](https://github.com/hagezi/dns-blocklists)
-at run time; nothing is vendored, so the blocklist stays current.
+## Legal
 
-Nothing in this repository is Amazon code.
+dumbtv changes settings on a device you own, through the developer tools the
+manufacturer ships. It does not bypass DRM, unlock anything or touch anyone's
+account. Fire TV, Fire OS, Alexa and Prime Video are trademarks of Amazon; dumbtv is
+not affiliated with or endorsed by Amazon. Use it at your own risk.
+
+## Licence
+
+Scripts, docs and the launcher are [MIT](LICENSE). The device catalog is
+[CC BY-SA 4.0](catalog/LICENSE).
+
+dumbtv bundles none of these, but downloads them when you ask for them:
+personalDNSfilter (GPL-2.0) from F-Droid, HaGeZi's Amazon tracker list (GPL-3.0),
+and SmartTube (MIT) from its own releases.

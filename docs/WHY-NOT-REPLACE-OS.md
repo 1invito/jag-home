@@ -20,30 +20,13 @@ the documented brick path, not a rumour.
 HDMI input switching and tuner. Those do not exist in the open, so even a
 hypothetical unlock ends at a black screen.
 
-## The root exploit that does exist
+## What about a root exploit?
 
-CVE-2026-43499 ("GhostLock") is a real kernel bug in the rtmutex/futex
-priority-inheritance path, affecting kernels 2.6.39 through 7.x. Public ports
-exist for several Fire TV devices, including an ARM32 / Linux 4.9.113 port aimed
-at Fire TV Edition televisions.
-
-What it gives you:
-
-- a root shell **until the next reboot** — it patches kernel state, not storage;
-- the ability to `pm disable-user` the handful of protected packages;
-- nothing else. `pm disable-user` is the only operation that was blocked by
-  permission rather than by dm-verity.
-
-What it does not give you:
-
-- a bootloader unlock, so no different OS;
-- write access to `/system`, so no hosts file and no removing system APKs;
-- persistence, so nothing survives a reboot.
-
-A profile is also per-build: kernel addresses and struct offsets come from that
-exact firmware. Between builds, the offsets move and the bug may be patched. So
-even if a port exists for your model, treat it as a weekend experiment, not a
-recipe. DNS blocking gets the same privacy with none of the risk.
+Kernel exploits for Fire OS do turn up. What they give is a root shell until the
+next reboot, which can disable the handful of packages Amazon protects. They do not
+unlock the bootloader, cannot write `/system` past dm-verity, and do not survive a
+reboot. Each one is tied to an exact firmware build and gets patched. The DNS
+filter already blocks what those protected packages send, without the risk.
 
 ## The conclusion this repo is built on
 

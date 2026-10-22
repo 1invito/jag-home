@@ -1,18 +1,15 @@
-# Pull request
+## What this changes
 
-## What this adds
+<!-- One line: the TV you are adding, or what the fix does. -->
 
-<!-- one line: the TV, or the fix -->
+## How you tested it
+
+<!-- The TV and build, what you ran, what verify.sh printed. -->
 
 ## Checklist
 
-- [ ] One device file under `catalog/devices/`, or a code/doc change — not both mixed
-- [ ] `python3 catalog/validate.py` passes
-- [ ] No IP address, MAC address, serial number, Wi-Fi name or account email anywhere in the diff
-- [ ] `status` is honest (`tested` only if the full pass ran and `verify.sh` exited 0 on this device)
-- [ ] The blocking prompts say what actually dismissed them, not just that one appeared
-- [ ] Package lists, if changed, come from this device's `pm list packages`, not from another TV
-
-## Evidence
-
-<!-- for a device entry: what did verify.sh print? for a code change: what did you run? -->
+- [ ] One device report, or one code or docs change, not both
+- [ ] The checks in CONTRIBUTING.md pass (`catalog/validate.py`, the tests, `bash -n`)
+- [ ] No IP address, MAC address, serial number, Wi-Fi name or account email anywhere
+- [ ] For a device report: `status` is `tested` only if the full pass ran and `verify.sh` exited 0
+- [ ] For a list change: the packages came from `pm list packages` on your TV

@@ -75,7 +75,7 @@ else
   case $hook in
     bound) printf '%-10s %-38s %s\n' ok home "bound, front is ${home:-unknown}" ;;
     unbound)
-      printf '%-10s %-38s %s\n' FAIL home "enabled but not bound; see docs/GOTCHAS.md"; fail=1 ;;
+      printf '%-10s %-38s %s\n' FAIL home "enabled but not bound; see docs/TROUBLESHOOTING.md"; fail=1 ;;
     disabled)
       printf '%-10s %-38s %s\n' FAIL home "hook disabled (front: ${home:-unknown}, wakefulness: ${wake:-?})"; fail=1 ;;
     *) printf '%-10s %-38s %s\n' FAIL home "cannot verify accessibility binding; inspect dumpsys accessibility"; fail=1 ;;
@@ -131,6 +131,6 @@ fi
 if [[ $fail == 0 ]]; then
   printf '\nall checks passed\n'
 else
-  printf '\nfailures above. Recovery steps: docs/GOTCHAS.md\n'
+  printf '\nfailures above. Recovery steps: docs/TROUBLESHOOTING.md\n'
 fi
 exit $fail

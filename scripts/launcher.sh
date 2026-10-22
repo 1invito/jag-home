@@ -40,6 +40,6 @@ if printf '%s' "$home" | grep -q "$PKG"; then
   note "home screen is dumbtv home"
 else
   note "home screen is $home"
-  note "press HOME once or run this script again; see docs/GOTCHAS.md if it will not stick"
+  note "press HOME once or run this script again; see docs/TROUBLESHOOTING.md if it will not stick"
   exit 1
 fi

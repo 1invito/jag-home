@@ -1,4 +1,6 @@
-# TCL G10 package observations
+# TCL Smart TV G10 (Google TV, Android 12)
+
+Contributed by [@nolanvargas](https://github.com/nolanvargas).
 
 These notes are from one **TCL Smart TV (G10_4K_US_NF / G10), Android 12**,
 read over ADB on October 20, 2026. The package changes were made on
@@ -26,16 +28,8 @@ number (`AS102` versus `AS50`). Both values are copied from the device.
 About 1.8 GB of RAM (`MemTotal` 1807460 kB). The only ABI is
 `armeabi-v7a`; an arm64 APK does not install.
 
-This is a record of one household's choices, not a universal removal
-profile. Disabling a package does not prove that every feature which
-depends on it was tested. The notes below say why another owner might
-keep each app. They are not claims that a package is malicious, or that
-removing it makes the TV faster. `data/androidtv/packages.txt` stays
-empty, and `debloat.sh` still refuses non-Fire-OS hardware.
-
-No catalog entry was added. The path used to turn on developer options
-was not written down; network debugging was already on before these
-notes.
+This is one household's set of choices, applied by hand. The notes say why
+another owner might keep each app.
 
 ## What this session disabled
 
@@ -48,7 +42,7 @@ drop a launcher disable across a reboot.
 
 | Package | Role | What to consider before disabling |
 |---|---|---|
-| `com.google.android.apps.tv.launcherx` | Google TV home | Disable only after another home screen is installed and is the default. On this set that was Projectivy 4.71. |
+| `com.google.android.apps.tv.launcherx` | Google TV home | Disable only after another home screen is installed and is the default. On this set that was a third-party launcher. |
 | `com.google.android.tungsten.setupwraith` | First-run setup; also answers HOME | Disabled together with `launcherx`. Disabling `launcherx` alone can leave setup answering HOME. |
 | `com.google.android.apps.tv.dreamx` | Ambient screensaver (Backdrop) | The screensaver component was pointed at `com.android.dreams.basic/.Colors` instead. |
 | `com.google.android.youtube.tv` | YouTube | Keep if anyone uses the YouTube app. |
@@ -117,20 +111,16 @@ the Latin keyboard, Google text-to-speech, and Google WebView.
 
 ## Home screen and settings
 
-Projectivy `4.71` (`com.spocky.projengmenu`) is installed.
-`cmd package resolve-activity` for `MAIN` / `HOME` returns
-`com.spocky.projengmenu.ui.home.MainActivity` with `isDefault=true`.
-`cmd package get-home-activities` is not a command on this Android 12
-build. dumbtv home was not installed.
+A third-party launcher was set as home; dumbtv home was not installed.
+`cmd package get-home-activities` is not a command on this Android 12 build.
 
 `ro.product.model` is `Smart TV`, with a space. `adb devices -l` prints
 `model:Smart_TV`.
 
 Two settings were changed and were still set on October 20:
 
-- Private DNS: `private_dns_mode=hostname`,
-  `private_dns_specifier=dns.adguard-dns.com`. No on-device DNS-filter
-  app was installed.
+- Private DNS: `private_dns_mode=hostname` with an ad-blocking resolver. No
+  on-device DNS-filter app was installed.
 - Screensaver component: from
   `com.google.android.apps.tv.dreamx/.service.Backdrop` to
   `com.android.dreams.basic/.Colors`.
@@ -143,7 +133,4 @@ for a package that was already disabled. The eight packages uninstalled
 for user 0 were already in that state; `cmd package install-existing`
 can put an existing system APK back for user 0, and was not run here.
 
-The TV was still in daily use on October 20, with Projectivy as home.
-There is no measured speedup. `scripts/all.sh` and `scripts/verify.sh`
-were not run. This note does not enable `debloat.sh` on Android TV and
-does not recommend the list above for another household or another build.
+The TV was still in daily use on 20 October.

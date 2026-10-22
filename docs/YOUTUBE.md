@@ -5,7 +5,7 @@ from the network, and the reason is worth understanding before trying.
 
 ## Why DNS blocking cannot work here
 
-A DNS filter — this repo's on-device one, a Pi-hole, Nextdoor, AdGuard — sees one
+A DNS filter (this repo's on-device one, a Pi-hole, any other) sees one
 thing: the hostname being looked up. It can answer `softwareupdates.amazon.com`
 with `127.0.0.1` because that host does nothing but updates.
 
@@ -38,8 +38,7 @@ with a client that never asks for the ads.**
 ## SmartTube
 
 [SmartTube](https://github.com/yuliskov/SmartTube) is that client: open source
-(MIT), 35k stars, made for Android TV, works on Fire TV devices released before
-October 2025. Its own FAQ is the clearest evidence it cannot show an ad:
+(MIT), made for Android TV, and it runs on every Android-based Fire TV. Its own FAQ is the clearest evidence it cannot show an ad:
 
 > Can I whitelist ads on some channels? — No, this is not possible. SmartTube
 > does not have any code to display ads.
@@ -50,8 +49,8 @@ It also has what this repo needs for a TV shared with children:
   search results and the watch page.
 - **Hide Mixes**, **Hide watched videos from Home / Subscriptions** — quieter home.
 - **Video presets** — cap the resolution. On a 1080p panel, asking for 4K costs
-  CPU and RAM for no visible gain; on this TV 4K VP9 decoding ran at 15-18 Mbps
-  and the extra work is all on a 1.3 GHz ARMv7 core.
+  CPU and memory for no visible gain, and many Fire TV televisions have slow
+  32-bit chips.
 - **SponsorBlock** — skips in-video sponsor segments, crowd-sourced.
 
 ## What the script does
@@ -93,10 +92,8 @@ tick **Hide shorts everywhere**.
 before 2020 have no AV1 hardware decoder and the video shows "profile not
 supported" or stutters badly.
 
-Verified on a Fire TV Edition television running Fire OS 7.7.1.7: after ticking
-*Hide shorts everywhere* the Home shelves were `Recommended` and `Recently
-uploaded`, with no Shorts row in the accessibility tree, and playback started in
-674 ms with zero ad-host requests in logcat.
+Checked on a Fire TV Edition television (Fire OS 7.7.1.7): with *Hide shorts
+everywhere* ticked there is no Shorts row, and playback makes no ad requests.
 
 ## Voice search
 
@@ -108,7 +105,7 @@ installed by this script and it is not required for anything else.
 ## Undo
 
 ```sh
-adb shell pm enable com.amazon.firetv.youtube     # if it was disabled, it comes back
+adb shell pm enable --user 0 com.amazon.firetv.youtube   # if it was disabled, it comes back
 adb uninstall org.smarttube.stable                # SmartTube goes away
 ```
 

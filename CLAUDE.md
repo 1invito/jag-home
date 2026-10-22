@@ -1,7 +1,3 @@
-Read `AGENTS.md` first. It is the full contract: interview the user, record the
-answers with `./scripts/configure.sh`, then run `./scripts/all.sh` and
-`./scripts/verify.sh`.
-
-Never touch `/system`, never factory-reset, never disable anything in
-`data/fireos/never-disable.txt`, and never remove an app the user said they
-watch.
+Read [AGENTS.md](AGENTS.md) before running anything. It is the whole contract:
+interview the owner, record the answers with `./scripts/configure.sh`, run
+`./scripts/all.sh`, then `./scripts/verify.sh`.

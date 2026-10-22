@@ -1,17 +1,14 @@
-# TCL G08 package observations
+# TCL Smart TV Pro G08 (Google TV, Android 14)
 
-These are the 21 packages disabled for user 0 on one **TCL Smart TV Pro
-(G08_4K_US/G08), Android 14**, build
-`tcl9618-user 14 UTT2.250416.001 AU14 release-keys`, on October 18, 2026.
-The private change log records a `disabled-user` result for each. The owner
-confirmed the resulting setup worked. Nothing in this list was uninstalled.
+Contributed by [@maam00](https://github.com/maam00). Device report:
+[catalog/devices/androidtv-tcl-g08.yaml](../../catalog/devices/androidtv-tcl-g08.yaml).
 
-This is a record of a household's choices, not a universal removal profile.
-Successful disabling does not prove that every dependent feature was tested.
-The feature descriptions below explain why another owner might keep each app;
-they are not claims that each package is malicious or that every removal
-improves performance. The generic Android TV package list remains empty, and
-`debloat.sh` still refuses non-Fire-OS hardware.
+21 packages disabled for user 0 on one TCL Smart TV Pro (G08_4K_US), build
+`tcl9618-user 14 UTT2.250416.001 AU14 release-keys`, on 18 October 2026. Nothing
+was uninstalled, and the owner confirmed the TV worked afterwards.
+
+This is one household's set of choices, applied by hand. The last column says why
+another owner might keep each app.
 
 ## What was disabled
 
@@ -61,25 +58,8 @@ The session also excluded these functional areas from cleanup:
 - Google Play services/store, keyboards, WebView, permission controllers,
   media/DRM services, and Dolby/MediaTek hardware services.
 
-These exclusions are conservative session decisions, not an exhaustive
-dependency audit or a newly verified global `never-disable` list.
+## Undo
 
-## Reversibility and evidence limits
-
-For a package that was enabled before the session, its individual disable can
-be undone with `adb -s "$ADB_SERIAL" shell pm enable --user 0 <package>`.
-Record the original state before making changes: `pm enable` is not an exact
-restore for a package that was already disabled or using its manifest default.
-The household's original restore script enabled whole lists and reset some
-settings to defaults, so it has not been copied into dumbtv.
-
-A future executable profile needs explicit device/build selection, individual
-choices, an original-state journal, and recovery that touches only the changes
-it made. It also needs checks of home, inputs, keyboard, streaming, remote and
-sound on that target TV.
-
-No controlled speedup is claimed. The saved performance snapshots used
-different foreground workloads, and one preceded most of the package changes.
-The full dumbtv pass and verifier were not run on this TV. See the
-[device report](../catalog/devices/androidtv-tcl-g08.yaml) for the observed
-pairing, accessibility and remote-button details.
+`adb shell pm enable --user 0 <package>` turns any of them back on. Note the state
+of a package before you change it: `pm enable` is not an exact undo for one that
+was already disabled.
