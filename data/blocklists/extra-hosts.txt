@@ -7,8 +7,9 @@
 #   appstore-tv-prod-na.amazon.com / mas-ext / mas-sdk      app store
 #   *.googlevideo.com / youtube.com / ytimg.com             YouTube
 #
-# Prime Video: aiv-delivery.net and aiv-cdn.net appear in the HaGeZi list, so
-# Prime playback will not work. YouTube is unaffected.
+# Prime Video: with PRIME=1 (the default) dnsfilter.sh leaves aiv-delivery.net,
+# aiv-cdn.net and device-messaging-na.amazon.com out of the filter.
+# Alexa's voice servers are in alexa-hosts.txt and are blocked only with ALEXA=0.
 
 # OTA: nothing can check for or download an update
 softwareupdates.amazon.com
@@ -16,6 +17,9 @@ dubri19p4y5b.cloudfront.net
 distro-download.amazon.com
 amzdigital-a.akamaihd.net
 amzdigitaldownloads.edgesuite.net
+
+# Amazon Device Messaging, a push channel. Prime Video does not start without it
+# (closed PR #54), so it is blocked only with PRIME=0.
 device-messaging-na.amazon.com
 
 # device telemetry and registration
@@ -30,25 +34,6 @@ unagi-zaz.amazon.com
 unagi-na.amazon.com
 metrics.media-amazon.com
 
-# Alexa voice and device API
-api.amazonalexa.com
-api.eu.amazonalexa.com
-api.fe.amazonalexa.com
-avs-alexa-14-na.amazon.com
-# seen on a Fire OS 7.7.1.7 TV (issue #58)
-avs-alexa-19-na.amazon.com
-# seen resolving on an EU-region Fire TV Stick (issue #8)
-avs-alexa-18-eu.amazon.com
-devices.amazonalexa.com
-idc-service-ga.amazon.com
-idc-service-be.amazon.com
-idc-service-ga-fe.amazon.com
-idc-service-ga-eu.amazon.com
-mlis.amazon.com
-rafs.amazon.com
-rafs-eu.amazon.com
-rafs-fe.amazon.com
-
 # analytics pipeline (names seen in the TV's own ceviche config)
 aan.amazon.com
 fls-na.amazon.com
@@ -59,7 +44,6 @@ dcape-na.amazon.com
 # whole families: the filter blocks every subdomain of a listed domain (no * needed)
 ceviche.amazon.com
 minerva.amazon.com
-alexa-personality.amazon.dev
 
 # Amazon advertising: home promo rows, Appstore sponsored tiles, ad attribution.
 # Video CDNs (aiv-delivery/aiv-cdn) stay out when PRIME=1; artwork hosts are

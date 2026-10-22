@@ -23,7 +23,7 @@ else
       *0.0.0.0*|*127.0.0.1*) printf '%-10s %-38s blocked\n' ok "$h" ;;
       *) printf '%-10s %-38s NOT BLOCKED\n' FAIL "$h"; fail=1 ;;
     esac
-  done < <(list_of "$DATA/blocklists/verify-blocked.txt")
+  done < <(expected_blocked)
 
   while read -r h; do
     line=$(dev "ping -c1 -W2 $h" | head -1)

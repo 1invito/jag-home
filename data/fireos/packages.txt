@@ -1,20 +1,28 @@
-# Amazon packages to uninstall (falls back to disable). Fire OS 7 package names.
+# Amazon packages debloat.sh disables on Fire OS 7 and 8. Disabled, never
+# uninstalled: restore.sh or Settings > Applications turns any of them back on.
+#
+# Only things that serve ads, track what you watch, report telemetry, run
+# experiments, nag about updates, or are dead demo stubs. Anything a person might
+# use (apps, the screensaver, printing, TV-provider sign-in) is in user-apps.txt and
+# is only removed when asked for. Alexa is in alexa.txt and is kept unless asked.
+#
 # Protection varies per build: anything that answers "Cannot disable a protected
-# package" belongs in protected.txt instead. Keep this list to things that only
-# ever do ads, telemetry, experiments, promo or Alexa work.
+# package" belongs in protected.txt instead.
 
-# --- ads and targeting ---
-com.amazon.tv.acr                      # Automatic Content Recognition: fingerprints what's on screen, HDMI included
+# --- ads, promos and shopping ---
 com.amazon.hybridadidservice           # advertising ID
-com.amazon.shoptv.client               # shopping on the TV
-com.amazon.shoptv.firetv.client        # "Amazon Live Shopping" tile; seen enabled on Fire OS 7.7.1.3 and 7.7.1.7
-com.amazon.sneakpeek                   # autoplaying promos
-com.amazon.minitv.android.app          # ad-supported video service
-com.amazon.media.recommendations       # sponsored rows
-com.amazon.tahoe                       # paints the ad/content tiles on Amazon's home
 com.amazon.privacypassservice          # ad-token service
-com.amazon.ftv.screensaver             # promo screensaver
-com.amazon.systemnotices               # Amazon system notices
+com.amazon.shoptv.client               # shopping on the TV
+com.amazon.shoptv.firetv.client        # "Amazon Live Shopping" tile
+com.amazon.sneakpeek                   # autoplaying promos
+com.amazon.media.recommendations       # sponsored rows
+com.amazon.tahoe                       # paints the ad and content tiles on Amazon's home
+com.amazon.systemnotices               # Amazon promo notices
+com.amazon.tv.website_launcher         # promo web pages
+
+# --- tracking what you watch ---
+com.amazon.tv.acr                      # Automatic Content Recognition: fingerprints the screen, HDMI included
+com.amazon.hedwig                      # watch time and engagement
 
 # --- telemetry, logging, crash reporting ---
 com.amazon.tv.fw.metrics
@@ -24,9 +32,8 @@ com.amazon.perfcollection
 com.amazon.dp.logger
 com.amazon.logan
 com.amazon.neo.minerva.logcat
-com.amazon.ceviche                     # analytics pipeline; its config names unagi-*.amazon.com as the upload target
+com.amazon.ceviche                     # analytics pipeline, uploads to unagi-*.amazon.com
 com.amazon.connectivitydiag
-com.amazon.hedwig                      # watch time / engagement
 com.amazon.tigris
 com.amazon.spiderpork                  # metrics transport
 com.amazon.tv.developer.dataservice
@@ -36,49 +43,20 @@ com.amazon.ale
 com.amazon.katoch
 com.amazon.device_remote_config_sync_service
 
-# --- Alexa and the microphone app ---
-com.amazon.aca                         # the app that owns the mic
-com.amazon.alexa.datastore.app
-com.amazon.alexadirectivebrokerservice
-com.amazon.alexamediaplayer.runtime.ftv
-com.amazon.alexa.externalmediaplayer.fireos
-com.amazon.tv.alexaalerts
-com.amazon.tv.alexanotifications
-com.amazon.vizzini.ftvcds
-com.amazon.firetv.androidskillconnectioncapability
-com.amazon.audiohome
-com.amazon.rtcsessioncontroller        # Alexa calling
-com.amazon.smarthomemapviewapp         # "Alexa Smart Home" tile, the smart-home dashboard; seen on Fire OS 7.7.1.7
-
-# --- OTA helpers (the real updater is protected, see protected.txt) ---
+# --- update nags (the updater itself is protected, see protected.txt) ---
 com.amazon.tv.forcedotaupdater.v2
+com.amazon.tv.easyupgrade
 
-# --- bloat, stubs, leftover UIs ---
-com.amazon.gamehub
-com.amazon.bueller.music
-com.amazon.bueller.photos
+# --- demos, tutorials and empty stubs ---
 com.amazon.tv.democontent.provider
 com.amazon.storm.lightning.tutorial
 com.amazon.tmm.tutorial
 com.amazon.tv.releasenotes
-com.amazon.tv.website_launcher
-com.amazon.tv.support
-com.amazon.tv.easyupgrade
-com.amazon.tv.ottssocompanionapp
-com.amazon.tv.localgallery
-com.amazon.tv.notificationcenter
-com.amazon.uxnotification
-com.amazon.csm.htmlruntime
-com.amazon.cloud9                      # Silk browser
-com.amazon.spotify.mediabrowserservice
-com.amazon.wha.mediabrowserservice
 com.amazon.dummy.alarmclock
 com.amazon.dummy.calendar
 com.amazon.dummy.contacts
 com.amazon.dummy.gallery
 com.amazon.dummy.music
 com.amazon.dummy.settings
-com.android.printspooler
-com.android.bips
-com.android.traceur
-com.android.nfc
+com.android.traceur                    # system tracing tool
+com.android.nfc                        # no NFC hardware on Fire TV

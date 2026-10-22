@@ -38,9 +38,14 @@ note "filter         personalDNSfilter, runs as a local VPN on the TV"
 note "gateway        $GW (put inside the tunnel so apps cannot bypass the filter)"
 note "list           HaGeZi Amazon trackers + data/blocklists/extra-hosts.txt"
 if [[ $PRIME == 1 ]]; then
-  note "prime video    kept: the video CDN stays out of the list"
+  note "prime video    kept: its video CDN and push service stay out of the list"
 else
-  note "prime video    blocked (aiv-delivery / aiv-cdn); YouTube is unaffected"
+  note "prime video    blocked (aiv-delivery, aiv-cdn, device messaging); YouTube is unaffected"
+fi
+if [[ $ALEXA == 1 ]]; then
+  note "alexa          kept: its voice servers stay out of the list"
+else
+  note "alexa          blocked (data/blocklists/alexa-hosts.txt)"
 fi
 if [[ $DRY_RUN == 0 ]]; then confirm "Install the on-device DNS filter on $SERIAL?" || die "cancelled"; fi
 
@@ -49,13 +54,7 @@ if [[ $DRY_RUN == 1 ]]; then
   note "[dry-run] download, compose and push a blocklist"
 else
   fetch "$RAW" "$HAGEZI_URL" || die "could not download the tracker list"
-  grep -v '^#' "$RAW" | awk 'NF' > "$LIST"
-  if [[ $PRIME == 1 ]]; then
-    # grep exits 1 when it selects nothing; that must not skip the rename.
-    grep -viE 'aiv-delivery|aiv-cdn' "$LIST" > "$LIST.noprime" || true
-    mv "$LIST.noprime" "$LIST"
-  fi
-  grep -v '^#' "$DATA/blocklists/extra-hosts.txt" | awk 'NF' >> "$LIST"
+  compose_blocklist "$RAW" > "$LIST"
   note "$(grep -c . "$LIST") entries"
 fi
 
@@ -157,6 +156,9 @@ if [[ $DRY_RUN == 0 ]]; then
     # from it. Choosing that list is a setting only the app's own screen can change.
     MEDIA=/sdcard/Android/media/$PKG
     dev "mkdir -p $MEDIA" >/dev/null 2>&1
+    # Without these the app's file import writes an empty list and says nothing.
+    dev "pm grant $PKG android.permission.READ_EXTERNAL_STORAGE" >/dev/null 2>&1
+    dev "pm grant $PKG android.permission.WRITE_EXTERNAL_STORAGE" >/dev/null 2>&1
     "$ADB" -s "$SERIAL" push "$LIST" "$MEDIA/dumbtv-blocklist.txt" | tail -1 || die "push to $MEDIA failed"
     acmd settings put secure always_on_vpn_app $PKG >/dev/null
     step "one manual step ($(fireos_name) hides the app's files from adb)"
@@ -208,6 +210,10 @@ acmd appops write-settings >/dev/null
 sleep 3
 step "reboot and wait"
 reboot_wait
+if [[ $NO_REBOOT == 1 ]]; then
+  note "self-test skipped: reboot the TV, then run ./scripts/verify.sh"
+  exit 0
+fi
 sleep 20
 
 step "self-test"
@@ -232,7 +238,7 @@ while read -r h; do
     *0.0.0.0*|*127.0.0.1*) printf '  %-34s blocked\n' "$h" ;;
     *) printf '  %-34s NOT BLOCKED: %s\n' "$h" "$line"; fail=1 ;;
   esac
-done < <(list_of "$DATA/blocklists/verify-blocked.txt")
+done < <(expected_blocked)
 
 line=$(dev "ping -c1 -W2 www.youtube.com" | head -1)
 case $line in

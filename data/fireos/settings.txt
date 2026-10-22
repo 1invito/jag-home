@@ -9,8 +9,6 @@ secure USAGE_METRICS_UPLOAD_ENABLED 0
 secure usage_metrics_marketing_enabled 0
 secure settingsApp:appUsageData:value 0
 secure settingsApp:deviceUsageData:value 0
-secure alexa_wake_word_disabled 1
-secure voice_disabled 1
 global heads_up_notifications_enabled 0
 global com.amazon.tv.settings.featured_item_video_enabled 0
 global com.amazon.tv.settings.featured_item_video_volume 0.0

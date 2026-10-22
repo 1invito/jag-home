@@ -9,6 +9,7 @@ ADB=${ADB:-adb}
 export MSYS2_ARG_CONV_EXCL="${MSYS2_ARG_CONV_EXCL:+$MSYS2_ARG_CONV_EXCL;}/sdcard;/data;/storage;/system"
 DRY_RUN=${DRY_RUN:-0}
 ASSUME_YES=${ASSUME_YES:-0}
+NO_REBOOT=${NO_REBOOT:-0}
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DATA="$ROOT/data"
 REPORT="$ROOT/report"
@@ -20,21 +21,47 @@ SDK=${SDK:-0}
 # 1 when the TV has `cmd package install-existing`, i.e. an uninstalled system app can come back.
 REINSTALL=${REINSTALL:-0}
 
-# Preferences written by scripts/configure.sh. Absent file = defaults: keep
-# nothing extra, PRIME=1, LAUNCHER=1, DNSFILTER=1, SYSTEM_DNS=0.
+# Preferences written by scripts/configure.sh. Absent file = defaults: remove no
+# app, keep Prime Video and Alexa, PRIME=1, ALEXA=1, LAUNCHER=1, DNSFILTER=1.
 load_conf() {
   KEEP_APPS=${KEEP_APPS:-}
   REMOVE_EXTRA=${REMOVE_EXTRA:-}
   PRIME=${PRIME:-1}
+  ALEXA=${ALEXA:-1}
   LAUNCHER=${LAUNCHER:-1}
   DNSFILTER=${DNSFILTER:-1}
   SYSTEM_DNS=${SYSTEM_DNS:-0}
   FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
   [[ -f $CONF ]] && source "$CONF"
   KEEP_APPS=${KEEP_APPS:-}; REMOVE_EXTRA=${REMOVE_EXTRA:-}
-  PRIME=${PRIME:-1}; LAUNCHER=${LAUNCHER:-1}; DNSFILTER=${DNSFILTER:-1}
+  PRIME=${PRIME:-1}; ALEXA=${ALEXA:-1}; LAUNCHER=${LAUNCHER:-1}; DNSFILTER=${DNSFILTER:-1}
   SYSTEM_DNS=${SYSTEM_DNS:-0}
   FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
+}
+
+# What debloat.sh disables: the ads and tracking list, plus Alexa only with ALEXA=0.
+cleanup_list() {
+  list_of "$(fos packages.txt)" | awk '{print $1}'
+  if [[ $ALEXA == 0 ]]; then list_of "$(fos alexa.txt)" | awk '{print $1}'; fi
+}
+
+# The DNS filter's list: the downloaded tracker feed $1 plus this repo's hosts.
+# Prime Video and Alexa need some of those hosts, so the owner's answers decide.
+compose_blocklist() {
+  {
+    grep -v '^#' "$1"
+    list_of "$DATA/blocklists/extra-hosts.txt"
+    if [[ $ALEXA == 0 ]]; then list_of "$DATA/blocklists/alexa-hosts.txt"; fi
+  } | awk 'NF' | if [[ $PRIME == 1 ]]; then
+    grep -viE 'aiv-delivery|aiv-cdn|^device-messaging-na\.amazon\.com$' || true
+  else cat; fi
+}
+
+# Hosts verify.sh and the filter's self-test expect to be blocked.
+expected_blocked() {
+  list_of "$DATA/blocklists/verify-blocked.txt"
+  if [[ $ALEXA == 0 ]]; then echo api.amazonalexa.com; fi
+  if [[ $PRIME == 0 ]]; then echo device-messaging-na.amazon.com; fi
 }
 
 keep_pkg() {
@@ -49,6 +76,7 @@ check_keep_list() {
   local k known
   [[ -z $KEEP_APPS ]] && return 0
   known=$(list_of "$(fos packages.txt)" | awk '{print $1}')
+  known="$known $(list_of "$(fos alexa.txt)" | awk '{print $1}')"
   known="$known $(list_of "$(fos user-apps.txt)" | awk '{print $1}') $REMOVE_EXTRA"
   for k in $KEEP_APPS; do
     printf '%s\n' "$known" | tr ' ' '\n' | grep -qx "$k" ||
@@ -92,6 +120,7 @@ parse_flags() {
     case $a in
       --dry-run) DRY_RUN=1 ;;
       -y|--yes)  ASSUME_YES=1 ;;
+      --no-reboot) NO_REBOOT=1 ;;
       *) die "unknown flag: $a" ;;
     esac
   done
@@ -178,8 +207,14 @@ gateway() {
 }
 uid_of()     { dev "dumpsys package $1" | sed -n 's/.*userId=\([0-9]*\).*/\1/p' | head -1; }
 present()    { dev_ok "pm path $1" | grep -q '^package:'; }
+# Shipped with the TV, as opposed to installed from a store.
+is_system()  { dev_ok "pm list packages -s" | tr -d '\r' | grep -qx "package:$1"; }
 
 reboot_wait() {
+  if [[ ${NO_REBOOT:-0} == 1 ]]; then
+    note "not rebooting (--no-reboot): reboot the TV before the next step"
+    return 0
+  fi
   note "rebooting the TV"
   dev reboot >/dev/null 2>&1 || true
   sleep 45

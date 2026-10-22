@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Uninstalls/disables the Amazon bloat and applies the privacy settings.
-# Usage: ./scripts/debloat.sh [--dry-run] [-y]
+# Disables Amazon's ads, tracking and telemetry packages and applies the privacy
+# settings. Apps are left alone unless the owner named them in dumbtv.conf.
+# Usage: ./scripts/debloat.sh [--dry-run] [-y] [--no-reboot]
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 parse_flags "$@"
@@ -9,39 +10,34 @@ need_supported_fireos
 load_conf
 check_keep_list
 
-aps=$(list_of "$(fos user-apps.txt)")
-for p in $REMOVE_EXTRA; do case " $aps " in *" $p "*) ;; *) aps="$aps $p";; esac; done
+settings_files() {
+  list_of "$(fos settings.txt)"
+  if [[ $ALEXA == 0 ]]; then list_of "$(fos settings.alexa.txt)"; fi
+}
 
 step "plan"
 note "platform   $(fireos_name) (sdk $SDK), lists from ${DATA#$ROOT/}/$(basename "$(dirname "$(fos packages.txt)")")"
-note "packages   $(list_of "$(fos packages.txt)" | wc -l | tr -d ' ')"
-note "user apps  $(printf '%s' "$aps" | wc -w | tr -d ' ') (keeping: ${KEEP_APPS:-none extra})"
-note "settings   $(list_of "$(fos settings.txt)" | wc -l | tr -d ' ')"
+note "disable    $(cleanup_list | wc -l | tr -d ' ') Amazon ads, tracking and telemetry packages (reversible)"
+if [[ $ALEXA == 1 ]]; then note "alexa      kept (ALEXA=1)"; else note "alexa      disabled (ALEXA=0)"; fi
+if [[ -n $REMOVE_EXTRA ]]; then note "your apps  removing only what you named: $REMOVE_EXTRA"
+else note "your apps  none removed"; fi
+note "settings   $(settings_files | wc -l | tr -d ' ')"
 if [[ $DRY_RUN == 0 ]]; then
-  note "these are uninstalled permanently (APKs live in /data):"
-  for p in $aps; do
-    keep_pkg "$p" && continue
-    present "$p" || continue
-    printf '    %-32s %s\n' "$(app_name "$p" || true)" "$p" >&2
-  done
-  note "Amazon system apps are disabled and can be restored by restore.sh"
-  [[ $REINSTALL == 0 ]] &&
-    note "this build has no 'cmd package install-existing': system apps are only disabled, never uninstalled"
-  confirm "Remove ads/telemetry AND uninstall the apps listed above from $SERIAL?" || die "cancelled"
+  confirm "Disable Amazon's ads and tracking on $SERIAL${REMOVE_EXTRA:+ and remove the apps you named}?" || die "cancelled"
 fi
 
 if [[ $DRY_RUN == 1 ]]; then
   step "Amazon packages (dry-run)"
-  for p in $(list_of "$(fos packages.txt)"); do
+  for p in $(cleanup_list); do
     protected_by_policy "$p" && { note "$p  SKIP (never-disable list)"; continue; }
     keep_pkg "$p" && { note "$p  SKIP (keep list)"; continue; }
-    present "$p" && note "$p  would be removed or disabled"
+    present "$p" && note "$p  would be disabled"
   done
-  step "third-party apps (dry-run)"
-  for p in $aps; do
+  step "apps you named (dry-run)"
+  for p in $REMOVE_EXTRA; do
     protected_by_policy "$p" && { note "$p  SKIP (never-disable list)"; continue; }
-    keep_pkg "$p" && { note "$p  SKIP (keep list)"; continue; }
-    present "$p" && note "$p  would be uninstalled"
+    present "$p" || continue
+    if is_system "$p"; then note "$p  would be disabled"; else note "$p  would be uninstalled"; fi
   done
   note "dry-run: nothing was changed"
   exit 0
@@ -51,27 +47,9 @@ mkdir -p "$REPORT"
 log="$REPORT/debloat.txt"
 : > "$log"
 
-step "Amazon packages"
-removed=0; disabledn=0; protectedn=0; sysoff=0; absent=0; suspect=0
-for p in $(list_of "$(fos packages.txt)"); do
-  if protected_by_policy "$p"; then
-    printf '  %-46s SKIP (never-disable list)\n' "$p"; continue
-  fi
-  if keep_pkg "$p"; then
-    printf '  %-46s SKIP (keep list)\n' "$p"; continue
-  fi
-  if ! present "$p"; then
-    printf '  %-46s absent\n' "$p"; absent=$((absent+1)); continue
-  fi
-  # Uninstalling for user 0 is only undoable with install-existing (Android 8+).
-  # Without it the app would only come back with a factory reset, so disable instead.
-  if [[ $REINSTALL == 1 ]]; then
-    out=$(acmd pm uninstall -k --user 0 "$p" | head -1)
-    case $out in
-      Success*) printf '  %-46s removed\n' "$p"; removed=$((removed+1))
-                printf '%s\tremoved\n' "$p" >> "$log"; continue ;;
-    esac
-  fi
+# Prints the outcome of `pm disable-user` for $1 and logs it.
+disable_pkg() {
+  local p=$1 out
   out=$(acmd pm disable-user --user 0 "$p" | head -1)
   case $out in
     *disabled-user*) printf '  %-46s disabled\n' "$p"; disabledn=$((disabledn+1))
@@ -92,10 +70,11 @@ for p in $(list_of "$(fos packages.txt)"); do
     *)               printf '  %-46s SUSPECT: %s\n' "$p" "$out"; suspect=$((suspect+1))
                      printf '%s\tsuspect\t%s\n' "$p" "$out" >> "$log" ;;
   esac
-done
+}
 
-step "third-party apps"
-for p in $aps; do
+step "Amazon packages"
+removed=0; disabledn=0; protectedn=0; sysoff=0; absent=0; suspect=0
+for p in $(cleanup_list); do
   if protected_by_policy "$p"; then
     printf '  %-46s SKIP (never-disable list)\n' "$p"; continue
   fi
@@ -103,18 +82,38 @@ for p in $aps; do
     printf '  %-46s SKIP (keep list)\n' "$p"; continue
   fi
   if ! present "$p"; then
-    printf '  %-46s absent\n' "$p"; continue
+    printf '  %-46s absent\n' "$p"; absent=$((absent+1)); continue
   fi
-  out=$(acmd pm uninstall --user 0 "$p" | head -1)
-  case $out in
-    Success*) printf '  %-46s removed\n' "$p"; printf '%s\tremoved\n' "$p" >> "$log" ;;
-    *)        printf '  %-46s kept: %s\n' "$p" "$out" ;;
-  esac
+  disable_pkg "$p"
 done
+
+if [[ -n $REMOVE_EXTRA ]]; then
+  step "apps you named"
+  for p in $REMOVE_EXTRA; do
+    if protected_by_policy "$p"; then
+      printf '  %-46s SKIP (never-disable list)\n' "$p"; continue
+    fi
+    if ! present "$p"; then
+      printf '  %-46s absent\n' "$p"; continue
+    fi
+    # The TV's own apps are disabled so restore.sh can bring them back; store apps
+    # are uninstalled and come back from the store.
+    if is_system "$p"; then
+      disable_pkg "$p"
+      continue
+    fi
+    out=$(acmd pm uninstall --user 0 "$p" | head -1)
+    case $out in
+      Success*) printf '  %-46s uninstalled\n' "$p"; removed=$((removed+1))
+                printf '%s\tremoved\n' "$p" >> "$log" ;;
+      *)        printf '  %-46s kept: %s\n' "$p" "$out" ;;
+    esac
+  done
+fi
 
 step "processes that survived their own disable"
 live=$(running_names)
-for p in $(list_of "$(fos packages.txt)"); do
+for p in $(cleanup_list); do
   printf '%s\n' "$live" | grep -qx "$p" || continue
   protected_by_policy "$p" && continue
   keep_pkg "$p" && continue
@@ -133,13 +132,14 @@ while read -r ns key value; do
   [[ -z ${ns:-} || $ns == \#* ]] && continue
   acmd settings put "$ns" "$key" "$value" >/dev/null
   printf '  %-46s %s\n' "$key" "$value"
-done < <(list_of "$(fos settings.txt)" | sed 's/ = / /')
+done < <(settings_files | sed 's/ = / /')
 
 step "summary"
-note "removed $removed · disabled $disabledn · protected $protectedn · system-disabled $sysoff · absent $absent · suspect $suspect"
+note "disabled $disabledn · protected $protectedn · system-disabled $sysoff · absent $absent · suspect $suspect · apps uninstalled $removed"
 note "log: ${log#$ROOT/}"
 [[ $suspect -gt 0 ]] && note "SUSPECT entries need a human look before continuing"
 
 reboot_wait
+[[ ${NO_REBOOT:-0} == 1 ]] && exit 0
 note "home screen now: $(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')"
 note "if that is not a home screen you can use, run ./scripts/restore.sh"
