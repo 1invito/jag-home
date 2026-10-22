@@ -128,6 +128,16 @@ if [[ $DRY_RUN == 0 ]]; then
   fi
   grep -Fqx "routeIPs = $GW" "$CONF_OUT" ||
     die "config template changed upstream (routeIPs did not take) — update scripts/dnsfilter.sh"
+  # Fire OS 6 forgets always_on_vpn_app at boot, so there the app's own boot start is the
+  # only thing that brings the filter up. Opt-out for TVs where both starts race (issue #58).
+  if [[ $FILTER_AUTOSTART == 0 && $SDK -lt 28 ]]; then
+    note "FILTER_AUTOSTART=0 is ignored on $(fireos_name): it needs the app's own boot start"
+  elif [[ $FILTER_AUTOSTART == 0 ]]; then
+    sed -i.dumbtv3 's|^AUTOSTART = .*|AUTOSTART = false|' "$CONF_OUT"
+    grep -Fqx 'AUTOSTART = false' "$CONF_OUT" ||
+      die "config template changed upstream (AUTOSTART did not take) — update scripts/dnsfilter.sh"
+    note "AUTOSTART = false: always-on VPN alone starts the filter"
+  fi
   note "patched; no list downloads on the TV"
 fi
 
@@ -152,7 +162,7 @@ if [[ $DRY_RUN == 0 ]]; then
     step "one manual step ($(fireos_name) hides the app's files from adb)"
     note "the blocklist is on the TV; tell the app to use it, with the remote:"
     note "  1. open personalDNSfilter, then Advanced settings > Configure filter update"
-    note "  2. add an entry: file://storage/emulated/0/Android/media/$PKG/dumbtv-blocklist.txt"
+    note "  2. add an entry: file:///storage/emulated/0/Android/media/$PKG/dumbtv-blocklist.txt"
     note "  3. untick every other entry, go back, and reboot the TV"
     note "  4. run ./scripts/verify.sh: the Amazon hosts should answer 127.0.0.1"
     note "the routing tweaks (detectDNS=false, routeIPs) cannot be applied this way; see docs/GOTCHAS.md"
@@ -162,8 +172,9 @@ if [[ $DRY_RUN == 0 ]]; then
   dev "am force-stop $PKG" >/dev/null 2>&1
   sleep 2
   "$ADB" -s "$SERIAL" push "$CONF_OUT" "$DIR/dnsfilter.conf" | tail -1 || die "push of dnsfilter.conf failed"
-  # A stale index makes the app keep serving the previous list.
-  dev "rm -rf $DIR/FILTERHOSTS.TXT.idx $DIR/IDX_OUTDATED" >/dev/null 2>&1
+  # A stale index makes the app keep serving the previous list. The marker must exist:
+  # the app's rebuild ends by deleting IDX_OUTDATED and throws if it is not there.
+  dev "rm -rf $DIR/FILTERHOSTS.TXT.idx; touch $DIR/IDX_OUTDATED" >/dev/null 2>&1
   "$ADB" -s "$SERIAL" push "$LIST" "$DIR/FILTERHOSTS.TXT" | tail -1 || die "push of FILTERHOSTS.TXT failed"
   # Without a download-info file, the first boot after setup sees no
   # FILTERHOSTS.TXT.DLD_CNT and schedules an immediate "update ASAP" from the
@@ -232,6 +243,11 @@ esac
 if [[ $fail == 1 ]]; then
   note "the filter is not in the DNS path. Do not force-stop the app — reboot the TV,"
   note "then run ./scripts/verify.sh. See docs/GOTCHAS.md."
+  if [[ $(dev1 settings get secure always_on_vpn_app) == "$PKG" ]] &&
+     dev 'ip addr show' | grep -Eq '^[0-9]+: tun[0-9]+:.*UP'; then
+    note "the tunnel is up and always-on is set, yet DNS goes around it: if a reboot does not"
+    note "fix it, add FILTER_AUTOSTART=0 to dumbtv.conf and run this script again"
+  fi
   exit 1
 fi
 note "filter is live"

@@ -159,6 +159,14 @@ falls back to checking that a `tunN` interface is up instead of the setting.
 The interface name is not stable across boots (seen `tun0`, then `tun1` on the
 same device after the next reboot), so match any `tunN`, never a hardcoded `tun0`.
 
+**On some Fire OS 7 TVs the tunnel is up and nothing is filtered.** Seen on an AFTTI43
+(issue #58): after a reboot `always_on_vpn_app` was set, `tun0` was connected, and DNS
+still went straight to the router. Both the always-on VPN and the app's own boot receiver
+start the filter there, and they race. `FILTER_AUTOSTART=0` in `dumbtv.conf`, then
+`dnsfilter.sh` again, turns the app's own start off (`AUTOSTART = false`) and fixed it.
+It stays on by default: the same build on an Onida TV filters fine with it, and Fire OS 6
+needs it because it forgets the always-on setting at boot, so the script ignores it there.
+
 **The app can write an empty list over the pushed one** (84 bytes: a
 `# Downloaded by personalDNSFilter at:` header and nothing else). At start it
 reloads at once when `previousAutoUpdateURL` differs from the update URL, or when
@@ -168,7 +176,7 @@ which never equals the emptied URL, so this is not Fire OS 6 only. `dnsfilter.sh
 now empties `previousAutoUpdateURL` and writes `DLD_CNT` (whose mtime starts the
 reload interval) after the push.
 
-**Launcher releases up to 1.1 need Android 9.** From the next release one APK is
+**Launcher releases up to 1.1 need Android 9.** From 1.2 one APK is
 built for sdk 25 and installs on Fire OS 6 as is. With an older release pinned,
 `launcher/install.sh` sees `INSTALL_FAILED_OLDER_SDK` and builds from source
 instead (needs a JDK and `platforms;android-25`).
@@ -220,7 +228,8 @@ From a Fire TV Stick 4K Max (AFTKM, Fire OS 8.1.8.2) in issue #8; the catalog en
 detects this, pushes the list to `/sdcard/Android/media/dnsfilter.android/` instead
 (adb can still write there) and prints the one step only the app's own screen can do:
 Advanced settings > Configure filter update, add
-`file://storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt`, untick
+`file:///storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt` (three
+slashes: the app cuts `file://` off and needs the path that is left to start with `/`), untick
 the rest, reboot. The routing tweaks (`detectDNS = false`, `routeIPs`) cannot be set this
 way. `verify.sh` skips the list count there and relies on the blocked-host lookups.
 
@@ -229,7 +238,7 @@ start from an app with no visible window, even one sent through `system_server` 
 alarm (logcat: `Background activity start ... callingUidHasAnyVisibleWindow: false`). The
 Guard already owns such a window: the cover it draws over Amazon's home. It used to show
 the cover and fire the alarm in the same call, so the check ran before the window had
-reached the window manager. Builds after launcher 1.1 fire the launch from the cover's
+reached the window manager. From launcher 1.2 the Guard fires the launch from the cover's
 first pre-draw pass, which runs after the window's relayout, with a 150 ms fallback. Tested
 on a Fire TV Edition television (AFTOLCBC82, Fire OS 8.1.8.0): dumbtv home is in front
 0.3 s after Amazon's home starts, and the system log shows the start accepted. No new

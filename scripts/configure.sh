@@ -99,6 +99,10 @@ if [[ $DRY_RUN == 1 ]]; then
   exit 0
 fi
 
+# Not asked: an advanced switch for one filter problem (docs/GOTCHAS.md). Keep a set value.
+FILTER_AUTOSTART=$([[ -f $CONF ]] && sed -n 's/^FILTER_AUTOSTART=//p' "$CONF" | tail -1)
+FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
+
 mkdir -p "$REPORT"
 cat > "$CONF" <<EOF_CONF
 # Written by scripts/configure.sh. Git-ignored; it describes this household, not the repo.
@@ -109,6 +113,7 @@ LAUNCHER=$LAUNCHER
 DNSFILTER=$DNSFILTER
 SYSTEM_DNS=$SYSTEM_DNS
 YOUTUBE=$YOUTUBE
+FILTER_AUTOSTART=$FILTER_AUTOSTART
 EOF_CONF
 
 # Prove the file before anyone sources it.
@@ -119,6 +124,7 @@ case $DNSFILTER in 0|1) ;; *) die "internal error: DNSFILTER=$DNSFILTER";; esac
 case $SYSTEM_DNS in 0|1) ;; *) die "internal error: SYSTEM_DNS=$SYSTEM_DNS";; esac
 case $PRIME in 0|1) ;; *) die "internal error: PRIME=$PRIME";; esac
 case $YOUTUBE in 0|1) ;; *) die "internal error: YOUTUBE=$YOUTUBE";; esac
+case $FILTER_AUTOSTART in 0|1) ;; *) die "FILTER_AUTOSTART must be 0 or 1 in $CONF";; esac
 
 step "saved"
 note "${CONF#$ROOT/}"
