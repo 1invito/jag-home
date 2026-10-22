@@ -101,17 +101,17 @@ else
     printf '%-10s %-38s %s\n' FAIL filter "missing or empty"; fail=1
   fi
   vpn=$(dev 'settings get secure always_on_vpn_app' | tr -d '\r')
-  if [[ $SDK -lt 28 ]]; then
-    # Fire OS 6 forgets always_on_vpn_app at boot; the app starts itself, so check the tunnel.
-    if dev 'ip addr show tun0' | grep -q 'tun0:.*UP'; then
-      printf '%-10s %-38s %s\n' ok vpn "tun0 up (started by its boot receiver)"
-    else
-      printf '%-10s %-38s %s\n' FAIL vpn "tun0 down; open personalDNSfilter once, then reboot"; fail=1
-    fi
-  elif [[ $vpn == dnsfilter.android ]]; then
+  if [[ $vpn == dnsfilter.android ]]; then
     printf '%-10s %-38s %s\n' ok vpn "$vpn"
+  elif tunif=$(dev 'ip addr show' | sed -n 's/^[0-9]*: \(tun[0-9]*\):.*UP.*/\1/p' | head -1) && [[ -n $tunif ]]; then
+    # Fire OS 6 always forgets always_on_vpn_app at boot; at least one Fire OS 7 build
+    # (7.7.1.3 / PS7713) does too. Either way the app's own AUTOSTART boot receiver
+    # brings the tunnel up on its own, so a live tunN is the real proof it is filtering.
+    # The interface name is not stable across boots (seen tun0, then tun1 on the same
+    # device), so match any tunN rather than hardcoding tun0.
+    printf '%-10s %-38s %s\n' ok vpn "$tunif up (started by its boot receiver, not always-on)"
   else
-    printf '%-10s %-38s %s\n' FAIL vpn "${vpn:-unset}"; fail=1
+    printf '%-10s %-38s %s\n' FAIL vpn "${vpn:-unset}; no tun interface up; open personalDNSfilter once, then reboot"; fail=1
   fi
 fi
 
