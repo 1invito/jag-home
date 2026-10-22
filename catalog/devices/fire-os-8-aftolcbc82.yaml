@@ -1,0 +1,41 @@
+id: fire-os-8-aftolcbc82
+title: "Amazon AFTOLCBC82"
+platform: fireos
+status: partial
+tested_on: "RS8180.3746N"
+models:
+  - "AFTOLCBC82 (codename ginza; Fire TV Edition television, MediaTek)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  not recorded: ADB was already enabled before this session. My Fire TV > Developer Options lists both 'ADB debugging' (port 5555) and a separate 'Wireless debugging' (Android 11 pairing, random port)
+ip_location: "Settings > My Fire TV > About > Network"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "human presses Allow with 'Always allow' ticked. On the first connect the accepted prompt did not take; a disconnect/connect raised a second prompt, and accepting that one authorized the key"
+  - name: "ADB off after reboot"
+    blocks_automation: true
+    fix: "after debloat.sh's reboot, port 5555 was closed (TV otherwise booted to home normally), so reboot_wait timed out with 'device did not report boot_completed'. Turning ADB debugging on once did not open 5555; turning it off and on again did"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "Fire TV Edition TV: MediaTek inputs (com.mediatek.tis HDMI x5/analog/composite/component, com.mediatek.dtv.tvinput.atsctuner) plus com.amazon.mediatek.livetv, com.amazon.tv.settings.mediatek, com.mediatek.customerpq, com.amazon.ftve.audioprovider/audioeffectsprovider, com.amazon.franktvinput are not on never-disable.txt. None is targeted today; they belong on never-disable"
+  - "No 'cmd package install-existing' on this build: debloat.sh disabled all 58 present targets (0 uninstalled), so restore.sh only needs pm enable"
+  - "No package in packages.txt was refused (protected 0, suspect 0). Absent: tv.fw.metrics, neo.minerva.logcat, tigris, vizzini.ftvcds, androidskillconnectioncapability, wha.mediabrowserservice, printspooler, bips, nfc; device.rdmapplication from protected.txt"
+  - "com.amazon.firebat is Prime Video here (versionName PVFTV-*, FirebatTvInputService), not an OTA helper; com.amazon.tv.support lives at priv-app/com.amazon.tv.aiv.support. packages.txt disables both, so PRIME=1 users must add them to KEEP_APPS"
+  - "com.amazon.hedwig provides a TV input (HedwigTvInputService, a channel source, not HDMI/tuner); disabling it left all hardware inputs working"
+  - "secure voice_disabled and alexa_wake_word_disabled read 0 again after reboot (Fire OS resets them); harmless once com.amazon.aca is disabled"
+  - "com.amazon.dummy.settings and com.android.traceur stayed disabled after reboot (unlike AFTKM)"
+  - "com.amazon.device.software.ota restarts within seconds of lockdown.sh's force-stop; only DNS stops updates"
+  - "Wi-Fi reports NOT_METERED, so lockdown.sh's data saver and restrict-background blacklist have no effect; the app-ops part still applies"
+  - "configure.sh -y writes defaults (PRIME=1 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0), not prior answers; answers had to be fed on stdin"
+  - "verify.sh with DNSFILTER=0 performs no DNS checks; blocking was proven by pinging verify-blocked/verify-allowed hosts from the TV against a network resolver (6/6 blocked, 4/4 resolve)"
+notes: "Fire OS 8.1.8.0 Fire TV Edition TV: debloat (58 disabled), lockdown and youtube.sh work; verify.sh exits 0. DNS filter and launcher not used (blocking done at a network resolver with the same host list; launcher skipped because HOME takeover is known not to work on Fire OS 8)."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
