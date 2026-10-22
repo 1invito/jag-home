@@ -49,3 +49,57 @@ com.onn.updatenotification                   # onn/Walmart update nagger
 #   com.google.android.tungsten.setupwraith  # the launcher swap (scripts/launcher.sh),
 #                                            # never as debloat. Both are on
 #                                            # never-disable.txt for that reason.
+#
+# For single builds' documented choices and feature tradeoffs (not executable
+# removal lists), see docs/TCL-G08-PACKAGES.md and docs/TCL-G10-PACKAGES.md.
+
+# --- Philips-24NA-4K (Skyworth), Android 14, build UKN7.260716.014 ---
+# Verified by hand on that one TV on 2026-10-19: each was uninstalled for user 0
+# and the TV kept working. Commented out on purpose: one household's choices on
+# one build, not a list to apply elsewhere. See
+# catalog/devices/androidtv-philips-24na-4k.yaml.
+#
+# vendor recommendations, shortcuts, manuals, karaoke
+# com.smartdevice.recommendation
+# com.smartdevice.dailyshortcut
+# com.smartdevice.dailymanage
+# com.smartdevice.leanbacklauncher.customizer
+# com.smartdevice.recordactivation
+# com.Smartdevice.emanual
+# com.audiocn.karaoke.global.micmanager
+# com.loostone.tuning
+#
+# feedback, ads, telemetry, personalization
+# com.google.android.feedback
+# com.android.tv.feedbackconsent
+# com.google.android.play.games
+# com.android.adservices.api
+# com.android.federatedcompute.services
+# com.android.ondevicepersonalization.services
+# com.google.android.apps.tv.dreamx
+#
+# voice assistant (removes voice search)
+# com.google.android.katniss
+# com.android.hotwordenrollment.okgoogle
+# com.android.hotwordenrollment.xgoogle
+#
+# firmware updater (no more OTA updates)
+# com.mediatek.tv.systemupdater
+#
+# preinstalled streaming apps this household does not watch. A household
+# choice, not bloat: these belong in user-apps.txt decisions, never here.
+# ar.tvplayer.tv
+# com.ballyscorp.ballylive
+# com.disney.disneyplus
+# com.hulu.livingroomplus
+# com.instagram.airwave
+# com.tubitv
+# com.netflix.ninja
+# com.netflix.tokenmanager
+# com.amazon.amazonvideo.livingroom
+# com.google.android.youtube.tvmusic
+#
+# disabled, not removed, so dumbtv home answers HOME (both are in
+# never-disable.txt; see the catalog entry before copying this)
+# com.google.android.apps.tv.launcherx
+# com.google.android.tungsten.setupwraith
