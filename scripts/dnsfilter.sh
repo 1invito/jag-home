@@ -192,6 +192,9 @@ if [[ $DRY_RUN == 1 ]]; then
   exit 0
 fi
 
+# adb reboot skips the framework shutdown, so save the VPN app-op and always-on setting first
+acmd appops write-settings >/dev/null
+sleep 3
 step "reboot and wait"
 reboot_wait
 sleep 20
