@@ -115,3 +115,7 @@ uses.
 [Muzzammil](https://x.com/DevMuzzammil), with people who ran it on their own TVs
 and sent fixes and device reports. They are credited in the
 [README](../README.md#thanks).
+
+**Can someone set it up for me?**
+Yes. Tell us which TV you have at [dumbtv.org/help](https://dumbtv.org/help) and we
+will reply by email.

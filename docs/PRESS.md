@@ -4,6 +4,10 @@ dumbtv launched on 19 October 2026 with [a post on X](https://x.com/DevMuzzammil
 that followed [the one before it](https://x.com/DevMuzzammil/status/2111595814099591535).
 Within days it was covered in more than 100 articles across about 25 countries.
 
+Website: [dumbtv.org](https://dumbtv.org). Logos and screenshots are in
+[docs/assets](assets). For interviews and questions, use
+[dumbtv.org/help](https://dumbtv.org/help) and choose **Press**.
+
 **Highlights:** [TechCrunch](https://techcrunch.com/2026/10/19/people-are-using-ai-to-make-their-smart-tvs-dumb-again/) ·
 [TechRadar](https://www.techradar.com/entertainment/streaming/your-tv-should-do-what-you-paid-for-people-are-vibe-coding-apps-to-banish-ads-from-their-smart-tvs-and-android-tv-and-its-catching-on) ·
 [Tom's Guide](https://www.tomsguide.com/ai/people-are-using-ai-to-turn-their-smart-tvs-into-dumb-tvs-and-you-might-want-to-do-the-same) ·

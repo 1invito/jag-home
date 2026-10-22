@@ -9,6 +9,14 @@
 Ads, tracking and clutter out of your Fire TV. Your apps and HDMI inputs stay.</p>
 
 <p align="center">
+  <a href="https://dumbtv.org"><b>dumbtv.org</b></a> ·
+  <a href="https://dumbtv.org/start">Get started</a> ·
+  <a href="https://dumbtv.org/blocked">What it blocks</a> ·
+  <a href="https://dumbtv.org/tv">Devices</a> ·
+  <a href="https://dumbtv.org/help">Get help</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/humblemuzzu/dumbtv/stargazers"><img src="https://img.shields.io/github/stars/humblemuzzu/dumbtv?style=flat&color=4C8DFF" alt="Stars"></a>
   <a href="https://github.com/humblemuzzu/dumbtv/releases/latest"><img src="https://img.shields.io/github/v/release/humblemuzzu/dumbtv?label=dumbtv%20home&color=4C8DFF" alt="Latest launcher release"></a>
   <a href="https://github.com/humblemuzzu/dumbtv/actions/workflows/validate.yml"><img src="https://github.com/humblemuzzu/dumbtv/actions/workflows/validate.yml/badge.svg" alt="CI"></a>
@@ -90,7 +98,11 @@ adb connect <tv-ip>:5555        # press Allow on the TV
 ./scripts/verify.sh             # checks the result
 ```
 
-Works from macOS, Linux and Windows (WSL or Git Bash).
+Works from macOS, Linux and Windows (WSL or Git Bash). The same steps, one at a
+time, are at [dumbtv.org/start](https://dumbtv.org/start).
+
+**Rather not do it yourself?** [Tell us about your TV](https://dumbtv.org/help) and
+we will help.
 
 ## What you choose
 
@@ -119,6 +131,8 @@ Your answers are saved in `dumbtv.conf`; run `configure.sh` again to change them
 | **Your apps** | Untouched. |
 
 [How it works](docs/HOW-IT-WORKS.md) explains each part and why it is needed.
+[dumbtv.org/blocked](https://dumbtv.org/blocked) lists every package, what it does
+and what you lose without it.
 
 ## dumbtv home
 
@@ -145,7 +159,8 @@ it takes over the HOME button.
 ## Tested on
 
 Each row is a report from the person who ran it. **tested** means the whole pass ran
-and `verify.sh` passed on that device.
+and `verify.sh` passed on that device. [dumbtv.org/tv](https://dumbtv.org/tv) has
+every model with its menu paths and quirks.
 
 | Device | Fire OS | Status | Tested by |
 |---|---|---|---|
@@ -213,6 +228,7 @@ back from the Appstore.
 
 | | |
 |---|---|
+| [dumbtv.org](https://dumbtv.org) | the website: guides, every package, every device |
 | [How it works](docs/HOW-IT-WORKS.md) | each part and why it is needed |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | symptoms and fixes |
 | [FAQ](docs/FAQ.md) | updates, Prime Video, factory reset, is this legal |

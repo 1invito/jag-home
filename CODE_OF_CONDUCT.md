@@ -7,5 +7,5 @@ people here are running a terminal for the first time to fix their own TV; help
 them the way you would want to be helped.
 
 To report a problem, message the maintainer, [@DevMuzzammil](https://x.com/DevMuzzammil)
-on X, or open a private report from the repository's **Security** tab. Reports are
-kept confidential.
+on X, write through [dumbtv.org/help](https://dumbtv.org/help), or open a private
+report from the repository's **Security** tab. Reports are kept confidential.

@@ -28,7 +28,8 @@ rest:
 - your GitHub username, so the report credits you
 
 It writes `catalog/devices/<platform>-<brand>-<model>.yaml`, validates it and prints
-the `git` and `gh` commands for the pull request. For unattended runs every answer
+the `git` and `gh` commands for the pull request. Once merged, the report appears
+on [dumbtv.org/tv](https://dumbtv.org/tv) within a day. For unattended runs every answer
 has a flag: `--brand`, `--model`, `--platform`, `--status`, `--developer-mode`,
 `--ip-location`, `--prompt "name|fix"`, `--quirk "text"`, `--models "A,B"`,
 `--notes "text"`, `--github handle`, `--no-device`, `--dry-run`.

@@ -6,7 +6,8 @@ is shown, which dialogs needed a person, and what surprised them. The next owner
 of the same model, or their coding agent, starts from there.
 
 The list of devices, with what worked on each, is in the
-[README](../README.md#tested-on).
+[README](../README.md#tested-on) and on [dumbtv.org/tv](https://dumbtv.org/tv),
+which picks up a new file within a day of it being merged.
 
 ## Adding your TV
 
