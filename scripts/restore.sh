@@ -42,6 +42,16 @@ for p in $(list_of "$(fos packages.txt)"); do
   printf '  %-46s %s / %s\n' "$p" "${a:-no output}" "${b:-no output}"
 done
 
+# Older lists disabled packages that have since moved to never-disable.txt
+# (com.amazon.firebat is Prime Video), so the loop above no longer reaches them.
+step "never-disable packages left disabled"
+off=$(dev 'pm list packages -d' | sed 's/^package://' | tr -d '\r')
+for p in $(list_of "$(fos never-disable.txt)" | awk '{print $1}'); do
+  grep -qx "$p" <<<"$off" || continue
+  b=$(acmd pm enable --user 0 "$p" 2>&1 | head -1)
+  printf '  %-46s %s\n' "$p" "${b:-no output}"
+done
+
 step "packages that were only starved"
 if [[ -f $REPORT/debloat.txt ]]; then
   while IFS=$'\t' read -r p state rest; do
