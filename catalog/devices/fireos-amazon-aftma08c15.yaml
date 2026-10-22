@@ -1,5 +1,7 @@
-id: fire-os-8-aftma08c15
-title: "Amazon AFTMA08C15"
+id: fireos-amazon-aftma08c15
+title: "Amazon Fire TV Stick 4K Plus (AFTMA08C15)"
+contributors:
+  - edrmundy
 platform: fireos
 status: partial
 tested_on: "RS8185.3891N"
@@ -25,14 +27,14 @@ quirks:
   - "DNS filter on Fire OS 8 (Android 11): the app folder is not writable over adb, so dnsfilter.sh pushes the blocklist to /sdcard/Android/media/dnsfilter.android/ and the app has to be pointed at it by hand. Advanced settings > Configure filter update > the row labelled <new> > edit it: category custom, name dumbtv, URL file:///storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt (three slashes - the app strips file:// and needs the leading slash), untick every built-in entry, set the update interval to 3650 days, then RELOAD FILTER. The log then reads Building index for 415 entries"
   - "personalDNSfilter writes a default config on first start with 1Hosts-light, StevenBlack and HageziPro active (381269 entries) and refreshes on its own, so the built-in entries must be unticked by hand and the update interval raised to 3650 days, otherwise the pushed list is overwritten"
   - "The Fire TV on-screen keyboard (com.amazon.tv.ime) swallows key events while a text field is focused: KEYCODE_DEL lands only every few tries unless the deletes are batched into one adb shell input keyevent 67 67 67 call, KEYCODE_MOVE_HOME and the D-pad never arrive, and taps on other fields land one field behind. To clear a field: tap its left edge so the cursor sits at position 0, then a batched KEYCODE_DEL, then adb shell input text"
-  - "Launcher: the HOME takeover does not work on this model. The Guard accessibility service is enabled and bound and its alarm fires (dumpsys alarm shows a pending u0a253:tv.dumbtv.home alarm), but no activity start is ever logged and HOME keeps opening com.amazon.tv.launcher/.ui.HomeActivity_vNext. Every HOME press also logs E SELinux: avc: denied { see_home_task } for scontext=u:r:platform_app tclass=amazon_policies - that denial comes from com.amazon.tv.devicecontrol (platform-signed), not from the launcher app. cmd package set-home-activity prints Success and is ignored. Lead for a launcher change: /system/framework/fosservices.jar contains com.amazon.policy.keypolicymanager.CustomHomeButtonHandler, which reads the manifest metadata com.amazon.metadata.CUSTOM_HOME and would send ACTION_CUSTOM_HOME to that receiver; the metadata is not set, so the system falls back to Amazon home. verify.sh reports the hook as bound - press HOME to check"
-  - "com.amazon.firebat is Prime Video on this model as well (versionName PVFTV-324.0104-L, real app in /data with a stub in /system/system_ext/priv-app/com.amazon.firebat-stub), although data/fireos/packages.txt lists it under OTA helpers, so the stock pass disables Prime Video. Prime Video is com.amazon.avod on older builds"
+  - "Launcher 1.1: the Guard was bound and its alarm fired, but Android 11 never started dumbtv home and HOME stayed on Amazon's. Launcher 1.2 fixes this (the launch waits for the Guard's cover window to draw); not yet re-tested on this stick. Every HOME press also logs an SELinux denial for see_home_task from com.amazon.tv.devicecontrol, which is Amazon's own and harmless. fosservices.jar contains CustomHomeButtonHandler, which reads the manifest metadata com.amazon.metadata.CUSTOM_HOME: a possible second route"
+  - "com.amazon.firebat is Prime Video on this model too (versionName PVFTV-324.0104-L, real app in /data, stub in /system/system_ext/priv-app). It is on never-disable.txt"
   - "The filter VPN is revoked when personalDNSfilter is killed. The RESTART button in the app brings it back; always_on_vpn_app plus the Autostart checkbox bring it back after a reboot. Do not am force-stop the filter app"
   - "No package in packages.txt was refused (protected 0). Absent on this model: tv.fw.metrics, katoch, vizzini.ftvcds, tv.democontent.provider, tv.localgallery, wha.mediabrowserservice, printspooler, bips, nfc; device.rdmapplication from protected.txt; whisperjoin.middleware.np from never-disable.txt"
   - "com.amazon.device.software.ota and .ota.override share one UID (10087)"
-  - "cmd package help exits 255 on this build and lib.sh runs it in a pipeline under set -o pipefail, so REINSTALL is detected as 0 and the debloat only disables the Amazon apps instead of uninstalling them for user 0. Nothing is lost here (restore.sh only has to re-enable them), but the message about a missing install-existing is wrong"
+  - "cmd package help exits 255 on this build, so the scripts cannot tell whether install-existing exists. It no longer matters for a new run: debloat.sh only disables Amazon packages"
   - "A third-party VPN client is installed on this TV and competes for the single VPN slot with the DNS filter: connecting it takes the filter offline"
-notes: "Fire OS 8 (Android 11), build RS8185.3891N: debloat (58 disabled, 0 protected, 0 suspect), lockdown and the DNS filter (415 entries) all work and verify.sh exits 0. The HOME takeover does not work on this model - needs a launcher change"
+notes: "Fire OS 8 (Android 11), build RS8185.3891N: debloat (58 disabled, 0 protected, 0 suspect), lockdown and the DNS filter (415 entries) all work and verify.sh exits 0. HOME stayed on Amazon's home with launcher 1.1; 1.2 carries the fix"
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt

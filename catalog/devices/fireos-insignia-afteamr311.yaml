@@ -1,5 +1,7 @@
-id: fire-os-6-afteamr311
-title: "Insignia AFTEAMR311 (Fire TV Edition)"
+id: fireos-insignia-afteamr311
+title: "Insignia Fire TV Edition TV (AFTEAMR311)"
+contributors:
+  - gtalusan
 platform: fireos
 status: tested
 tested_on: "NS6711"

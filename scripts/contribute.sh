@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # End of session: record what you learned about this TV and open a PR.
-# Derives the technical facts from the device, asks only for the parts a robot
-# cannot know (menu paths, blocking dialogs), writes catalog/devices/<id>.yaml,
-# validates it, and prints the PR steps.
+# Reads the technical facts from the device, asks for what it cannot read (menu
+# paths, blocking dialogs, your GitHub name for the credit), writes
+# catalog/devices/<platform>-<brand>-<model>.yaml, validates it, and prints the PR steps.
 #
-# Usage: ./scripts/contribute.sh [-y] [--dry-run] [--id slug]
+# Usage: ./scripts/contribute.sh [-y] [--dry-run] [--id slug] [--github handle]
 #        [--platform fireos|androidtv|tizen|webos|roku|other]
 #        [--status tested|partial|untested] [--brand B] [--model M] [--no-device]
 #        [--developer-mode "path"] [--ip-location "path"]
@@ -13,7 +13,7 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ID=""; PLATFORM=""; STATUS=""; USE_DEVICE=1
-DEV_MODE=""; IP_LOC=""; MODELS=""; NOTES=""; BRAND=""; MODEL=""
+DEV_MODE=""; IP_LOC=""; MODELS=""; NOTES=""; BRAND=""; MODEL=""; GITHUB=""
 ANDROID="unknown"; SDK="unknown"; BUILD="unknown"; KERNEL="unknown"
 PROMPTS=(); QUIRKS=()
 while [[ $# -gt 0 ]]; do
@@ -21,6 +21,7 @@ while [[ $# -gt 0 ]]; do
     -y|--yes) ASSUME_YES=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --id) ID=$2; shift 2 ;;
+    --github) GITHUB=${2#@}; shift 2 ;;
     --platform) PLATFORM=$2; shift 2 ;;
     --status) STATUS=$2; shift 2 ;;
     --brand) BRAND=$2; shift 2 ;;
@@ -78,6 +79,8 @@ if [[ $USE_DEVICE == 1 ]]; then
   note "build    $BUILD"
   note "kernel   $KERNEL"
   [[ -z $PLATFORM ]] && { if is_fireos; then PLATFORM=fireos; else PLATFORM=androidtv; fi; }
+  # Fire TV Edition televisions report Amazon; the brand on the box is what a reader searches for.
+  BRAND=$(ask "Brand on the box (Amazon for sticks and cubes):" "$BRAND")
 else
   [[ -z $BRAND ]] && BRAND=$(ask "Brand:")
   [[ -z $MODEL ]] && MODEL=$(ask "Model:")
@@ -92,7 +95,8 @@ fi
 if [[ $ASSUME_YES == 1 && ( -z $BRAND || -z $MODEL ) ]]; then
   die "unattended mode needs --brand and --model (or drop --no-device so they can be read from the TV)"
 fi
-[[ -z $ID ]] && ID=$(printf '%s-%s' "$PLATFORM" "$(printf '%s' "$MODEL" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9.\n' '-')" | sed 's/-\+/-/g; s/-$//')
+slug() { printf '%s' "$1" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9.\n' '-' | sed 's/--*/-/g; s/^-//; s/-$//'; }
+[[ -z $ID ]] && ID=$(printf '%s-%s-%s' "$PLATFORM" "$(slug "$BRAND")" "$(slug "$MODEL")")
 printf '%s' "$ID" | grep -Eq '^[a-z0-9][a-z0-9.-]*$' || die "id '$ID' must be lowercase letters, digits, dots or dashes"
 
 step "the parts only a human knows"
@@ -121,6 +125,9 @@ if [[ $ASSUME_YES == 0 && ${#QUIRKS[@]} -eq 0 ]]; then
   done
 fi
 [[ -z $NOTES ]] && NOTES=$(clean "$(ask 'One-line summary of the result:' '')")
+[[ -z $GITHUB ]] && GITHUB=$(ask "Your GitHub username, for the credit (Enter to stay anonymous):" "")
+GITHUB=${GITHUB#@}
+[[ -z $GITHUB || $GITHUB =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]] || die "'$GITHUB' is not a GitHub username"
 
 case $PLATFORM in
   fireos) DATA_DIR=data/fireos ;;
@@ -128,12 +135,14 @@ case $PLATFORM in
   *) DATA_DIR="" ;;
 esac
 OUT="$ROOT/catalog/devices/$ID.yaml"
-[[ -e $OUT ]] && die "$OUT already exists — pick another --id or edit that file"
+[[ -e $OUT ]] && die "$OUT already exists: add your findings to it, or pass --id with the build appended (e.g. $ID-ps7717)"
+[[ $DRY_RUN == 1 ]] && OUT=/dev/stdout
 
 step "writing"
 {
   printf 'id: %s\n' "$ID"
   printf 'title: "%s"\n' "$(yamlq "$BRAND $MODEL")"
+  [[ -n $GITHUB ]] && printf 'contributors:\n  - %s\n' "$GITHUB"
   printf 'platform: %s\n' "$PLATFORM"
   printf 'status: %s\n' "$STATUS"
   printf 'tested_on: "%s"\n' "$(yamlq "$BUILD")"
@@ -178,9 +187,7 @@ step "writing"
 } > "$OUT"
 
 if [[ $DRY_RUN == 1 ]]; then
-  step "dry-run: wrote $OUT"
-  note "delete it if you only wanted to look: $OUT"
-  cat "$OUT" >&2
+  note "dry-run: printed above, nothing written; it would be catalog/devices/$ID.yaml"
   exit 0
 fi
 

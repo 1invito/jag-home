@@ -1,5 +1,7 @@
 id: androidtv-onn-streaming-device-4k-pro
-title: "onn Streaming Device 4K Pro (Google TV, Android 14)"
+title: "onn. Streaming Device 4K Pro (Google TV, Android 14)"
+contributors:
+  - OSikorsky
 platform: androidtv
 status: partial
 tested_on: "URO4.260304.011.B1.15051976"
@@ -32,8 +34,7 @@ launcher:
     com.google.android.apps.tv.launcherx disabled for user 0, in that order.
   fallback: >-
     pm enable --user 0 for both stock packages hands HOME straight back to Google TV;
-    no reboot needed. report/rollback-onn.sh in a working copy does this plus the
-    package pass.
+    no reboot needed.
   quirk: >-
     cmd package set-home-activity returns Success but is not what decides HOME: launcherx
     wins on intent-filter priority until it is disabled. Order matters, and setupwraith

@@ -1,5 +1,7 @@
 id: androidtv-tcl-g08
-title: "TCL Smart TV Pro (G08, Android 14)"
+title: "TCL Smart TV Pro G08 (Google TV, Android 14)"
+contributors:
+  - maam00
 platform: androidtv
 # Live hardware session; not an end-to-end run of dumbtv's scripts.
 status: partial

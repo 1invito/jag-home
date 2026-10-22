@@ -1,5 +1,7 @@
-id: fireos-aftr
-title: "Amazon AFTR"
+id: fireos-amazon-aftr
+title: "Amazon Fire TV Cube, 2nd gen (AFTR)"
+contributors:
+  - podulator
 platform: fireos
 status: tested
 tested_on: "PS7713.5443N"
@@ -18,7 +20,7 @@ data:
   user_apps: data/fireos/user-apps.txt
 quirks:
   - "always_on_vpn_app has been seen reverting to null across a reboot on this build (7.7.1.3 / PS7713), not just on Fire OS 6; the app's own AUTOSTART boot receiver keeps the filter running regardless, so verify.sh falls back to checking for any live tunN interface. The tun interface name is not stable across boots (seen tun0, then tun1 after the next one) — never match a hardcoded tun0."
-notes: "Fire TV Cube (1st gen, model AFTR), full dumbtv pass: debloat + lockdown + DNS filter + launcher + YouTube replaced; verify.sh all checks passed"
+notes: "Fire TV Cube (2nd gen, model AFTR), full dumbtv pass: debloat + lockdown + DNS filter + launcher + YouTube replaced; verify.sh all checks passed"
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt

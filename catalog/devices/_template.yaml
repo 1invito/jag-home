@@ -1,7 +1,9 @@
-# Copy to catalog/devices/<platform-or-model>.yaml and fill in.
-# Delete the models: [] placeholder if you do not list models.
-id: example-id
-title: Example TV platform
+# Copy to catalog/devices/<platform>-<brand>-<model>.yaml and fill in; id must match
+# the file name. ./scripts/contribute.sh writes this for you.
+id: androidtv-brand-model
+title: "Brand Model (Google TV, Android 14)"
+contributors:
+  - your-github-name
 platform: androidtv
 status: untested
 tested_on: ""

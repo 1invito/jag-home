@@ -1,5 +1,7 @@
 id: androidtv-philips-24na-4k
 title: "Philips 24NA 4K Google TV (Skyworth, Android 14)"
+contributors:
+  - lsukev
 platform: androidtv
 # Full pass done by hand over ADB; verify.sh only checks Fire OS things.
 status: partial
@@ -50,7 +52,7 @@ quirks:
     Wi-Fi dropped for about 40 s during the APK install. Reconnect with
     adb connect on port 5555 and check the install result before retrying.
   - >-
-    Private DNS set to dns.adguard-dns.com validated on this build and
+    Private DNS set to an ad-blocking DoT resolver validated on this build and
     blocked doubleclick.
   - >-
     Made by Skyworth: the vendor packages are com.smartdevice.* (DailyPlay

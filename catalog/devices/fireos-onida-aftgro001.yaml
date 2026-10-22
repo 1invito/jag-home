@@ -1,5 +1,7 @@
-id: fire-os-7
-title: Fire OS 7 (Android 9)
+id: fireos-onida-aftgro001
+title: "Onida 43\" Fire TV Edition TV (AFTGRO001)"
+contributors:
+  - humblemuzzu
 platform: fireos
 status: tested
 tested_on: Fire TV Edition television, Fire OS 7.7.1.x

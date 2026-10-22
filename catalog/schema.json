@@ -10,12 +10,14 @@
     "platform": { "enum": ["fireos", "androidtv", "tizen", "webos", "roku", "other"] },
     "status": { "enum": ["tested", "untested", "partial"] },
     "tested_on": { "type": "string" },
+    "contributors": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*$" } },
+    "notes": { "type": "string" },
     "models": { "type": "array", "items": { "type": "string" } },
     "adb": {
       "type": "object",
       "properties": {
         "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-        "transport": { "enum": ["wifi", "usb", "both"] },
+        "transport": { "enum": ["wifi", "ethernet", "usb", "both"] },
         "first_connection_prompt": { "type": "string" }
       }
     },
@@ -49,7 +51,7 @@
     "launcher": {
       "type": "object",
       "properties": {
-        "mechanism": { "enum": ["accessibility_service", "set_home_activity", "none"] },
+        "mechanism": { "enum": ["accessibility_service", "usage_stats_keeper", "set_home_activity", "none"] },
         "package": { "type": "string" },
         "reason": { "type": "string" },
         "fallback": { "type": "string" },

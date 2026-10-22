@@ -1,5 +1,7 @@
-id: fireos-aftkrt
-title: "Amazon AFTKRT"
+id: fireos-amazon-aftkrt
+title: "Amazon Fire TV Stick 4K Max, 2nd gen (AFTKRT)"
+contributors:
+  - gerardo-galvez-hl
 platform: fireos
 status: partial
 tested_on: "RS8182.3811N"
@@ -21,7 +23,7 @@ data:
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks:
-  - "Different model from catalog/devices/fire-os-8-aftkm.yaml (issue #8) but the same codename (ro.product.device karat) and the same build (RS8182.3811N, Fire OS 8.1.8.2), so the Fire OS 8 findings there (Android/data unreachable from shell, launcher HOME blocked by background-activity-start rules) most likely apply here too; dnsfilter.sh and launcher.sh were not run on this unit"
+  - "Different model from catalog/devices/fireos-amazon-aftkm.yaml (issue #8) but the same codename (karat) and build (RS8182.3811N, Fire OS 8.1.8.2), so the Fire OS 8 findings there (Android/data unreachable from adb) most likely apply here too. dnsfilter.sh and launcher.sh were not run on this unit. The Fire OS 8 HOME fix in launcher 1.2 was confirmed on an AFTKRT by its author (PR #49)"
   - "debloat.sh printed 'no cmd package install-existing' although the command exists (line 120 of cmd package help): need_device runs adb shell 'cmd package help' | grep -q install-existing under set -o pipefail; grep -q exits on the first match, adb gets a broken pipe and returns 255, so REINSTALL=0. Reproduced 5/5 with pipefail, 3/3 succeed without it. Timing-dependent: the issue #8 run on the same build detected it (10 removed). Harmless here, every package was disabled instead of uninstalled"
   - "debloat.sh: 0 removed, 58 disabled, 0 protected, 0 suspect, 9 absent (none of the regional user apps are installed). com.amazon.ceviche and com.amazon.neo.minerva.logcat kept running after disable-user and were starved; after a reboot ceviche stays stopped but minerva.logcat is running again while still disabled"
   - "Unlike issue #8, com.amazon.dummy.settings and com.android.traceur were still disabled after a reboot here (both were disabled, not uninstalled)"

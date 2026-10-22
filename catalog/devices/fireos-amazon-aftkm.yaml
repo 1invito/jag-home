@@ -1,5 +1,8 @@
-id: fire-os-8-aftkm
-title: "Amazon AFTKM"
+id: fireos-amazon-aftkm
+title: "Amazon Fire TV Stick 4K, 2nd gen (AFTKM)"
+contributors:
+  - gleesonb
+  - humblemuzzu
 platform: fireos
 status: partial
 tested_on: "RS8182.3811N"

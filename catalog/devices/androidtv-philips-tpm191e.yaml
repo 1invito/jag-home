@@ -1,5 +1,7 @@
 id: androidtv-philips-tpm191e
-title: "Philips TPM191E Android TV (OLED705, Android 12)"
+title: "Philips OLED705 Android TV (TPM191E, Android 12)"
+contributors:
+  - tkightly
 platform: androidtv
 # Live hardware session by hand over ADB; not an end-to-end run of dumbtv's scripts.
 status: partial
@@ -69,7 +71,7 @@ notes: >-
   tvrecommendations. The TV survived two reboots, all HDMI, tuner and
   component inputs stayed registered, and Freeview Play, Ambilight/Hue,
   Alexa, Chromecast and PlayFi packages were left enabled. Private DNS set to
-  a NextDNS profile. The owner then confirmed on the TV that the home screen,
+  an ad-blocking resolver. The owner then confirmed on the TV that the home screen,
   HDMI switching, Freeview Play, Prime Video, Ambilight/Hue, Alexa, casting
   and SmartTube all worked. Left enabled on purpose: com.vewd.core.browserui and
   com.seraphic.openinet.pre (likely the HbbTV / Freeview Play engines),

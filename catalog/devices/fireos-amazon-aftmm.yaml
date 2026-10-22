@@ -1,5 +1,7 @@
-id: fire-os-6
-title: Fire OS 6 (Android 7.1)
+id: fireos-amazon-aftmm
+title: "Amazon Fire TV Stick 4K, 1st gen (AFTMM)"
+contributors:
+  - niz-coder
 platform: fireos
 status: tested
 tested_on: "Fire TV Stick 4K 1st gen (mantis), Fire OS 6.7.1.1: debloat, lockdown, DNS filter and the Keeper launcher; verify.sh exited 0; HOME lands on dumbtv in under 0.3 s with a real remote; boot takes ~45–50 s (BOOT_COMPLETED)"

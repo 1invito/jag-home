@@ -1,5 +1,7 @@
 id: androidtv-hisense-smarttv-4k-ffm
 title: "Hisense SmartTV 4K FFM (Google TV, Android 11)"
+contributors:
+  - aswinaasokan18-spec
 platform: androidtv
 # Live hardware session with manual ADB; not an end-to-end run of all.sh/verify.sh.
 status: partial
@@ -64,7 +66,7 @@ quirks:
     were unchanged after the session.
   - >-
     Private DNS works with no app: settings put global private_dns_specifier
-    dns.adguard-dns.com plus private_dns_mode hostname. dumpsys connectivity
+    <an ad-blocking DoT host> plus private_dns_mode hostname. dumpsys connectivity
     showed it validated, and ad hosts resolved to 127.0.0.1 after a reboot.
 notes: >-
   Tested on a real TV on 2026-10-21 with manual ADB. Disabled for user 0, all
@@ -79,8 +81,8 @@ known_limits:
   - "One TV and one firmware build; other Hisense Google TV models may differ."
   - >-
     all.sh, debloat.sh and verify.sh were not run: debloat.sh refuses non-Amazon
-    hardware, and verify.sh checks Fire OS hosts. AdGuard Private DNS was used
-    instead of personalDNSfilter.
+    hardware, and verify.sh checks Fire OS hosts. An ad-blocking Private DNS
+    resolver was used instead of personalDNSfilter.
   - >-
     data/androidtv/packages.txt is still unpopulated. The disables listed in
     notes are one household's choices, not a removal list for other TVs.

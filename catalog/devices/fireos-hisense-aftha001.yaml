@@ -1,5 +1,7 @@
-id: fire-os-7-aftha001-hisense-58u6hf
-title: "Hisense 58U6HF (Amazon AFTHA001, Fire TV Edition)"
+id: fireos-hisense-aftha001
+title: "Hisense 58U6HF Fire TV (AFTHA001)"
+contributors:
+  - murilaiooo
 platform: fireos
 status: partial
 tested_on: "Fire OS 7.7.1.7, PS7717.5741N (Android 9, SDK 28)"

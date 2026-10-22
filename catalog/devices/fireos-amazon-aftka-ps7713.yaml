@@ -1,5 +1,7 @@
-id: fireos-aftka
-title: "Amazon AFTKA"
+id: fireos-amazon-aftka-ps7713
+title: "Amazon Fire TV Stick 4K Max, 1st gen (AFTKA), Fire OS 7.7.1.3"
+contributors:
+  - harupong
 platform: fireos
 status: partial
 tested_on: "PS7713.5443N"

@@ -1,5 +1,7 @@
 id: androidtv-xiaomi-mitv-mssp3
-title: "Xiaomi MiTV-MSSP3"
+title: "Xiaomi Mi TV (MiTV-MSSP3, Android TV 9)"
+contributors:
+  - frogu
 platform: androidtv
 status: partial
 tested_on: "PI.4663 release-keys"
@@ -45,8 +47,8 @@ notes: >-
   and feedback packages disabled for user 0. HOME resolved to dumbtv after
   disabling com.google.android.tvlauncher and the setup handler. After a
   reboot, HOME selection and all seven disabled package states persisted;
-  Wi-Fi and ADB returned. Android Private DNS using HaGeZi Normal via
-  Control D blocked pagead2.googlesyndication.com and
+  Wi-Fi and ADB returned. Android Private DNS using a public resolver with the HaGeZi Normal
+  list blocked pagead2.googlesyndication.com and
   googleads.g.doubleclick.net while Prime Video resolved. After reboot,
   the first blocked-domain check and the Prime Video check passed again.
   Prime Video and other owner-selected streaming apps were retained.

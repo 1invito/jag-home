@@ -1,5 +1,7 @@
-id: fire-os-7-aftka
-title: "Amazon AFTKA"
+id: fireos-amazon-aftka-ps7697
+title: "Amazon Fire TV Stick 4K Max, 1st gen (AFTKA), Fire OS 7.6.9.7"
+contributors:
+  - dchuk
 platform: fireos
 status: partial
 tested_on: "PS7697.4800N"

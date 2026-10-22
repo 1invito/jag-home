@@ -45,13 +45,13 @@ com.onn.updatenotification                   # onn/Walmart update nagger
 #                                            # the remote's Netflix hotkey.
 #
 # NOT in this list on purpose:
-#   com.google.android.apps.tv.launcherx     # the home screen. Disabled only as part of
-#   com.google.android.tungsten.setupwraith  # the launcher swap (scripts/launcher.sh),
+#   com.google.android.apps.tv.launcherx     # the home screen. Disabled by hand only as
+#   com.google.android.tungsten.setupwraith  # part of a launcher swap (docs/OTHER-TVS.md),
 #                                            # never as debloat. Both are on
 #                                            # never-disable.txt for that reason.
 #
 # For single builds' documented choices and feature tradeoffs (not executable
-# removal lists), see docs/TCL-G08-PACKAGES.md and docs/TCL-G10-PACKAGES.md.
+# removal lists), see docs/devices/tcl-g08.md and docs/devices/tcl-g10.md.
 
 # --- Philips-24NA-4K (Skyworth), Android 14, build UKN7.260716.014 ---
 # Verified by hand on that one TV on 2026-10-19: each was uninstalled for user 0

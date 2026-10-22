@@ -1,5 +1,7 @@
 id: androidtv-xiaomi-mi-tv-stick
 title: "Xiaomi Mi TV Stick (MiTV-AESP0, Android TV 9)"
+contributors:
+  - pfTheTrial
 platform: androidtv
 # Live hardware session with manual ADB; not an end-to-end run of dumbtv's scripts.
 status: partial

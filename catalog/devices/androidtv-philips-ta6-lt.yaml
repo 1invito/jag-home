@@ -1,5 +1,7 @@
-id: androidtv-philips-google-tv-ta6-lt
-title: "TPV Philips Google TV TA6 LT"
+id: androidtv-philips-ta6-lt
+title: "Philips Google TV TA6 LT (TPV)"
+contributors:
+  - fabricio00101
 platform: androidtv
 status: partial
 tested_on: "UKNV.260227.001"

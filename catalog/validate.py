@@ -23,7 +23,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEVICES = ROOT / "catalog" / "devices"
 SCHEMA_PATH = ROOT / "catalog" / "schema.json"
 REQUIRED = ["id", "title", "platform", "developer_mode", "ip_location", "data", "verify"]
-NESTED = {"data", "verify", "adb", "launcher", "prompts", "models", "quirks", "known_limits"}
+NESTED = {"data", "verify", "adb", "launcher", "prompts", "models", "quirks", "known_limits",
+          "contributors"}
+HANDLE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*$")
 WITH_DATA = {"fireos", "androidtv"}
 PATH_KEYS = {"packages", "protected", "never_disable", "user_apps", "settings",
              "settings_restore", "blocked", "allowed"}
@@ -181,6 +183,13 @@ def check_common(path, top, nested, sch, full):
         label = m.get("__item__") if isinstance(m, dict) else str(m)
         if not label:
             fail(name, "empty entry under models:")
+
+    contributors = nested.get("contributors") or []
+    if contributors and isinstance(contributors[0], str) and contributors[0].strip().startswith("-"):
+        contributors = [c.get("__item__", "") for c in block_items(contributors)]
+    for handle in contributors:
+        if not HANDLE.match(str(handle).lstrip("@")):
+            fail(name, f"contributors: '{handle}' is not a GitHub handle")
 
     if full:
         for key, value in nested.items():
