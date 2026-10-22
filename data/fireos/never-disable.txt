@@ -23,6 +23,8 @@ com.amazon.tv.ooberesource
 com.amazon.webview.chromium            # webview, many apps break without it
 com.amazon.venezia                     # app store
 com.amazon.firebat                     # Prime Video (Fire OS 6 and 7), not an OTA helper
+com.amazon.device.messaging            # disabling it hung a 2025 Fire TV at the boot animation
+                                       # (issue #57); its push domain is DNS-blocked instead
 com.amazon.vizzini                     # do not disable: it is a persistent priv-app that
                                        # then draws an undismissable "Unable to Detect Your
                                        # Remote" window over the TV. Block its domains instead.
