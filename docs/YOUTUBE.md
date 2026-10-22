@@ -126,6 +126,8 @@ Then set the dumbtv home app order back in Options, or edit
   app and it is not a parental-control system: recommendations are still YouTube's.
   For young children, the honest answer is the YouTube Kids app under Amazon's
   parental controls, or no YouTube on the TV at all.
-- **Not for Fire TV devices sold from October 2025.** Those run Amazon's VegaOS,
-  not Android, and no sideloaded app runs there at all. See the SmartTube README's
-  device-support note.
+- **Not for Fire TV devices that run VegaOS.** Amazon started shipping VegaOS, which
+  is not Android, on some devices from October 2025, and no sideloaded app runs there.
+  Other 2025 Fire TVs still run Android underneath (issue #57); `adb shell getprop
+  ro.build.version.sdk` answering a number means it is Android. See the SmartTube
+  README's device-support note.
