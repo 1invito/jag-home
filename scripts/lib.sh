@@ -105,7 +105,7 @@ need_device() {
   dev getprop ro.build.version.sdk >/dev/null || die "device $SERIAL is not responding"
   SDK=$(dev1 getprop ro.build.version.sdk | tr -d '\r')
   case $SDK in ''|*[!0-9]*) SDK=0 ;; esac
-  dev 'cmd package help' | grep -q install-existing && REINSTALL=1 || REINSTALL=0
+  grep -q install-existing <<<"$(dev 'cmd package help')" && REINSTALL=1 || REINSTALL=0
 }
 
 # Data file for this Fire OS generation. Fire OS 6 (Android 7.1) has its own lists in
