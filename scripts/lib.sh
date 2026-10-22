@@ -3,6 +3,10 @@
 # Must stay bash 3.2 compatible: that is what /usr/bin/env bash is on macOS.
 
 ADB=${ADB:-adb}
+# Git Bash (MSYS2) on Windows rewrites arguments that look like Unix paths, so
+# `adb push x /sdcard/...` would target "C:/Program Files/Git/sdcard/...". Device paths
+# must reach adb unchanged. Other shells ignore this variable.
+export MSYS2_ARG_CONV_EXCL="${MSYS2_ARG_CONV_EXCL:+$MSYS2_ARG_CONV_EXCL;}/sdcard;/data;/storage;/system"
 DRY_RUN=${DRY_RUN:-0}
 ASSUME_YES=${ASSUME_YES:-0}
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
