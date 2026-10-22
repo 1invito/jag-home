@@ -88,8 +88,8 @@ update one with the other: `install.sh` says so and tells you to
 **Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, layout (rows, or a
 grid that wraps to as many columns as the tile size fits on screen), app names
 (on focus / always / never), clock format, inputs row, what opens inputs (see below),
-background (black, graphite, midnight, an image, or adaptive solid), image dim and
-wallpaper rotation, and **Next wallpaper**
+background (black, graphite, midnight, an image, adaptive solid, or adaptive wallpaper
+tint), image dim and wallpaper rotation, and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
 the home screen. Apps without a TV banner, like the Appstore or Downloads, start
 hidden; tick them there to add them.
@@ -140,7 +140,7 @@ clock=auto
 inputs=on
 # tv home: what an input tile opens, the TV's own app or the launcher's input screen
 switch=tv
-# black graphite midnight image adaptive
+# black graphite midnight image adaptive adaptive-tint
 background=black
 # 0 20 40 60 80, image background only
 dim=40
@@ -157,9 +157,15 @@ Comments go on their own line; anything after `=` is the value.
 
 Back it up with `adb pull`, restore it with `adb push`. Hand edits apply the next
 time the home screen comes back. For a wallpaper, push `wallpaper.jpg` (or `.png`)
-into the same folder and set `background=image`. For several, push them into a
-`wallpapers/` subfolder instead (`.jpg`, `.png` or `.webp`, shown in name order) and
-pick a rotation; while that folder has images, `wallpaper.jpg` is ignored.
+into the same folder and set `background=image` (or `background=adaptive-tint`
+to overlay the focused app's color). There is no on-TV image picker. For several,
+push them into a `wallpapers/` subfolder instead (`.jpg`, `.png` or `.webp`, shown
+in name order) and pick a rotation; while that folder has images,
+`wallpaper.jpg` is ignored.
+`background=adaptive` picks a dark solid color from the focused app's art.
+`background=adaptive-tint` keeps the wallpaper and adds a subtle focus color overlay;
+without a wallpaper it shows graphite. HDMI, Options and Settings use a neutral color.
+Both modes leave the focus accent (`accent=amber`, for example) unchanged.
 
 ```sh
 adb shell mkdir -p /sdcard/Android/data/tv.dumbtv.home/files/wallpapers

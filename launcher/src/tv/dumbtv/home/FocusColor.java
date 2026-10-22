@@ -10,6 +10,11 @@ final class FocusColor {
 
     private FocusColor() {}
 
+    /** A 24% overlay; keep extraction independent of the configured focus accent. */
+    static int tint(int solid) {
+        return (solid & 0x00FFFFFF) | 0x3D000000;
+    }
+
     static int from(Drawable art) {
         if (art == null || art.getConstantState() == null) return FALLBACK;
         Bitmap bitmap = null;

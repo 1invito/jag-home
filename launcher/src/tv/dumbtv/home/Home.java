@@ -61,6 +61,7 @@ public final class Home extends Activity {
     private FrameLayout root;
     private ImageView wall;
     private View shade;
+    private View tint;
     private TextView clock, date;
     private Row apps, inputs;
     private Tile moving;
@@ -68,6 +69,7 @@ public final class Home extends Activity {
     private String backgroundMode;
     private ValueAnimator colorAnimation;
     private int displayedColor, targetColor;
+    private boolean tintWallpaper;
 
     private final BroadcastReceiver packages = new BroadcastReceiver() {
         @Override
@@ -400,6 +402,8 @@ public final class Home extends Activity {
         root.addView(wall, new FrameLayout.LayoutParams(MATCH, MATCH));
         shade = new View(this);
         root.addView(shade, new FrameLayout.LayoutParams(MATCH, MATCH));
+        tint = new View(this);
+        root.addView(tint, new FrameLayout.LayoutParams(MATCH, MATCH));
 
         ScrollView scroll = new ScrollView(this) {
             /** Scrolls in whole rows: the focused row shows complete, and a row starts at the top edge. */
@@ -631,7 +635,9 @@ public final class Home extends Activity {
     }
 
     private void focusBackground(Item it) {
-        if (!resumed || !"adaptive".equals(cfg.get(Config.BACKGROUND))) return;
+        String mode = cfg.get(Config.BACKGROUND);
+        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode)) return;
+        if ("adaptive-tint".equals(mode) && !tintWallpaper) return;
         if (it != null && it.info != null && it.backgroundColor == 0 && !it.colorRequested
                 && (it.banner != null || it.icon != null)) {
             it.colorRequested = true;
@@ -644,22 +650,24 @@ public final class Home extends Activity {
             });
         }
         int color = it == null || it.backgroundColor == 0 ? FocusColor.FALLBACK : it.backgroundColor;
+        if ("adaptive-tint".equals(mode)) color = FocusColor.tint(color);
         if (color == targetColor) return;
         targetColor = color;
         stopColorAnimation();
         if (Settings.Global.getFloat(getContentResolver(), "animator_duration_scale", 1f) == 0f) {
-            setSolidColor(color);
+            setAdaptiveColor(color);
             return;
         }
         colorAnimation = ValueAnimator.ofArgb(displayedColor, color);
         colorAnimation.setDuration(250);
-        colorAnimation.addUpdateListener(a -> setSolidColor((Integer) a.getAnimatedValue()));
+        colorAnimation.addUpdateListener(a -> setAdaptiveColor((Integer) a.getAnimatedValue()));
         colorAnimation.start();
     }
 
-    private void setSolidColor(int color) {
+    private void setAdaptiveColor(int color) {
         displayedColor = color;
-        root.setBackgroundColor(color);
+        if ("adaptive-tint".equals(backgroundMode)) tint.setBackgroundColor(color);
+        else root.setBackgroundColor(color);
     }
 
     private void stopColorAnimation() {
@@ -710,21 +718,35 @@ public final class Home extends Activity {
 
     private void background() {
         String mode = cfg.get(Config.BACKGROUND);
-        boolean image = "image".equals(mode);
+        boolean image = "image".equals(mode) || "adaptive-tint".equals(mode);
         File file = image ? cfg.wallpaper() : null;
+        tintWallpaper = "adaptive-tint".equals(mode) && file != null;
         if ("adaptive".equals(mode)) {
             if (!mode.equals(backgroundMode)) {
                 stopColorAnimation();
                 targetColor = 0;
-                setSolidColor(FocusColor.FALLBACK);
+                root.setBackgroundColor(FocusColor.FALLBACK);
+                displayedColor = FocusColor.FALLBACK;
+                tint.setBackgroundColor(Color.TRANSPARENT);
             }
             backgroundMode = mode;
             focusBackground(focusedItem());
+        } else if ("adaptive-tint".equals(mode)) {
+            root.setBackgroundColor(file == null ? cfg.background() : Color.BLACK);
+            if (!mode.equals(backgroundMode) || file == null) {
+                stopColorAnimation();
+                targetColor = 0;
+                tint.setBackgroundColor(Color.TRANSPARENT);
+                displayedColor = Color.TRANSPARENT;
+            }
+            backgroundMode = mode;
+            if (tintWallpaper) focusBackground(focusedItem());
         } else {
             stopColorAnimation();
             targetColor = 0;
             backgroundMode = mode;
-            setSolidColor(cfg.background());
+            tint.setBackgroundColor(Color.TRANSPARENT);
+            root.setBackgroundColor(cfg.background());
         }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
         shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
