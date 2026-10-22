@@ -29,10 +29,12 @@ load_conf() {
   LAUNCHER=${LAUNCHER:-1}
   DNSFILTER=${DNSFILTER:-1}
   SYSTEM_DNS=${SYSTEM_DNS:-0}
+  FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
   [[ -f $CONF ]] && source "$CONF"
   KEEP_APPS=${KEEP_APPS:-}; REMOVE_EXTRA=${REMOVE_EXTRA:-}
   PRIME=${PRIME:-1}; LAUNCHER=${LAUNCHER:-1}; DNSFILTER=${DNSFILTER:-1}
   SYSTEM_DNS=${SYSTEM_DNS:-0}
+  FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
 }
 
 keep_pkg() {
@@ -60,7 +62,7 @@ ask_note() { printf '  %s\n' "$*"; }
 die()  { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 dev()  { "$ADB" -s "$SERIAL" shell "$@" 2>&1 </dev/null; }
-dev1() { dev "$@" | head -1; }
+dev1() { dev "$@" | head -1 | tr -d '\r'; }
 
 # A dropped connection must not look like "package absent".
 dev_ok() {
@@ -121,10 +123,17 @@ fos() {
 }
 
 fireos_name() {
-  if [[ $SDK -ge 30 ]]; then echo "Fire OS 8"
+  if [[ $SDK -gt 30 ]]; then echo "Fire OS newer than 8 (sdk $SDK, untested)"
+  elif [[ $SDK -ge 30 ]]; then echo "Fire OS 8"
   elif [[ $SDK -ge 28 ]]; then echo "Fire OS 7"
-  elif [[ $SDK -ge 22 ]]; then echo "Fire OS 6"
+  elif [[ $SDK -ge 25 ]]; then echo "Fire OS 6"
   else echo "Fire OS 5 or older (unsupported)"; fi
+}
+
+# The package lists and app-op calls are written for Fire OS 6 and later.
+need_supported_fireos() {
+  is_fireos || die "this is for Amazon Fire OS; see docs/OTHER-TVS.md"
+  [[ $SDK -ge 25 ]] || die "$(fireos_name): Fire OS 5 and older refuse pm disable-user, so nothing here can work; see docs/OTHER-TVS.md"
 }
 
 # Background execution off/on. RUN_ANY_IN_BACKGROUND only exists from Android 9; on

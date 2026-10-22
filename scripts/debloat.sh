@@ -5,7 +5,7 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 parse_flags "$@"
 need_device
-is_fireos || die "this package list is for Fire OS; see docs/OTHER-TVS.md"
+need_supported_fireos
 load_conf
 check_keep_list
 

@@ -5,6 +5,7 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 parse_flags "$@"
 need_device
+need_supported_fireos
 load_conf
 
 step "network policy"
@@ -37,6 +38,6 @@ else
   note "blacklist:  $(dev 'cmd netpolicy list restrict-background-blacklist' | tr -d '\r')"
   op=RUN_ANY_IN_BACKGROUND; [[ $SDK -lt 28 ]] && op=RUN_IN_BACKGROUND
   for p in $(list_of "$(fos protected.txt)"); do
-    present "$p" && note "$(printf '%-44s' "$p") $(dev "appops get $p $op" | tr -d '\r')"
+    if present "$p"; then note "$(printf '%-44s' "$p") $(dev "appops get $p $op" | tr -d '\r')"; fi
   done
 fi
