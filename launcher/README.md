@@ -98,9 +98,11 @@ hidden; tick them there to add them.
 
 An input tile can open the input in two ways; **Options › Open inputs with** picks one.
 
-- **The TV's app** (default): the tile hands Android's passthrough channel URI for the
-  input to whatever app the TV ships for it, usually its Live TV app. That is what Fire
-  OS 7 televisions have done since the first release.
+- **Automatic** (default): the TV's own app when exactly one app other than Amazon's Live
+  TV claims the input, otherwise the launcher's own screen. Amazon's Live TV claims every
+  input and then opens its settings or a channel scan instead (issues #51 and #63).
+- **The TV's app**: always hand Android's passthrough channel URI to whatever app the TV
+  ships for it, as releases up to 1.1 did.
 - **dumbtv home**: the launcher shows the input itself, through Android's public `TvView`
   API (`Input.java`). The screen is the picture, the input's name for a moment, and
   "No signal" or "Could not open input" when there is none. Back returns to the home
@@ -110,7 +112,7 @@ An input tile can open the input in two ways; **Options › Open inputs with** p
   empty port 0.2 s after, and HOME finishes the screen in place, so no task or input
   session is left behind.
 
-Pick **dumbtv home** when the first route lands somewhere else. On a Fire TV Edition
+**Automatic** already picks the launcher's screen in the cases below. On a Fire TV Edition
 television (AFTOLCBC82, Fire OS 8) the URI resolves only to Amazon's Live TV app, which
 opens its channel-scan settings when no antenna channels are scanned; Amazon's own home
 goes through `com.amazon.tv.inputpreference.service`, which needs a system permission a
@@ -138,8 +140,8 @@ labels=focus
 clock=auto
 # on off
 inputs=on
-# tv home: what an input tile opens, the TV's own app or the launcher's input screen
-switch=tv
+# auto tv home: what an input tile opens, the TV's own app or the launcher's input screen
+switch=auto
 # black graphite midnight image adaptive adaptive-tint
 background=black
 # 0 20 40 60 80, image background only

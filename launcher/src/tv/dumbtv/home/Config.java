@@ -70,9 +70,9 @@ final class Config {
     static final Choice INPUTS = new Choice("inputs", "Inputs row", "on",
             new String[] {"on", "off"},
             new String[] {"Shown", "Hidden"});
-    static final Choice SWITCH = new Choice("switch", "Open inputs with", "tv",
-            new String[] {"tv", "home"},
-            new String[] {"The TV's app", "dumbtv home"});
+    static final Choice SWITCH = new Choice("switch", "Open inputs with", "auto",
+            new String[] {"auto", "tv", "home"},
+            new String[] {"Automatic", "The TV's app", "dumbtv home"});
     static final Choice BACKGROUND = new Choice("background", "Background", "black",
             new String[] {"black", "graphite", "midnight", "image", "adaptive", "adaptive-tint"},
             new String[] {"Black", "Graphite", "Midnight", "Image file", "Adaptive solid", "Adaptive wallpaper tint"});
@@ -308,7 +308,7 @@ final class Config {
             int n = pool.size();
             return pool.get((int) (((step + offset()) % n + n) % n));
         }
-        for (String name : new String[] {"wallpaper.jpg", "wallpaper.png", "wallpaper.webp"}) {
+        for (String name : new String[] {"wallpaper.jpg", "wallpaper.jpeg", "wallpaper.png", "wallpaper.webp"}) {
             File f = new File(dir, name);
             if (f.isFile()) return f;
         }

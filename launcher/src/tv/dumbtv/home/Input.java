@@ -3,6 +3,7 @@ package tv.dumbtv.home;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.AudioManager;
@@ -20,6 +21,8 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import java.util.List;
+
 /**
  * Shows an HDMI, AV or other passthrough input inside the launcher, through Android's TvView.
  *
@@ -36,6 +39,7 @@ public final class Input extends Activity {
     private static final String EXTRA_ID = "input", EXTRA_NAME = "name";
     private static final long NAME_MS = 2500, SIGNAL_MS = 6000;
     private static final String FAILED = "Could not open input", NO_SIGNAL = "No signal";
+    private static final String AMAZON_LIVE_TV = "com.amazon.tv.livetv";
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final AudioManager.OnAudioFocusChangeListener focus = change -> { };
@@ -72,15 +76,25 @@ public final class Input extends Activity {
     };
 
     /**
-     * The intent that opens {@code it} on this screen, or null when the user picked the TV's own
-     * app for the passthrough URI and the TV has one.
+     * The intent that opens {@code it} on this screen, or null when the TV's own app should get the
+     * passthrough URI: always for "tv" if one exists, and for "auto" only when a single app other
+     * than Amazon's Live TV claims it.
      */
     static Intent intent(Context c, Config cfg, Item it, CharSequence name) {
-        if ("tv".equals(cfg.get(Config.SWITCH))
-                && it.intent.resolveActivity(c.getPackageManager()) != null) {
-            return null;
-        }
+        String mode = cfg.get(Config.SWITCH);
+        List<ResolveInfo> apps = c.getPackageManager().queryIntentActivities(it.intent, 0);
+        boolean handOver = "tv".equals(mode) ? !apps.isEmpty()
+                : "auto".equals(mode) && apps.size() == 1 && !viewerIsLiveTv(apps.get(0));
+        if (handOver) return null;
         return new Intent(c, Input.class).putExtra(EXTRA_ID, it.id).putExtra(EXTRA_NAME, name);
+    }
+
+    /**
+     * Amazon's Live TV claims every passthrough URI, then redirects to its own settings or a
+     * channel scan instead of showing the input (seen on Fire OS 7 and 8 televisions).
+     */
+    private static boolean viewerIsLiveTv(ResolveInfo app) {
+        return app.activityInfo != null && AMAZON_LIVE_TV.equals(app.activityInfo.packageName);
     }
 
     @Override
