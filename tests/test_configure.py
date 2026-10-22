@@ -39,6 +39,24 @@ class ConfigureKeepTest(unittest.TestCase):
         self.assertIn("com.netflix.ninja", result.stderr)
         self.assertIsNone(conf)
 
+    def test_defaults_remove_nothing_and_keep_alexa(self):
+        result, conf = self.configure()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('REMOVE_EXTRA=""', conf)
+        self.assertIn("ALEXA=1", conf)
+        self.assertIn("PRIME=1", conf)
+        self.assertIn("YOUTUBE=0", conf)
+
+    def test_named_app_is_recorded_for_removal(self):
+        result, conf = self.configure("--remove", "in.startv.hotstar")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('REMOVE_EXTRA="in.startv.hotstar"', conf)
+
+    def test_a_package_the_tv_needs_cannot_be_removed(self):
+        result, conf = self.configure("--remove", "com.amazon.tv.launcher")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(conf)
+
     def test_extra_removal_can_be_kept(self):
         result, conf = self.configure(
             "--keep", "com.netflix.ninja", "--remove", "com.netflix.ninja")
