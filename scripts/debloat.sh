@@ -52,7 +52,7 @@ log="$REPORT/debloat.txt"
 : > "$log"
 
 step "Amazon packages"
-removed=0; disabledn=0; protectedn=0; absent=0; suspect=0
+removed=0; disabledn=0; protectedn=0; sysoff=0; absent=0; suspect=0
 for p in $(list_of "$(fos packages.txt)"); do
   if protected_by_policy "$p"; then
     printf '  %-46s SKIP (never-disable list)\n' "$p"; continue
@@ -78,6 +78,17 @@ for p in $(list_of "$(fos packages.txt)"); do
                      printf '%s\tdisabled\n' "$p" >> "$log" ;;
     *protected*)     printf '  %-46s PROTECTED\n' "$p"; protectedn=$((protectedn+1))
                      printf '%s\tprotected\n' "$p" >> "$log" ;;
+    # Fire OS ships some packages disabled by the system (state 2, e.g. com.android.nfc
+    # on a Fire TV Stick 4K Max). The shell may not move a package out of that state,
+    # and it is off already, so this is not a failure.
+    *"Shell cannot change component state"*)
+      if dev "dumpsys package $p" | grep -q 'User 0:.* enabled=2 '; then
+                     printf '  %-46s already disabled by the system\n' "$p"; sysoff=$((sysoff+1))
+                     printf '%s\tsystem-disabled\n' "$p" >> "$log"
+      else
+                     printf '  %-46s SUSPECT: %s\n' "$p" "$out"; suspect=$((suspect+1))
+                     printf '%s\tsuspect\t%s\n' "$p" "$out" >> "$log"
+      fi ;;
     *)               printf '  %-46s SUSPECT: %s\n' "$p" "$out"; suspect=$((suspect+1))
                      printf '%s\tsuspect\t%s\n' "$p" "$out" >> "$log" ;;
   esac
@@ -125,7 +136,7 @@ while read -r ns key value; do
 done < <(list_of "$(fos settings.txt)" | sed 's/ = / /')
 
 step "summary"
-note "removed $removed · disabled $disabledn · protected $protectedn · absent $absent · suspect $suspect"
+note "removed $removed · disabled $disabledn · protected $protectedn · system-disabled $sysoff · absent $absent · suspect $suspect"
 note "log: ${log#$ROOT/}"
 [[ $suspect -gt 0 ]] && note "SUSPECT entries need a human look before continuing"
 

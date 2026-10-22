@@ -155,6 +155,9 @@ Read the recovery table instead of disabling more packages.
 - `disabled` — `pm disable-user` succeeded.
 - `PROTECTED` — Amazon refuses (`Cannot disable a protected package`). Expected
   for `data/fireos/protected.txt`; `lockdown.sh` and the DNS filter handle them.
+- `already disabled by the system` — Fire OS ships it disabled (`enabled=2`, e.g.
+  `com.android.nfc` on a Fire TV Stick 4K Max); the shell may not change that
+  state and does not need to. Leave it alone.
 - `SUSPECT` — failed for another reason. Stop and report; do not add packages.
 - `SKIP (keep list)` — the user asked to keep it. Correct, leave it alone.
 
