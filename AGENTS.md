@@ -70,6 +70,9 @@ Ask these, in plain language, and wait for answers:
    and updates; if they say no, say what they lose.
 5. "Anything else you want kept, or that you want removed?" — free text. Map
    names to packages with `data/apps.txt` and `adb shell pm list packages -3`.
+   Only a package on a removal list (`data/fireos/user-apps.txt`,
+   `packages.txt`) belongs in `--keep`; dumbtv never touches anything else, and
+   `configure.sh` refuses it as a likely typo.
 6. "Do you want the YouTube app replaced?" — **ask it as a question, never as a
    plan step.** Default is **no**: the stock app stays, ads and all. If they say
    yes, say it is a different app (SmartTube) that has no ad code and can hide

@@ -82,6 +82,15 @@ fi
 KEEP=$(printf '%s' "$KEEP" | sed 's/^ *//')
 EXTRA=$(printf '%s' "$EXTRA" | sed 's/^ *//')
 
+# debloat.sh refuses a keep entry that is on no removal list (its typo guard),
+# but only after preflight has run. Catch it here instead. The TV is not known
+# yet, so accept a package from any Fire OS list.
+known=$(cat "$DATA"/fireos*/packages.txt "$DATA"/fireos*/user-apps.txt 2>/dev/null | sed 's/#.*//' | awk 'NF {print $1}')
+for k in $KEEP; do
+  printf '%s\n' $known $EXTRA | grep -qx -- "$k" ||
+    die "keep entry '$k' is on no removal list: dumbtv never touches it, so leave it out (or fix the typo)"
+done
+
 if [[ $DRY_RUN == 1 ]]; then
   step "would write $CONF"
   note "KEEP_APPS=\"$KEEP\""
