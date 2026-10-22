@@ -73,17 +73,43 @@ update one with the other: `install.sh` says so and tells you to
 |---|---|
 | OK | open the app, or switch to the input |
 | Hold OK, or ☰ Menu | Move, Rename, Hide, App info |
+| On an input: Back | back to the home screen |
+| On an input: ☰ Menu | show the input's name again |
 | Move mode | ◀ ▶ moves the tile, any other key drops it |
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
 **Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, app names
-(on focus / always / never), clock format, inputs row, background (black, graphite,
-midnight, or an image), image dim and wallpaper rotation, and **Next wallpaper**
+(on focus / always / never), clock format, inputs row, what opens inputs (see below),
+background (black, graphite, midnight, or an image), image dim and wallpaper rotation,
+and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
 the home screen. Apps without a TV banner, like the Appstore or Downloads, start
 hidden; tick them there to add them.
+
+## HDMI inputs
+
+An input tile can open the input in two ways; **Options › Open inputs with** picks one.
+
+- **The TV's app** (default): the tile hands Android's passthrough channel URI for the
+  input to whatever app the TV ships for it, usually its Live TV app. That is what Fire
+  OS 7 televisions have done since the first release.
+- **dumbtv home**: the launcher shows the input itself, through Android's public `TvView`
+  API (`Input.java`). The screen is the picture, the input's name for a moment, and
+  "No signal" or "Could not open input" when there is none. Back returns to the home
+  screen; HOME works as from any app. Nothing new is requested: a `TvView` asks the TV's
+  input service for a session and hands it the window's surface. Measured on a Fire TV
+  Edition television: first HDMI frame 1.3 s after the tile is pressed, "No signal" on an
+  empty port 0.2 s after, and HOME finishes the screen in place, so no task or input
+  session is left behind.
+
+Pick **dumbtv home** when the first route lands somewhere else. On a Fire TV Edition
+television (AFTOLCBC82, Fire OS 8) the URI resolves only to Amazon's Live TV app, which
+opens its channel-scan settings when no antenna channels are scanned; Amazon's own home
+goes through `com.amazon.tv.inputpreference.service`, which needs a system permission a
+sideloaded app cannot hold. The launcher also falls back to its own screen on its own
+when no app claims the URI at all.
 
 ## The settings file
 
@@ -104,6 +130,8 @@ labels=focus
 clock=auto
 # on off
 inputs=on
+# tv home: what an input tile opens, the TV's own app or the launcher's input screen
+switch=tv
 # black graphite midnight image
 background=black
 # 0 20 40 60 80, image background only
@@ -159,8 +187,10 @@ What you see on HOME: the app, then about 0.3 s of black, then this home screen.
    alarm or not. The cover from step 3 is that window, so `Guard` fires the launch from
    the cover's first draw pass instead of in the same call that shows it. Measured on a
    Fire TV Edition television: dumbtv home is in front 0.3 s after Amazon's home starts.
-   From an HDMI input the TV itself takes about 4.5 s to release the display first;
-   the screen is black until then and Amazon's home never shows.
+   From an HDMI input shown by Amazon's Live TV app the TV itself takes about 4.5 s to
+   release the display first; the screen is black until then and Amazon's home never
+   shows. From the launcher's own input screen (see HDMI inputs above) the picture is
+   released the moment Amazon's home resumes, about 0.4 s after the key.
 
 ### Fire OS 6
 
@@ -187,6 +217,7 @@ until another app is opened.
 | `src/.../Home.java` | the home screen: clock, Apps row, Inputs row, tile menu, move mode |
 | `src/.../Tile.java` | one tile, drawn in a single `onDraw`: banner or icon, focus ring |
 | `src/.../Catalog.java` | which apps and inputs exist, and which are shown in what order |
+| `src/.../Input.java` | the built-in input screen: a `TvView` on the chosen HDMI or AV input |
 | `src/.../Config.java` | the `home.conf` reader and writer |
 | `src/.../Options.java` | the settings screen |
 | `src/.../Guard.java` | the Fire OS 7/8 HOME takeover described above |

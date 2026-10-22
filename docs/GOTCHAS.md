@@ -242,8 +242,10 @@ appears slowly, occasionally landed on dumbtv home while HOME from an app never 
 **HOME from an HDMI input takes about 4.5 s on a Fire TV Edition television.** The HDMI
 passthrough activity holds the display while it tears down: `mCurrentFocus` is null and the
 screen is black until Amazon's home window appears. dumbtv home follows within
-milliseconds of that. Nothing in the launcher can shorten it; Amazon's own home is just as
-late.
+milliseconds of that. Nothing in the launcher can shorten the Live TV app's teardown;
+Amazon's own home is just as late. The launcher's own input screen (`launcher/README.md`,
+"HDMI inputs") does not go through that app: it releases the HDMI picture the moment
+Amazon's home resumes, about 0.4 s after the key.
 
 **`com.amazon.dummy.settings` and `com.android.traceur` come back enabled after a
 reboot.** Re-run `debloat.sh` after a reboot to switch them off again.

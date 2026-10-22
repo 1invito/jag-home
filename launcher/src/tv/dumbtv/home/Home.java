@@ -645,7 +645,17 @@ public final class Home extends Activity {
     }
 
     private void open(Tile t) {
-        launch(new Intent(t.item.intent), Catalog.APPS.equals(t.kind) ? t.item.id : null);
+        if (Catalog.APPS.equals(t.kind)) {
+            launch(new Intent(t.item.intent), t.item.id);
+            return;
+        }
+        Intent own = Input.intent(this, cfg, t.item, Catalog.label(cfg, t.item));
+        // The built-in screen goes on top of this one in the same task, so BACK returns here and
+        // the HOME takeover's singleTask relaunch clears it. NEW_TASK | RESET_TASK_IF_NEEDED on an
+        // activity of the task that is already in front only brings that task forward and starts
+        // nothing (ActivityStarter.complyActivityFlags), so it is started plainly.
+        if (own != null) startActivity(own);
+        else launch(new Intent(t.item.intent), null);
     }
 
     private void launch(Intent i, String pkg) {

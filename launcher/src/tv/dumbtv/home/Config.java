@@ -67,6 +67,9 @@ final class Config {
     static final Choice INPUTS = new Choice("inputs", "Inputs row", "on",
             new String[] {"on", "off"},
             new String[] {"Shown", "Hidden"});
+    static final Choice SWITCH = new Choice("switch", "Open inputs with", "tv",
+            new String[] {"tv", "home"},
+            new String[] {"The TV's app", "dumbtv home"});
     static final Choice BACKGROUND = new Choice("background", "Background", "black",
             new String[] {"black", "graphite", "midnight", "image"},
             new String[] {"Black", "Graphite", "Midnight", "Image file"});
@@ -78,7 +81,7 @@ final class Config {
             new String[] {"off", "visit", "hourly", "daily", "daytime"},
             new String[] {"Off", "Every return home", "Every hour", "Every day", "By time of day"});
 
-    static final Choice[] CHOICES = {ACCENT, TILES, LABELS, CLOCK, INPUTS, BACKGROUND, DIM, ROTATE};
+    static final Choice[] CHOICES = {ACCENT, TILES, LABELS, CLOCK, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
