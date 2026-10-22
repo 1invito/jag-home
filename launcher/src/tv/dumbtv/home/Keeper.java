@@ -84,6 +84,30 @@ public final class Keeper extends Service {
         super.onDestroy();
     }
 
+    /**
+     * Logs to logcat always, and to a file under the app's own external dir only
+     * while the {@code debug} marker exists there (touch it to enable, delete it
+     * to stop). The file survives reboots, which is the point.
+     */
+    static void note(String msg) {
+        android.util.Log.i("dumbtvtest", msg);
+        java.io.File marker = new java.io.File(
+                android.os.Environment.getExternalStorageDirectory(),
+                "Android/data/tv.dumbtv.home/files/debug");
+        if (!marker.exists()) return;
+        try {
+            java.io.File f = new java.io.File(marker.getParentFile(), "keeper.log");
+            if (f.getParentFile() != null) f.getParentFile().mkdirs();
+            java.io.FileOutputStream out = new java.io.FileOutputStream(f, true);
+            try {
+                out.write((System.currentTimeMillis() + " " + msg + "\n").getBytes("UTF-8"));
+            } finally {
+                out.close();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** After a boot or an update there is no Home task yet, and UsageStats saw no new event. */
     private void firstStart() {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -127,11 +151,20 @@ public final class Keeper extends Service {
         if (manager != null) {
             try {
                 for (ActivityManager.AppTask task : manager.getAppTasks()) {
+                    // An empty task is one being torn down (its activity was just
+                    // finished by the task reset on a HOME press); moving it makes
+                    // Fire OS relaunch the dead activity, so never touch it.
+                    String top = task.getTaskInfo().topActivity == null ? ""
+                            : task.getTaskInfo().topActivity.getClassName();
+                    String base = task.getTaskInfo().baseActivity == null ? ""
+                            : task.getTaskInfo().baseActivity.getClassName();
+                    if (top.isEmpty() && base.isEmpty()) continue;
                     task.moveToFront();
                     android.util.Log.i("dumbtvtest", "keeper: moveToFront");
                     return;
                 }
-            } catch (Throwable ignored) {
+            } catch (Throwable t) {
+                note("moveToFront threw: " + t);
                 // Fall through to the alarm below.
             }
         }

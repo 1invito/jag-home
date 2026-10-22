@@ -210,6 +210,23 @@ accessibility:
 `Options > Open Amazon's home screen` pauses the Keeper, so Amazon's home stays
 until another app is opened.
 
+## Diagnostics
+
+Logcat carries everything under the tag `dumbtvtest`: Keeper decisions (moves,
+failures) and the Input screen's session steps.
+
+When logcat alone is not enough — mostly for boot-time problems, where the buffer
+has rotated by the time you can read it — the Keeper can also write a file that
+survives reboots:
+
+```sh
+adb shell touch /sdcard/Android/data/tv.dumbtv.home/files/debug
+```
+
+While that marker exists, every log line is appended to
+`sdcard/Android/data/tv.dumbtv.home/files/keeper.log`. Delete the marker (and the
+log) to stop.
+
 ## Files
 
 | File | What it is |
