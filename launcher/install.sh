@@ -114,7 +114,8 @@ else
   echo "checksum ok"
 fi
 
-out=$(adb_ install -r "$APK" 2>&1 | tail -1 || true)
+# Newer adb prints "Install command complete in N ms" after "Success", so read the whole output.
+out=$(adb_ install -r "$APK" 2>&1 || true)
 case $out in
   *Success*) ;;
   *INSTALL_FAILED_UPDATE_INCOMPATIBLE*)
@@ -122,7 +123,7 @@ case $out in
     echo "  back up your settings:  adb pull /sdcard/Android/data/$PKG/files/home.conf" >&2
     echo "  then remove it:         adb uninstall $PKG    and run this again" >&2
     exit 1 ;;
-  *) echo "error: adb install failed: $out" >&2; exit 1 ;;
+  *) echo "error: adb install failed: $(printf '%s' "$out" | tail -1)" >&2; exit 1 ;;
 esac
 echo "installed $PKG"
 

@@ -222,13 +222,28 @@ Advanced settings > Configure filter update, add
 the rest, reboot. The routing tweaks (`detectDNS = false`, `routeIPs`) cannot be set this
 way. `verify.sh` skips the list count there and relies on the blocked-host lookups.
 
-**HOME does not move to dumbtv home yet.** Android 11 blocks the Guard's alarm-fired
-launch as a background activity start (logcat: `Background activity start ...
-callingUidHasAnyVisibleWindow: false`). The service is bound, so `verify.sh` reports it
-as bound; press HOME to see the truth. Android's documented way past this is the
-"display over other apps" permission (`SYSTEM_ALERT_WINDOW`), which the launcher does
-not declare. Adding it is open: it would end the launcher's no-permissions rule, and it
-needs testing on a Fire OS 8 device.
+**HOME takeover needs the cover window to be up first.** Android 11 blocks an activity
+start from an app with no visible window, even one sent through `system_server` by an
+alarm (logcat: `Background activity start ... callingUidHasAnyVisibleWindow: false`). The
+Guard already owns such a window: the cover it draws over Amazon's home. It used to show
+the cover and fire the alarm in the same call, so the check ran before the window had
+reached the window manager. Builds after launcher 1.1 fire the launch from the cover's
+first pre-draw pass, which runs after the window's relayout, with a 150 ms fallback. Tested
+on a Fire TV Edition television (AFTOLCBC82, Fire OS 8.1.8.0): dumbtv home is in front
+0.3 s after Amazon's home starts, and the system log shows the start accepted. No new
+permission: the "display over other apps" route was tried first and Fire OS ignores
+`appops set ... SYSTEM_ALERT_WINDOW allow` for third-party apps (the mode stays `default`).
+
+Why it sometimes worked before the fix: when Amazon's home sent a second window event
+while the cover was still showing (within 1.5 s and more than 1 s after the first), the
+retry found a visible window and went through. That is why HOME from an HDMI input, which
+appears slowly, occasionally landed on dumbtv home while HOME from an app never did.
+
+**HOME from an HDMI input takes about 4.5 s on a Fire TV Edition television.** The HDMI
+passthrough activity holds the display while it tears down: `mCurrentFocus` is null and the
+screen is black until Amazon's home window appears. dumbtv home follows within
+milliseconds of that. Nothing in the launcher can shorten it; Amazon's own home is just as
+late.
 
 **`com.amazon.dummy.settings` and `com.android.traceur` come back enabled after a
 reboot.** Re-run `debloat.sh` after a reboot to switch them off again.

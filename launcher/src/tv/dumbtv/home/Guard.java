@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -25,18 +26,25 @@ import android.view.accessibility.AccessibilityEvent;
  * {@code alarm_manager_constants} has {@code min_futurity=0}; install.sh sets it.
  *
  * Amazon's home is covered with a plain overlay until ours has drawn, so it never shows.
+ *
+ * Android 11 refuses an activity start from an app with no visible window, even one sent
+ * through system_server by an alarm ("Background activity start ... callingUidHasAnyVisibleWindow:
+ * false"). The cover is such a window, so the launch waits until the cover has reached the
+ * window manager: {@link #launchWhenCovered} fires it from the cover's first draw pass.
  */
 public final class Guard extends AccessibilityService {
     static final String AMAZON = "com.amazon.tv.launcher";
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     private static final long COVER_MAX_MS = 1500;
     private static final long REPEAT_MS = 1000;
+    private static final long LAUNCH_FALLBACK_MS = 150;
 
     private static volatile boolean paused;
     private static Guard running;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable uncover = this::uncover;
+    private final Runnable launch = () -> home(this);
     private View cover;
     private long lastLaunch;
 
@@ -101,6 +109,7 @@ public final class Guard extends AccessibilityService {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(uncover);
+        handler.removeCallbacks(launch);
         if (cover != null) ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(cover);
         if (running == this) running = null;
         super.onDestroy();
@@ -121,8 +130,38 @@ public final class Guard extends AccessibilityService {
         long now = SystemClock.uptimeMillis();
         if (now - lastLaunch < REPEAT_MS) return;
         lastLaunch = now;
+        launchWhenCovered();
+    }
+
+    /**
+     * Shows the cover, then starts the launch once that window is visible to the window manager.
+     * A cover that is already on screen (a repeat within {@link #COVER_MAX_MS}) gets no new draw
+     * pass, so the launch goes out at once; otherwise it waits for the first pre-draw, which runs
+     * after the window's relayout. A short fallback covers a window that never draws.
+     */
+    private void launchWhenCovered() {
+        handler.removeCallbacks(launch);
+        if (cover == null) {
+            home(this);
+            return;
+        }
+        boolean shown = cover.getVisibility() == View.VISIBLE;
         cover();
-        home(this);
+        if (shown) {
+            home(this);
+            return;
+        }
+        final ViewTreeObserver observer = cover.getViewTreeObserver();
+        observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                cover.getViewTreeObserver().removeOnPreDrawListener(this);
+                handler.removeCallbacks(launch);
+                home(Guard.this);
+                return true;
+            }
+        });
+        handler.postDelayed(launch, LAUNCH_FALLBACK_MS);
     }
 
     /** The overlay window exists from service start; a GONE root keeps its surface hidden. */
