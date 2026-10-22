@@ -132,7 +132,9 @@ the API level at connect time and switch to `data/fireos6/` on their own.
 `pm enable`.
 
 **`com.amazon.firebat` is Prime Video**, not an OTA helper: launching it opens
-`com.amazon.pyrocore.IgnitionActivity`. It is in `data/fireos6/never-disable.txt`.
+`com.amazon.pyrocore.IgnitionActivity`. Fire OS 7 is the same: there it owns
+Prime's `LandingActivity`, `PlaybackActivity` and deep links, and disabling it
+stops Prime from launching. It is in both `never-disable.txt` lists.
 
 **`com.amazon.vizzini` re-enables itself at every boot.** `pm disable-user`
 answers `disabled-user`, and after a reboot it is enabled and running again. Leave
