@@ -1,5 +1,5 @@
 id: androidtv-benq-gp01
-title: "BenQ GP01 projector (Google TV, Android 11)"
+title: "BenQ GP520 projector (BenQGP01, Google TV, Android 11)"
 contributors:
   - KasperHonore
 platform: androidtv
@@ -7,7 +7,8 @@ platform: androidtv
 status: partial
 tested_on: "RTMA.250416.017 (Android 11, sdk 30), security patch 2025-05-01"
 models:
-  - "BenQ GP01 (BenQGP01, device khandala, made by SDMC)"
+  - "BenQ GP520 (retail model on the box)"
+  - "BenQGP01 (ro.product.model; device khandala, made by SDMC)"
 adb:
   port: 5555
   transport: wifi
