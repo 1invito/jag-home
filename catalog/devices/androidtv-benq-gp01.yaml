@@ -139,7 +139,14 @@ notes: >-
   HOME. Private DNS was tried and turned off again; the DNS filter was not
   set up.
 known_limits:
-  - "Observed on one GP01 and one build; other BenQ projectors and firmware may differ."
+  - "Observed on one GP520 and one build; other BenQ projectors and firmware may differ."
+  - >-
+    The firmware looks shared: the odm and system_ext partitions identify as
+    Dangbei DBOX02 (ro.product.odm.name Dangbei_DBOX02, manufacturer SDMC,
+    board khandala, platform m7632), with only the product layer renamed
+    BenQ_GP01. Other BenQ projectors that report BenQGP01, and Dangbei devices
+    on DBOX02 firmware, will probably behave the same, but none were checked.
+    Compare ro.product.odm.name and the build id before relying on this entry.
   - >-
     all.sh, debloat.sh and verify.sh were not run: they are Fire OS only, so
     verify.sh says nothing about this projector.
