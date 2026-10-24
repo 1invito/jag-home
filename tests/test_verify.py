@@ -21,8 +21,12 @@ class VerifyTests(unittest.TestCase):
                    landed='tv.dumbtv.home/.Home',
                    away='com.amazon.tv.launcher/.ui.MainSettingsActivity',
                    dnsfilter='0', extra=None):
+        # Android 14's shape (the fake reports sdk 34): a per-task topResumedActivity=,
+        # and the top-level ResumedActivity: after the task list.
         def resumed(app):
-            return 'mResumedActivity: ActivityRecord{x u0 ' + app + '}'
+            return ('  * Task{1 #5 type=standard A=10050:' + app.split('/')[0] + '}\n'
+                    '      topResumedActivity=ActivityRecord{1 u0 ' + app + ' t5}\n'
+                    '  ResumedActivity: ActivityRecord{1 u0 ' + app + ' t5}')
         replies = {
             'getprop ro.build.version.sdk': {'out': '34'},
             # Asked three times: what is in front now, what the check moved to, and
@@ -68,7 +72,7 @@ class VerifyTests(unittest.TestCase):
                                     env=env, text=True, capture_output=True)
             calls = [json.loads(line) for line in log.read_text().splitlines()]
         self.assertNotIn('unexpected command', result.stdout + result.stderr)
-        # Only reads and adb start-server are permitted by the fake.
+        # The fake refuses any command it has no reply for, so nothing else reaches a TV.
         return result, calls
 
     @staticmethod

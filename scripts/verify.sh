@@ -52,7 +52,7 @@ else
   printf '%s' "$allowed_rows"
 fi
 
-home=$(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')
+home=$(front_activity)
 wake=$(dev 'dumpsys power' | sed -n 's/.*mWakefulness=\([A-Za-z]*\).*/\1/p' | head -1)
 alarms=$(dev 'settings get global alarm_manager_constants' | tr -d '\r')
 if [[ $LAUNCHER == 0 ]]; then
@@ -108,14 +108,21 @@ else
   # broken.
   [[ $wake == Awake ]] || { dev 'input keyevent KEYCODE_WAKEUP' >/dev/null 2>&1 || true; sleep 2; }
   dev 'am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_SETTINGS' >/dev/null 2>&1 || true
-  sleep 4
-  away=$(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')
-  if [[ $away == tv.dumbtv.home/* ]]; then
+  for i in 1 2 3 4 5 6; do
+    away=$(front_activity)
+    [[ -n $away && $away != tv.dumbtv.home/* ]] && break
+    sleep 1
+  done
+  if [[ -z $away || $away == tv.dumbtv.home/* ]]; then
     printf '%-10s %-38s %s\n' skip home-key "could not leave the home screen; press HOME to check"
   else
     dev 'input keyevent KEYCODE_HOME' >/dev/null 2>&1 || true
-    sleep 5
-    landed=$(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')
+    # Amazon's home can show first while the swap is under way.
+    for i in 1 2 3 4 5 6 7 8; do
+      sleep 1
+      landed=$(front_activity)
+      [[ $landed == tv.dumbtv.home/* ]] && break
+    done
     case $landed in
       tv.dumbtv.home/*) printf '%-10s %-38s %s\n' ok home-key "HOME lands on $landed" ;;
       *) printf '%-10s %-38s %s\n' FAIL home-key "HOME lands on ${landed:-unknown}"; fail=1 ;;
