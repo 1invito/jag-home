@@ -99,6 +99,8 @@ accent=blue
 tiles=medium
 # rows grid
 layout=rows
+# custom recent (recent = newest first; the history stays in the app's private storage)
+order=custom
 # focus always never
 labels=focus
 # auto 24h 12h
@@ -256,12 +258,14 @@ Delete both to stop.
 | `src/.../Ui.java` | shared colours, text and sizes |
 | `src/.../Guard.java` | the Fire OS 7 and 8 HOME takeover |
 | `src/.../Keeper.java` | the Fire OS 6 HOME takeover |
+| `src/.../Recent.java` | when each app was last opened, for App order › Recently used |
 | `src/.../BootReceiver.java` | restarts the Keeper after a boot or an update |
 | `build.sh` | aapt2, javac, d8, zipalign, apksigner |
 | `install.sh` | download and checksum (or `--build`), install, HOME hook, `--undo` |
 | `version.env` | the version and the release's SHA-256, read by the three scripts |
 | `release-check.sh` | checks that the version, the built APK and the GitHub release agree |
 | `tests/FocusColorTest.java` | host-side test for `FocusColor`, run by CI |
+| `tests/RecentTest.java` | host-side test for the Recently used order, run by CI |
 
 ## Releasing
 
