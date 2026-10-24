@@ -127,6 +127,22 @@ for p in $(cleanup_list); do
   printf '%s\tstarved\n' "$p" >> "$log"
 done
 
+# Android keeps pointing at a screensaver whose package is off, fails to start it,
+# and puts the TV to sleep at the first timeout instead. That happens
+# when the owner names Amazon's screensaver, and on TVs older lists debloated.
+step "screensaver"
+dream=$(dream_package)
+if [[ -n $dream ]] && dev 'pm list packages -d' | tr -d '\r' | grep -qx "package:$dream"; then
+  if present "${AOSP_DREAM%%/*}"; then
+    acmd settings put secure screensaver_components "$AOSP_DREAM" >/dev/null
+    printf '  %-46s %s\n' "$dream is off" "screensaver is now Android's own ($AOSP_DREAM)"
+  else
+    printf '  %-46s %s\n' "$dream is off" "no other screensaver on this TV: the screen sleeps at the timeout"
+  fi
+else
+  printf '  %-46s %s\n' "${dream:-none set}" "unchanged"
+fi
+
 step "privacy settings"
 while read -r ns key value; do
   [[ -z ${ns:-} || $ns == \#* ]] && continue

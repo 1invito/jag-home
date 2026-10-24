@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RestoreTest(unittest.TestCase):
-    def run_restore(self, ignores_reboot=False):
+    def run_restore(self, ignores_reboot=False, settings=None):
         packages = {
             "dnsfilter.android": {"system": False, "enabled": True},
             "com.amazon.tv.acr": {"system": True, "enabled": False},
@@ -27,6 +27,7 @@ class RestoreTest(unittest.TestCase):
                 "secure/accessibility_enabled": "1",
                 "secure/always_on_vpn_app": "dnsfilter.android",
                 "global/alarm_manager_constants": "min_futurity=0",
+                **(settings or {}),
             }
             state.write_text(json.dumps({"packages": packages, "settings": hooked,
                                          "ignores_reboot": ignores_reboot}))
@@ -52,6 +53,24 @@ class RestoreTest(unittest.TestCase):
         self.assertEqual(state["boots"], 1)
         self.assertTrue(state["packages"]["com.amazon.tv.acr"]["enabled"])
         self.assertEqual(state.get("bad", []), [])
+
+    def test_amazons_screensaver_comes_back(self):
+        amazon = "com.amazon.ftv.screensaver/.app.services.ScreensaverService"
+        result, _, state = self.run_restore(settings={
+            "secure/screensaver_components": "com.android.dreams.basic/.Colors",
+            "secure/screensaver_default_component": amazon,
+        })
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(state["settings"]["secure/screensaver_components"], amazon)
+
+    def test_a_screensaver_dumbtv_did_not_set_is_kept(self):
+        mine = "com.example.dream/.Photos"
+        result, _, state = self.run_restore(settings={
+            "secure/screensaver_components": mine,
+            "secure/screensaver_default_component": "com.amazon.ftv.screensaver/.S",
+        })
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(state["settings"]["secure/screensaver_components"], mine)
 
     def test_home_and_dns_are_handed_back(self):
         result, _, state = self.run_restore()

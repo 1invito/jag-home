@@ -223,6 +223,17 @@ running_names() {
   fi
 }
 
+# Android's own screensaver, on Fire OS too. Used when the configured one is disabled.
+AOSP_DREAM=com.android.dreams.basic/.Colors
+
+# Package of the screensaver the TV is set to, or nothing.
+dream_package() {
+  local d
+  d=$(dev1 settings get secure screensaver_components)
+  d=${d%%,*}
+  case $d in ''|null) ;; *) printf '%s\n' "${d%%/*}" ;; esac
+}
+
 # The activity in front, as package/.Class. Android 9, 11 and 14 print a top-level
 # "ResumedActivity:" after the task list; Android 7.1 has only the per-task
 # "mResumedActivity:" and 13 only "topResumedActivity=" (issue #57).

@@ -30,8 +30,12 @@ STORE_APPS = ["com.netflix.ninja", "com.amazon.firetv.youtube", "org.videolan.vl
 
 
 class DebloatTest(unittest.TestCase):
-    def run_debloat(self, conf="", *flags):
+    AMAZON_DREAM = "com.amazon.ftv.screensaver/.app.services.ScreensaverService"
+
+    def run_debloat(self, conf="", *flags, basic_dream=True):
         packages = {p: {"system": True, "enabled": True} for p in CLEANUP + ALEXA + USER_APPS}
+        if basic_dream:
+            packages["com.android.dreams.basic"] = {"system": True, "enabled": True}
         for p in STORE_APPS:
             packages[p] = {"system": False, "enabled": True}
         packages["com.amazon.tv.launcher"] = {"system": True, "enabled": True}
@@ -39,7 +43,8 @@ class DebloatTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             state = tmp / "state.json"
-            state.write_text(json.dumps({"packages": packages}))
+            state.write_text(json.dumps({"packages": packages, "settings": {
+                "secure/screensaver_components": self.AMAZON_DREAM}}))
             log = tmp / "commands.log"
             log.touch()
             (tmp / "dumbtv.conf").write_text(conf)
@@ -90,6 +95,21 @@ class DebloatTest(unittest.TestCase):
     def test_keep_list_wins_over_the_cleanup_list(self):
         disabled, _, _ = self.run_debloat('KEEP_APPS="com.amazon.tv.acr"\n')
         self.assertNotIn("com.amazon.tv.acr", disabled)
+
+    def test_screensaver_left_alone_by_default(self):
+        _, _, settings = self.run_debloat()
+        self.assertFalse([s for s in settings if "screensaver" in s])
+
+    def test_disabled_screensaver_is_replaced_by_androids_own(self):
+        disabled, _, settings = self.run_debloat('REMOVE_EXTRA="com.amazon.ftv.screensaver"\n')
+        self.assertIn("com.amazon.ftv.screensaver", disabled)
+        self.assertIn("settings put secure screensaver_components com.android.dreams.basic/.Colors",
+                      settings)
+
+    def test_no_replacement_screensaver_means_no_change(self):
+        _, _, settings = self.run_debloat('REMOVE_EXTRA="com.amazon.ftv.screensaver"\n',
+                                          basic_dream=False)
+        self.assertFalse([s for s in settings if "screensaver" in s])
 
     def test_dry_run_changes_nothing(self):
         disabled, uninstalled, settings = self.run_debloat("", "--dry-run")

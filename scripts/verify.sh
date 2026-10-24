@@ -130,7 +130,12 @@ else
   fi
 fi
 
-printf '%-10s %-38s %s\n' packages "" "$(dev 'pm list packages -d' | wc -l | tr -d ' ') disabled"
+off=$(dev 'pm list packages -d' | tr -d '\r')
+printf '%-10s %-38s %s\n' packages "" "$(printf '%s\n' "$off" | grep -c '^package:') disabled"
+dream=$(dream_package)
+if [[ -n $dream ]] && grep -qx "package:$dream" <<<"$off"; then
+  printf '%-10s %-38s %s\n' warn screensaver "$dream is disabled, so the TV sleeps at the timeout; run debloat.sh"
+fi
 
 if [[ $DNSFILTER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip filter "not installed by choice"

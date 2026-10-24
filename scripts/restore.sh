@@ -69,6 +69,17 @@ for p in $(list_of "$(fos never-disable.txt)" | awk '{print $1}'); do
   printf '  %-46s %s\n' "$p" "${b:-no output}"
 done
 
+step "screensaver"
+if [[ $(dev1 settings get secure screensaver_components) == "$AOSP_DREAM" ]]; then
+  want=$(restore_value secure screensaver_components "$(dev1 settings get secure screensaver_default_component)")
+  if [[ -n $want && $want != null && $want != "$AOSP_DREAM" ]]; then
+    acmd settings put secure screensaver_components "$want" >/dev/null
+    printf '  %-46s %s\n' screensaver_components "$want"
+  fi
+else
+  note "unchanged"
+fi
+
 step "packages that were only starved"
 if [[ -f $REPORT/debloat.txt ]]; then
   while IFS=$'\t' read -r p state rest; do

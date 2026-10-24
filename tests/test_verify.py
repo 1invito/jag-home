@@ -43,6 +43,7 @@ class VerifyTests(unittest.TestCase):
             f'settings --user {user} get secure accessibility_enabled': {'out': enabled},
             'dumpsys accessibility': {'out': dump, 'code': dump_code},
             'pm list packages -d': {'out': ''},
+            'settings get secure screensaver_components': {'out': 'null'},
             'am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_SETTINGS': {'out': ''},
             'input keyevent KEYCODE_HOME': {'out': ''},
         }
@@ -83,6 +84,16 @@ class VerifyTests(unittest.TestCase):
         result, _ = self.run_verify(self.modern(LABEL))
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn('bound, front is example.player/.Main', result.stdout)
+
+    def test_a_disabled_screensaver_is_flagged(self):
+        result, _ = self.run_verify(self.modern(LABEL), extra={
+            'pm list packages -d': {'out': 'package:com.amazon.ftv.screensaver\npackage:com.amazon.tv.acr'},
+            'settings get secure screensaver_components':
+                {'out': 'com.amazon.ftv.screensaver/.app.services.ScreensaverService'},
+        })
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('2 disabled', result.stdout)
+        self.assertIn('com.amazon.ftv.screensaver is disabled, so the TV sleeps', result.stdout)
 
     def test_bound_android9_format(self):
         dump = f'User state[attributes:{{id=0, currentUser=true}}\n services:{{{LABEL}}}]'
