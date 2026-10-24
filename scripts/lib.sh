@@ -223,6 +223,17 @@ running_names() {
   fi
 }
 
+# The activity in front, as package/.Class. Android 9, 11 and 14 print a top-level
+# "ResumedActivity:" after the task list; Android 7.1 has only the per-task
+# "mResumedActivity:" and 13 only "topResumedActivity=" (issue #57).
+front_activity() {
+  local dump line
+  dump=$(dev 'dumpsys activity activities')
+  line=$(printf '%s\n' "$dump" | grep -m1 -E '^ *ResumedActivity: ActivityRecord')
+  [[ -n $line ]] || line=$(printf '%s\n' "$dump" | grep -m1 -E '(topResumedActivity=|mResumedActivity: )ActivityRecord')
+  printf '%s\n' "$line" | sed -nE 's/.*ActivityRecord\{[^ ]+ u[0-9]+ ([^ }]+).*/\1/p'
+}
+
 is_fireos()  { case $(dev1 getprop ro.product.manufacturer) in Amazon*) return 0 ;; *) return 1 ;; esac; }
 gateway() {
   local gw

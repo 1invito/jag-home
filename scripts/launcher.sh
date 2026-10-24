@@ -35,7 +35,7 @@ confirm "Replace the home screen on $SERIAL?" || die "cancelled"
 ADB=$ADB ADB_SERIAL=$SERIAL "$ROOT/launcher/install.sh" || die "launcher install failed (see above)"
 
 sleep 3
-home=$(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')
+home=$(front_activity)
 if printf '%s' "$home" | grep -q "$PKG"; then
   note "home screen is dumbtv home"
 else

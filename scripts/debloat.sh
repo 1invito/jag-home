@@ -141,5 +141,5 @@ note "log: ${log#$ROOT/}"
 
 reboot_wait
 [[ ${NO_REBOOT:-0} == 1 ]] && exit 0
-note "home screen now: $(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//')"
+note "home screen now: $(front_activity)"
 note "if that is not a home screen you can use, run ./scripts/restore.sh"

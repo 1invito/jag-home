@@ -32,7 +32,7 @@ fi
 step "current state"
 note "packages      $(dev 'pm list packages' | wc -l | tr -d ' ') installed, $(dev 'pm list packages -d' | wc -l | tr -d ' ') disabled"
 note "third-party   $(dev 'pm list packages -3' | sed 's/package://' | grep -vc overlay) apps"
-note "home screen   $(dev 'dumpsys activity activities' | grep -m1 mResumedActivity | sed 's/.*u0 //;s/}.*//' | awk -F/ '{print $1}')"
+note "home screen   $(front_activity | awk -F/ '{print $1}')"
 note "free ram      $(dev 'dumpsys meminfo' | sed -n 's/.*Free RAM: *\([0-9,]*K\).*/\1/p' | head -1)"
 note "dns filter    $(present dnsfilter.android && echo installed || echo 'not installed')"
 note "launcher      $(present tv.dumbtv.home && echo 'dumbtv home installed' || echo 'not installed')"
