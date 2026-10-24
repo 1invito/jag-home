@@ -172,6 +172,8 @@ public final class Home extends Activity {
         super.onCreate(state);
         Future<List<Item>> catalog = io.submit(() -> Catalog.apps(this));
         cfg = Config.get(this);
+        Future<Map<String, Long>> times = recentFor(Catalog.APPS) == null ? null
+                : io.submit(() -> Recent.times(this));
         tv = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
         setContentView(build());
 
@@ -183,7 +185,7 @@ public final class Home extends Activity {
         registerReceiver(packages, f);
         Keeper.start(this);
         if (tv != null) tv.registerCallback(inputWatch, ui);
-        firstApps(catalog);
+        firstApps(catalog, times);
         loadInputs();
     }
 
@@ -193,9 +195,10 @@ public final class Home extends Activity {
      * background drew the Inputs row alone, focused HDMI 1 for ~0.3 s, then popped the apps and
      * their banners in.
      */
-    private void firstApps(Future<List<Item>> catalog) {
+    private void firstApps(Future<List<Item>> catalog, Future<Map<String, Long>> times) {
         try {
             apps.all = catalog.get();
+            if (times != null) recent = times.get();
         } catch (ExecutionException e) {
             loadApps(null);
             return;
@@ -205,7 +208,7 @@ public final class Home extends Activity {
             return;
         }
         int fit = getResources().getDisplayMetrics().widthPixels / (cardSize()[0] + dp(18)) + 1;
-        for (Item it : Catalog.visible(cfg, Catalog.APPS, apps.all)) {
+        for (Item it : Catalog.visible(cfg, Catalog.APPS, apps.all, recentFor(Catalog.APPS))) {
             if (fit-- <= 0) break;
             Catalog.art(getPackageManager(), it);
             it.artRequested = true;
@@ -831,9 +834,9 @@ public final class Home extends Activity {
 
     private void launch(Intent i, String pkg) {
         if (Guard.AMAZON.equals(pkg)) Guard.pause();
-        if (pkg != null) Recent.opened(this, pkg);
         try {
             startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
+            if (pkg != null) Recent.opened(this, pkg);
         } catch (ActivityNotFoundException | SecurityException e) {
             Toast.makeText(this, "Could not open that", Toast.LENGTH_SHORT).show();
         }
