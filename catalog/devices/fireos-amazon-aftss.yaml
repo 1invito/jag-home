@@ -1,0 +1,32 @@
+id: fireos-amazon-aftss
+title: "Amazon Fire TV Stick Lite / Fire TV Stick HD (AFTSS)"
+contributors:
+  - arielvieira
+platform: fireos
+status: tested
+tested_on: "PS7717.5741N"
+models:
+  - "Fire TV Stick Lite - 1st gen (2020)"
+  - "Fire TV Stick HD (2024)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > My Fire TV > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "A person must press Allow on the TV, and tick Always allow, before adb will connect; until then adb reports the device as unauthorized"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "AFTSS is shared by the Fire TV Stick Lite 1st gen (2020) and the Fire TV Stick HD (2024), so ro.product.model cannot tell them apart; take the retail name from the box"
+  - "debloat.sh reboots the TV, so adb disconnects and reconnects mid-pass; wait for the device to return before the next step"
+notes: "Full pass ran and verify.sh exited 0 (all checks passed) on Fire OS 7.7.1.7. 56 packages disabled, DNS filter with 398 entries active, dumbtv home bound, SmartTube installed."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
