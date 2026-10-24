@@ -34,10 +34,15 @@ confirm "Replace the home screen on $SERIAL?" || die "cancelled"
 
 ADB=$ADB ADB_SERIAL=$SERIAL "$ROOT/launcher/install.sh" || die "launcher install failed (see above)"
 
-sleep 3
-home=$(front_activity)
-if printf '%s' "$home" | grep -q "$PKG"; then
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  sleep 1
+  home=$(front_activity)
+  [[ $home == "$PKG"/* ]] && break
+done
+if [[ $home == "$PKG"/* ]]; then
   note "home screen is dumbtv home"
+elif [[ -z $home ]]; then
+  note "could not read which app is in front; ./scripts/verify.sh checks the takeover"
 else
   note "home screen is $home"
   note "press HOME once or run this script again; see docs/TROUBLESHOOTING.md if it will not stick"

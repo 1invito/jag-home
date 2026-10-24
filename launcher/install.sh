@@ -151,8 +151,16 @@ if [[ $dev_sdk -lt 28 ]]; then
     echo "error: the Fire OS 6 home keeper did not start ($PKG/.Keeper)" >&2
     exit 1
   fi
-  front=$(sh_ dumpsys activity activities | grep -m1 mResumedActivity || true)
-  if [[ $front != *"$PKG"* ]]; then
+  # Right after the start nothing may be resumed yet, and a single empty read stopped
+  # the whole pass on a TV where the home screen was fine.
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    front=$(sh_ dumpsys activity activities | grep -m1 'ResumedActivity: ' || true)
+    [[ $front == *"$PKG"* ]] && break
+    sleep 1
+  done
+  if [[ -z $front ]]; then
+    echo "note: could not read which app is in front; ./scripts/verify.sh checks the Keeper"
+  elif [[ $front != *"$PKG"* ]]; then
     echo "error: dumbtv home is installed but not in front ($front)" >&2
     exit 1
   fi
