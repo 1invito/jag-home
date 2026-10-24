@@ -166,12 +166,13 @@ every model with its menu paths and quirks.
 |---|---|---|---|
 | [Fire TV Stick 4K, 1st gen (AFTMM)](catalog/devices/fireos-amazon-aftmm.yaml) | 6.7 | tested | [@niz-coder](https://github.com/niz-coder) |
 | [Insignia Fire TV Edition (AFTEAMR311)](catalog/devices/fireos-insignia-afteamr311.yaml) | 6.7 | tested | [@gtalusan](https://github.com/gtalusan) |
-| [Toshiba 50LF621U19 Fire TV Edition (AFTKMST12)](catalog/devices/fireos-toshiba-aftkmst12.yaml) | 6.7 | tested | [@ryanlucht](https://github.com/ryanlucht) |
+| [Toshiba 50LF621U19, 55LF711U20 Fire TV Edition (AFTKMST12)](catalog/devices/fireos-toshiba-aftkmst12.yaml) | 6.7 | tested | [@ryanlucht](https://github.com/ryanlucht), [@zekesax](https://github.com/zekesax) |
 | [Fire TV, 3rd gen (AFTN)](catalog/devices/fireos-amazon-aftn.yaml) | 6.2 | tested | [@adi-c](https://github.com/adi-c) |
 | [Fire TV Cube, 2nd gen (AFTR)](catalog/devices/fireos-amazon-aftr.yaml) | 7.7 | tested | [@podulator](https://github.com/podulator) |
 | [Insignia 50" F30 (AFTDCT31)](catalog/devices/fireos-insignia-aftdct31.yaml) | 7.7 | tested | [@timcunningham-sv](https://github.com/timcunningham-sv) |
 | [Onida 43" Fire TV Edition (AFTGRO001)](catalog/devices/fireos-onida-aftgro001.yaml) | 7.7 | tested | [@humblemuzzu](https://github.com/humblemuzzu) |
-| [Fire TV Stick HD, 2024 (AFTSS)](catalog/devices/fireos-amazon-aftss.yaml) | 7.7 | tested | [@RabeJonas](https://github.com/RabeJonas), [@Prathamesh913](https://github.com/Prathamesh913) |
+| [Fire TV Stick HD 2024, Stick Lite 2020 (AFTSS)](catalog/devices/fireos-amazon-aftss.yaml) | 7.7 | tested | [@RabeJonas](https://github.com/RabeJonas), [@Prathamesh913](https://github.com/Prathamesh913), [@arielvieira](https://github.com/arielvieira) |
+| [Hisense 55QD65NF (AFTHA004)](catalog/devices/fireos-hisense-aftha004.yaml) | 7.7 | tested | [@stedrow](https://github.com/stedrow) |
 | [Ember 55, Fire TV Omni Mini-LED (AFTOMNA003)](catalog/devices/fireos-amazon-aftomna003.yaml) | 8.0 | tested | [@zaco-tm](https://github.com/zaco-tm) |
 | [Fire TV Stick 4K Max, 2nd gen (AFTKRT)](catalog/devices/fireos-amazon-aftkrt.yaml) | 8.1 | tested | [@gerardo-galvez-hl](https://github.com/gerardo-galvez-hl), [@derkstample](https://github.com/derkstample) |
 | [Fire TV Stick 4K Plus (AFTMA08C15)](catalog/devices/fireos-amazon-aftma08c15.yaml) | 8.1 | tested | [@edrmundy](https://github.com/edrmundy) |
@@ -299,7 +300,10 @@ the devices above because of you.
 [@adi-c](https://github.com/adi-c),
 [@derkstample](https://github.com/derkstample),
 [@KasperHonore](https://github.com/KasperHonore),
-[@damsma](https://github.com/damsma)
+[@damsma](https://github.com/damsma),
+[@arielvieira](https://github.com/arielvieira),
+[@stedrow](https://github.com/stedrow),
+[@zekesax](https://github.com/zekesax)
 
 **Bug reports:**
 [@gleesonb](https://github.com/gleesonb),
@@ -309,7 +313,8 @@ the devices above because of you.
 [@PWannop](https://github.com/PWannop),
 [@jt-at-home](https://github.com/jt-at-home),
 [@thearchivist9778-ai](https://github.com/thearchivist9778-ai),
-[@GrackleCrow](https://github.com/GrackleCrow)
+[@GrackleCrow](https://github.com/GrackleCrow),
+[@MisterKOak](https://github.com/MisterKOak)
 
 And to the projects dumbtv stands on:
 [personalDNSfilter](https://github.com/IngoZenz/personaldnsfilter) by Ingo Zenz,
