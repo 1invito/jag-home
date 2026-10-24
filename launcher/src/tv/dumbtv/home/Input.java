@@ -18,6 +18,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -150,6 +151,7 @@ public final class Input extends Activity {
     @SuppressWarnings("deprecation")
     protected void onStop() {
         ui.removeCallbacksAndMessages(null);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (view != null) {
             view.reset();
             ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).abandonAudioFocus(focus);
@@ -181,8 +183,15 @@ public final class Input extends Activity {
         ui.postDelayed(hideName, NAME_MS);
     }
 
+    /**
+     * Keeps the TV awake while the input shows a picture, as Amazon's own input player does;
+     * otherwise the screensaver and then sleep come on mid-film or mid-game. With no
+     * signal the normal timeout applies again, so an input left on a dead source still sleeps.
+     */
     private void status(String text) {
         Log.i("dumbtv", "input " + id + ": " + (text == null ? "video" : text));
+        if (text == null) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         ui.removeCallbacks(noSignal);
         status.setText(text);
         status.setVisibility(text == null ? View.GONE : View.VISIBLE);
