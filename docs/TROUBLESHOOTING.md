@@ -93,20 +93,22 @@ there.
 
 ### Use resolvers other than the router
 
-`DNS_UPSTREAM` in `dumbtv.conf` is a space-separated list of resolver IPs. The
-filter still answers its own list with `127.0.0.1`, and forwards everything else
-to those resolvers instead of the router:
+`DNS_UPSTREAM` in `dumbtv.conf` is a space-separated list of resolver IPs, asked
+on port 53 over UDP (DNS over TLS or HTTPS is not supported). The filter still
+blocks its own list, and forwards everything else to those resolvers instead of
+the router. Fire OS 8 is the exception: its config cannot be pushed, so this
+setting does not reach it.
 
 ```sh
 ./scripts/configure.sh --dns-upstream "76.76.2.45 76.76.10.45"
 ./scripts/dnsfilter.sh
 ```
 
-Leave it empty and re-run `dnsfilter.sh` to go back to the router. A resolver
-that serves its own blocklist will also block names that are not in dumbtv's
-list, and taking a host out of `extra-hosts.txt` does not bring those back.
-Re-running `configure.sh` keeps a list already saved unless you pass
-`--dns-upstream ""`.
+To go back to the router, run `./scripts/configure.sh --dns-upstream ""`, then
+`./scripts/dnsfilter.sh`. Running `configure.sh` without the flag keeps a saved
+list. A resolver that serves its own blocklist also blocks names dumbtv's list
+leaves alone, and taking a host out of `extra-hosts.txt` does not bring those
+back.
 
 ### The filter stopped working after the TV changed network
 

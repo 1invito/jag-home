@@ -24,7 +24,9 @@ while [[ $# -gt 0 ]]; do
     --dnsfilter)  flag01 "$1" "${2:-}"; DNSFILTER_ARG=$2; shift 2 ;;
     --youtube)    flag01 "$1" "${2:-}"; YOUTUBE_ARG=$2; shift 2 ;;
     --system-dns) flag01 "$1" "${2:-}"; SYSTEM_DNS_ARG=$2; shift 2 ;;
-    --dns-upstream) DNS_UPSTREAM_SET=1; DNS_UPSTREAM_ARG=${2:-}; shift 2 ;;
+    --dns-upstream)
+      [[ $# -ge 2 ]] || die '--dns-upstream takes resolver IPs; pass "" to clear them'
+      DNS_UPSTREAM_SET=1; DNS_UPSTREAM_ARG=$2; shift 2 ;;
     -y|--yes)     ASSUME_YES=1; shift ;;
     --dry-run)    DRY_RUN=1; shift ;;
     *) die "unknown flag: $1" ;;
@@ -105,13 +107,12 @@ FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
 if [[ $DNS_UPSTREAM_SET == 1 ]]; then
   DNS_UPSTREAM=$DNS_UPSTREAM_ARG
 elif [[ -f $CONF ]]; then
-  DNS_UPSTREAM=$(sed -n 's/^DNS_UPSTREAM="\(.*\)"/\1/p' "$CONF" | head -1)
+  DNS_UPSTREAM=$(sed -n 's/^DNS_UPSTREAM=//p' "$CONF" | tail -1 | tr -d '"')
 else
   DNS_UPSTREAM=""
 fi
-if [[ -n $DNS_UPSTREAM ]]; then
-  fallback_dns >/dev/null || exit 1
-fi
+DNS_UPSTREAM=$(printf '%s\n' "$DNS_UPSTREAM" | awk '{$1=$1; print}')
+fallback_dns >/dev/null || exit 1
 
 if [[ $DRY_RUN == 1 ]]; then
   step "would write $CONF"

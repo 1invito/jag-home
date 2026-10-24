@@ -165,27 +165,31 @@ fireos_name() {
 # What personalDNSfilter asks for a name that is not on the local list.
 # DNS_UPSTREAM is a space-separated list of resolver IPs. Empty keeps the router,
 # which is the default: a second blocklist at the resolver also sinks hosts the
-# local list deliberately left alone.
+# local list deliberately left alone. Port 53 over UDP only. personalDNSfilter drops
+# an entry it cannot parse without a word, and with no resolver left the TV resolves
+# nothing, so anything that is not a usable address stops here.
 fallback_dns() {
-  local ip item out=""
-  if [[ -z ${DNS_UPSTREAM:-} ]]; then
-    return 0
-  fi
-  for ip in $DNS_UPSTREAM; do
-    case $ip in
-      *[!0-9A-Fa-f:.]*) die "DNS_UPSTREAM entry '$ip' is not an IP address" ;;
-    esac
-    case $ip in
-      *:*)
-        case $ip in *.*) die "DNS_UPSTREAM entry '$ip' is not an IP address" ;; esac
-        item="[$ip]::53::UDP"
-        ;;
-      *.*.*.*) item="$ip::53::UDP" ;;
-      *) die "DNS_UPSTREAM entry '$ip' is not an IP address" ;;
-    esac
+  local ip o item out=""
+  local v4='^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$'
+  local h='[0-9A-Fa-f]{1,4}'
+  local v6full="^($h:){7}$h\$" v6short="^($h(:$h)*)?::($h(:$h)*)?\$"
+  for ip in ${DNS_UPSTREAM:-}; do
+    if [[ $ip =~ $v4 ]]; then
+      for o in "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[4]}"; do
+        [[ $((10#$o)) -le 255 && ( $o == 0 || $o != 0* ) ]] ||
+          die "DNS_UPSTREAM entry '$ip' is not an IP address"
+      done
+      [[ $ip == 0.0.0.0 ]] && die "DNS_UPSTREAM entry '$ip' is not a resolver"
+    elif [[ $ip =~ $v6full || $ip =~ $v6short ]]; then
+      [[ $ip == :: ]] && die "DNS_UPSTREAM entry '$ip' is not a resolver"
+    else
+      die "DNS_UPSTREAM entry '$ip' is not an IP address"
+    fi
+    item="[$ip]::53::UDP"
     if [[ -z $out ]]; then out=$item; else out="$out; $item"; fi
   done
-  printf '%s\n' "$out"
+  [[ -n $out ]] && printf '%s\n' "$out"
+  return 0
 }
 
 # The package lists and app-op calls are written for Fire OS 6 and later.

@@ -19,7 +19,7 @@ class ConfigureKeepTest(unittest.TestCase):
             env = dict(os.environ, CONF=str(conf))
             result = subprocess.run(
                 ["bash", str(ROOT / "scripts" / "configure.sh"), "-y", *flags],
-                env=env, capture_output=True, text=True,
+                env=env, capture_output=True, text=True, timeout=30,
             )
             return result, conf.read_text() if conf.exists() else None
 
@@ -98,6 +98,29 @@ class ConfigureKeepTest(unittest.TestCase):
         result, conf = self.configure("--dns-upstream", "dns.example")
         self.assertNotEqual(result.returncode, 0)
         self.assertIsNone(conf)
+
+    def test_dns_upstream_without_a_value_is_refused(self):
+        result, conf = self.configure("--dns-upstream")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('pass "" to clear', result.stderr)
+        self.assertIsNone(conf)
+
+    def test_dns_upstream_of_only_spaces_means_the_router(self):
+        result, conf = self.configure("--dns-upstream", "  ")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('DNS_UPSTREAM=""', conf)
+
+    def test_dns_upstream_saved_without_quotes_is_kept(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            conf = Path(tmp) / "dumbtv.conf"
+            conf.write_text("DNS_UPSTREAM=9.9.9.9\n")
+            result = subprocess.run(
+                ["bash", str(ROOT / "scripts" / "configure.sh"), "-y"],
+                env=dict(os.environ, CONF=str(conf)), capture_output=True, text=True,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('DNS_UPSTREAM="9.9.9.9"', conf.read_text())
 
     def test_empty_dns_upstream_clears_a_saved_list(self):
         with tempfile.TemporaryDirectory() as tmp:

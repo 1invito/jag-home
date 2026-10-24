@@ -37,8 +37,9 @@ step "plan"
 note "filter         personalDNSfilter, runs as a local VPN on the TV"
 note "gateway        $GW (put inside the tunnel so apps cannot bypass the filter)"
 note "list           HaGeZi Amazon trackers + data/blocklists/extra-hosts.txt"
-if [[ -n ${DNS_UPSTREAM:-} ]]; then
-  note "upstream       $DNS_UPSTREAM"
+upstream=$(fallback_dns) || exit 1
+if [[ -n $upstream ]]; then
+  note "upstream       $DNS_UPSTREAM (port 53, UDP)"
 else
   note "upstream       the router"
 fi
@@ -97,10 +98,9 @@ if [[ $DRY_RUN == 0 ]]; then
   # downloads a blocklist and cannot end up with a half-written one.
   # previousAutoUpdateURL must match the (now empty) update URL: the template ships "<none>",
   # and a mismatch makes the app "update" at start and write an empty list over the pushed one.
-  # DNS_UPSTREAM replaces the router. Empty keeps the same router line as before.
-  fb=$(fallback_dns) || exit 1
-  fb=${fb%$'\r'}
-  if [[ -z $fb ]]; then
+  if [[ -n $upstream ]]; then
+    fb=$upstream
+  else
     fb="\\#router; [$GW]::53::UDP"
   fi
   sed -i.dumbtv \
@@ -140,7 +140,7 @@ if [[ $DRY_RUN == 0 ]]; then
   fi
   grep -Fqx "routeIPs = $GW" "$CONF_OUT" ||
     die "config template changed upstream (routeIPs did not take) — update scripts/dnsfilter.sh"
-  if [[ -n ${DNS_UPSTREAM:-} ]]; then
+  if [[ -n $upstream ]]; then
     grep -Fqx "fallbackDNS = $fb" "$CONF_OUT" ||
       die "config template changed upstream (fallbackDNS did not take) — update scripts/dnsfilter.sh"
   fi
@@ -184,7 +184,7 @@ if [[ $DRY_RUN == 0 ]]; then
     note "  2. add an entry: file:///storage/emulated/0/Android/media/$PKG/dumbtv-blocklist.txt"
     note "  3. untick every other entry, go back, and reboot the TV"
     note "  4. run ./scripts/verify.sh: the Amazon hosts should answer 127.0.0.1"
-    note "the routing tweaks (detectDNS=false, routeIPs) cannot be applied this way; see docs/TROUBLESHOOTING.md"
+    note "the routing tweaks (detectDNS=false, routeIPs, DNS_UPSTREAM) cannot be applied this way; see docs/TROUBLESHOOTING.md"
     exit 0
   fi
   dev "test -d $DIR" >/dev/null 2>&1 || die "the app did not create $DIR — is it installed?"
