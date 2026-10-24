@@ -172,7 +172,8 @@ Also check that `PRIME=1` in `dumbtv.conf`.
 
 Persistent system apps keep their process after `pm disable-user`, and
 `am force-stop` does not end it. `debloat.sh` has a second pass for these: it
-takes away their background work and background data.
+takes away their background work, and their background data on metered networks.
+On Wi-Fi and Ethernet the DNS filter is what blocks their uploads.
 
 ### `debloat.sh` reports `PROTECTED`
 

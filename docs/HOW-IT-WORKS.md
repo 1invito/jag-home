@@ -48,8 +48,10 @@ cmd netpolicy set restrict-background true           # Data Saver
 cmd netpolicy add restrict-background-blacklist <uid>
 ```
 
-Their background services are held in standby and their background data is
-refused while Data Saver is on. A process that is already running keeps running,
+Their background services are held in standby. Data Saver refuses their background
+data only on metered networks: a TV on Wi-Fi or Ethernet is not metered (`dumpsys
+netpolicy` lists only the filter's tunnel), so there the DNS filter in section 4 is
+what stops them. A process that is already running keeps running,
 and `am force-stop` is refused for them, so they are starved rather than stopped.
 `lockdown.sh` applies this to `data/fireos/protected.txt`. `debloat.sh` applies the
 same treatment to disabled packages whose process survived the disable.

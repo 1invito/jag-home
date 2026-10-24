@@ -124,7 +124,7 @@ Your answers are saved in `dumbtv.conf`; run `configure.sh` again to change them
 | | |
 |---|---|
 | **Amazon packages** | About 50 disabled: ads, sponsored content, ACR, telemetry, crash and usage uploads, experiments, update nags. Disabled, never deleted. |
-| **Protected packages** | The few Amazon will not let anyone disable lose background running and background data. |
+| **Protected packages** | The few Amazon will not let anyone disable lose background running; the DNS filter blocks what they upload. |
 | **Settings** | Ad tracking limited, interest-based ads off, usage reporting off, home-screen autoplay off. |
 | **DNS** | [personalDNSfilter](https://github.com/IngoZenz/personaldnsfilter) runs on the TV and blocks about 400 Amazon telemetry, ad and update hosts. YouTube, the Appstore and your other apps are not blocked. |
 | **Home screen** | dumbtv home instead of Amazon's: no promo tiles, no sponsored rows. |

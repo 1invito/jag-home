@@ -123,7 +123,7 @@ for p in $(cleanup_list); do
   if [[ -n $uid && $uid -ge 10000 ]]; then
     acmd cmd netpolicy add restrict-background-blacklist "$uid" >/dev/null
   fi
-  printf '  %-46s still running -> ops off, data blocked\n' "$p"
+  printf '  %-46s still running -> ops off, metered data blocked\n' "$p"
   printf '%s\tstarved\n' "$p" >> "$log"
 done
 

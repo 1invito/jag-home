@@ -140,7 +140,7 @@ and changes nothing.
 | `already disabled by the system` | the TV had it off already |
 | `absent` | not on this TV; normal, the lists cover many models |
 | `PROTECTED` | Amazon refuses to let it be disabled. Expected; `lockdown.sh` and the filter deal with it |
-| `still running -> ops off, data blocked` | disabled but kept alive by the system, so its background running and data are cut |
+| `still running -> ops off, metered data blocked` | disabled but kept alive by the system, so its background running is cut. Data Saver only covers metered networks; on Wi-Fi and Ethernet the DNS filter blocks its uploads |
 | `uninstalled` | an app the owner named, removed |
 | `SKIP (keep list)` | the owner kept it |
 | `SKIP (never-disable list)` | the TV needs it |
