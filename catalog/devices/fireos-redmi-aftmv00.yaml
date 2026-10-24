@@ -32,10 +32,6 @@ data:
   user_apps: data/fireos/user-apps.txt
   settings: data/fireos/settings.txt
   settings_restore: data/fireos/settings.restore.txt
-launcher:
-  mechanism: none
-  package: com.amazon.tv.launcher
-  reason: "Launcher not tested on this device. Amazon's home screen kept. Onida and Hisense confirm accessibility_service works on Fire OS 7.7.1.x; not verified on this unit."
 quirks:
   - "Fire TV Edition TV (Redmi/MI TV), not a stick — has TV tuner and HDMI inputs"
   - "OEM model TTE_L32R8-FVIN, ADB model AFTMV00"
