@@ -301,7 +301,19 @@ boot_id() { dev1 cat /proc/sys/kernel/random/boot_id; }
 # enabled or disabled in the last few seconds comes back as it was. `svc power reboot`
 # shuts down properly. It is killed part-way through the shutdown, so chaining a
 # fallback after it with || would cut that shutdown short.
-ask_reboot() { dev svc power reboot >/dev/null 2>&1 || true; }
+# Fire OS 7.7 refuses it to the shell ("Neither user 2000 nor current process has
+# android.permission.REBOOT", in logcat only) and the TV stays up. A shutdown that
+# started sets sys.shutdown.requested, so a TV still answering without it refused.
+# Package state is written about 10 s after a change; a plain reboot after that wait
+# keeps every change.
+ask_reboot() {
+  dev svc power reboot >/dev/null 2>&1 || true
+  sleep 3
+  if [[ $(dev1 echo ok) == ok && -z $(dev1 getprop sys.shutdown.requested) ]]; then
+    sleep "${PM_WRITE_SECONDS:-12}"
+    dev reboot >/dev/null 2>&1 || true
+  fi
+}
 
 # A network adb session can drop when the TV's network changes under it (an app that
 # holds the VPN being replaced). Brings it back, or stops the run.

@@ -61,7 +61,15 @@ elif command == 'echo ok':
     print('ok')
 elif command == 'cat /proc/sys/kernel/random/boot_id':
     print(f"boot-{state.get('boots', 0)}")
+elif command == 'svc power reboot' and state.get('svc_refused'):
+    print('Killed')
+elif command == 'getprop sys.shutdown.requested':
+    print(state.pop('shutting_down', ''))
+    save()
 elif command in ('svc power reboot', 'reboot'):
+    if command == 'svc power reboot':
+        state['shutting_down'] = '1reboot'
+        save()
     if not state.get('ignores_reboot'):
         state['boots'] = state.get('boots', 0) + 1
         save()
