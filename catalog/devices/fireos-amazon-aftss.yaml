@@ -30,8 +30,8 @@ launcher:
   mechanism: accessibility_service
   package: tv.dumbtv.home
 quirks:
-  - "com.amazon.tahoe is Amazon Kids on this build (FreeTimeFTVApp v3.53: Kids profiles, PIN screens, FreeTime activities). packages.txt disables it as the ad-tile painter, so Amazon Kids goes with it"
-  - "com.amazon.spiderpork is Amazon Luna on this build: it owns the luna: URL scheme and the luna.amazon.* app links and has a launcher activity. packages.txt calls it a metrics transport; disabling it removes Luna"
+  - "com.amazon.tahoe is Amazon Kids on this build (FreeTimeFTVApp v3.53: Kids profiles, PIN screens, FreeTime activities). packages.txt disabled it as the ad-tile painter, so Amazon Kids went with it. Both lists now keep it unless the owner names it"
+  - "com.amazon.spiderpork is Amazon Luna on this build: it owns the luna: URL scheme and the luna.amazon.* app links and has a launcher activity. packages.txt called it a metrics transport, and disabling it removes Luna. It is now kept unless the owner names it"
   - "svc power reboot did not restart the stick on the first request in either reboot (debloat.sh and dnsfilter.sh): reboot_wait printed 'the TV is still up from before; asking again', and the second request worked"
   - "With ALEXA=1, voice_disabled and alexa_wake_word_disabled were still 0 after debloat.sh. Alexa voice search, opening apps by voice and the search results all worked with dumbtv home holding HOME"
   - "Keeping OTA updates (OTA section taken out of extra-hosts.txt, the two OTA packages out of protected.txt) makes the dnsfilter.sh self-test fail on its hard-coded softwareupdates.amazon.com check and exit 1, although the filter blocks everything else; verify.sh passes once that host is also taken out of verify-blocked.txt"
