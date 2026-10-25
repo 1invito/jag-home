@@ -10,10 +10,9 @@ final class MemoryPolicy {
     }
 
     static String explanation(int api) {
-        return "Automatic cleanup is unavailable on this device (Android API " + api + "). "
-            + "Public APIs cannot reliably identify other apps' playback or protected processes. "
-            + "No apps were stopped. Your VPN, playback, launchers and system services are untouched. "
-            + "You can review an app in system settings instead. Android manages available memory "
-            + "and may restart background processes.";
+        return "Android manages background processes and may restart them when needed. "
+            + "No apps were stopped. JAG never kills applications, clears their data or changes their background activity. "
+            + "Your VPN, playback, launchers and system services are untouched. "
+            + "You can review an app in system settings instead; leave active playback and VPN settings unchanged.";
     }
 }

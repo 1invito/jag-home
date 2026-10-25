@@ -38,7 +38,7 @@ public final class Preferences extends Activity {
         super.onCreate(state);
         config = new Configuration(new File(getFilesDir(), "jag.properties"));
         ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(0xFF091424);
+        scroll.setBackgroundColor(Theme.named(config.get("theme")).bottom);
         scroll.setFocusable(false);
         scroll.setVerticalScrollBarEnabled(false);
         list = new LinearLayout(this);
@@ -66,14 +66,18 @@ public final class Preferences extends Activity {
             });
         }
         action("Application ordering", this::ordering);
-        action("Free Memory · capabilities & exclusions", () -> Memory.information(this));
+        action("Clear recent history", () -> Ui.dialog(this).setTitle("Clear Recently Opened?")
+            .setMessage("Removes only the four local launch-history entries. Favorite ordering and app data are preserved.")
+            .setPositiveButton("Clear", (d, which) -> change(() -> config.set("recent", "")))
+            .setNegativeButton("Cancel", null).show());
+        action("Memory Status", () -> Memory.information(this));
         action("Android system settings", () -> Recovery.systemSettings(this));
         action("Application management", () -> Recovery.applications(this));
         action("Return to existing dumbtv", () -> Recovery.dumbtv(this));
         action("About JAG Home", this::about);
-        action("Restore default appearance", () -> Ui.dialog(this)
-            .setTitle("Restore the navy default?")
-            .setMessage("Resets JAG's appearance. Your app order, installed apps, accounts and dumbtv are preserved.")
+        action("Restore visual defaults", () -> Ui.dialog(this)
+            .setTitle("Restore Cinematic defaults?")
+            .setMessage("Resets JAG's appearance. Favorite order, recent history, installed apps, accounts and dumbtv are preserved.")
             .setPositiveButton("Restore", (d, which) -> change(config::resetAppearance))
             .setNegativeButton("Cancel", null).show());
         setContentView(scroll);
@@ -204,7 +208,7 @@ public final class Preferences extends Activity {
     }
 
     private void about() {
-        Ui.dialog(this).setTitle("JAG Home · development preview 0.1")
+        Ui.dialog(this).setTitle("JAG Home · cinematic development preview 0.2")
             .setMessage("An original, quiet TV home inspired by spatial clarity and simple navigation. "
                 + "Native Java and Android Views. No ads, tracking, network permission or background services. "
                 + "Built on dumbtv by the dumbtv contributors, MIT licensed. "

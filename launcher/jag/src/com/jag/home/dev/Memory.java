@@ -16,16 +16,6 @@ import java.util.List;
 final class Memory {
     private Memory() {}
 
-    static void confirm(Activity a) {
-        AlertDialog dialog = Ui.dialog(a)
-            .setTitle("Free Memory")
-            .setMessage("Try to free memory by stopping eligible background apps? Currently playing apps and your VPN will be protected.")
-            .setPositiveButton("Free Memory", (d, which) -> information(a))
-            .setNegativeButton("Cancel", null).create();
-        dialog.setOnShowListener(d -> Ui.focusDialog(dialog));
-        dialog.show();
-    }
-
     static String snapshot(Activity a) {
         try {
             ActivityManager am = (ActivityManager) a.getSystemService(Context.ACTIVITY_SERVICE);
@@ -37,12 +27,12 @@ final class Memory {
                 + (info.lowMemory ? " (system reports low memory)." : ".")
                 + "\nThis is a system snapshot, not a cleanup result.";
         } catch (RuntimeException e) {
-            return "Available memory could not be read. No cleanup was attempted.";
+            return "Available memory could not be read. No apps were stopped.";
         }
     }
 
     static void information(Activity a) {
-        Ui.dialog(a).setTitle("Memory & background apps")
+        Ui.dialog(a).setTitle("Memory Status")
             .setMessage(snapshot(a) + "\n\n" + MemoryPolicy.explanation(Build.VERSION.SDK_INT))
             .setPositiveButton("Manage an app", (d, which) -> pickApp(a))
             .setNeutralButton("App settings", (d, which) -> Recovery.applications(a))

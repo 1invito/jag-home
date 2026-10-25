@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.Gravity;
 import android.view.View;
@@ -48,6 +49,14 @@ final class Ui {
         StateListDrawable bg = new StateListDrawable();
         bg.addState(new int[] {android.R.attr.state_focused}, round(0xFF253B58, accent, dp(v.getContext(), 12)));
         bg.addState(new int[0], round(SURFACE, 0, dp(v.getContext(), 12)));
+        v.setBackground(bg);
+    }
+
+    /** Mark focus as handled without API 26 calls, avoiding Android's square fallback highlight. */
+    static void canvasFocus(View v) {
+        StateListDrawable bg = new StateListDrawable();
+        bg.addState(new int[] {android.R.attr.state_focused}, new ColorDrawable(0));
+        bg.addState(new int[0], new ColorDrawable(0));
         v.setBackground(bg);
     }
 

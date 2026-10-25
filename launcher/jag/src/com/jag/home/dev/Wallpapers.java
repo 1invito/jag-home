@@ -21,7 +21,8 @@ final class Wallpapers {
         List<File> result = new ArrayList<>();
         File external = c.getExternalFilesDir(null);
         if (external != null) result.add(new File(external, "wallpapers"));
-        for (File media : c.getExternalMediaDirs()) {
+        File[] mediaFolders = c.getExternalMediaDirs();
+        if (mediaFolders != null) for (File media : mediaFolders) {
             if (media != null) result.add(new File(media, "wallpapers"));
         }
         return result;
@@ -30,6 +31,7 @@ final class Wallpapers {
     static List<File> list(Context c) {
         List<File> result = new ArrayList<>();
         for (File folder : folders(c)) {
+            if (result.size() >= 100) break;
             File[] files = folder.listFiles();
             if (files == null) continue;
             for (File file : files) {

@@ -1,7 +1,7 @@
 package com.jag.home.dev;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,16 +11,17 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,7 +30,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Separate ordinary activity. No HOME takeover, background services or polling. */
+/** Visible-only native scene. No HOME takeover, tracking service or polling. */
 public final class Home extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -37,15 +38,15 @@ public final class Home extends Activity {
     private final List<Tile> tiles = new ArrayList<>();
     private List<AppCatalog.App> apps = new ArrayList<>();
     private Configuration config;
-    private List<String> order;
+    private List<String> order, recents;
     private FrameLayout root;
     private ImageView wallpaper;
-    private TextView clock, date, hint;
+    private TextView clock, date;
     private Bitmap background;
-    private String backgroundKey = "";
-    private String applied = "";
-    private boolean visible;
-    private int generation, lastFocus;
+    private String backgroundKey = "", focusToken = "";
+    private boolean visible, lowMemory, loading, reloadRequested, launchPending, wallpaperSuppressed;
+    private int generation;
+    private float sceneUnit;
     private SimpleDateFormat timeFormat, dateFormat;
 
     private final BroadcastReceiver changes = new BroadcastReceiver() {
@@ -58,61 +59,60 @@ public final class Home extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        if (state != null) lastFocus = Math.max(0, Math.min(8, state.getInt("focus", 0)));
+        if (state != null) focusToken = state.getString("focusToken", focusToken);
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        lowMemory = manager != null && manager.isLowRamDevice();
     }
 
     @Override protected void onSaveInstanceState(Bundle state) {
-        state.putInt("focus", lastFocus);
+        state.putString("focusToken", focusToken);
         super.onSaveInstanceState(state);
     }
 
     @Override protected void onResume() {
-        super.onResume();
-        visible = true;
+        super.onResume(); visible = true;
         config = new Configuration(new File(getFilesDir(), "jag.properties"));
-        StringBuilder signature = new StringBuilder(config.get("order"));
-        for (String[] choice : Configuration.CHOICES) signature.append('|').append(config.get(choice[0]));
-        if (root == null || !applied.equals(signature.toString())) {
-            applied = signature.toString();
-            build();
-        }
-        formats();
-        tick();
+        build(); formats(); tick();
         IntentFilter times = new IntentFilter(Intent.ACTION_TIME_TICK);
-        times.addAction(Intent.ACTION_TIME_CHANGED);
-        times.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+        times.addAction(Intent.ACTION_TIME_CHANGED); times.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         times.addAction(Intent.ACTION_LOCALE_CHANGED);
         registerReceiver(changes, times);
         IntentFilter packages = new IntentFilter();
-        packages.addAction(Intent.ACTION_PACKAGE_ADDED);
-        packages.addAction(Intent.ACTION_PACKAGE_REMOVED);
-        packages.addAction(Intent.ACTION_PACKAGE_CHANGED);
-        packages.addDataScheme("package");
+        packages.addAction(Intent.ACTION_PACKAGE_ADDED); packages.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        packages.addAction(Intent.ACTION_PACKAGE_CHANGED); packages.addDataScheme("package");
         registerReceiver(changes, packages);
-        load();
-        focus.get(lastFocus).requestFocus();
+        load(); restoreFocus();
     }
 
     @Override protected void onPause() {
-        visible = false;
-        generation++;
-        unregisterReceiver(changes);
-        super.onPause();
+        visible = false; generation++; unregisterReceiver(changes); super.onPause();
     }
 
-    @Override protected void onStop() {
+    @Override protected void onStop() { releaseImages(); super.onStop(); }
+
+    private void releaseImages() {
         for (Tile tile : tiles) tile.clearArt();
         apps = new ArrayList<>();
-        wallpaper.setImageDrawable(null);
-        background = null;
-        backgroundKey = "";
-        super.onStop();
+        if (wallpaper != null) wallpaper.setImageDrawable(null);
+        // Let the renderer/GC release displayed bitmaps; never recycle a live display-list reference.
+        background = null; backgroundKey = "";
+    }
+
+    @Override public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level >= TRIM_MEMORY_RUNNING_LOW && level < TRIM_MEMORY_UI_HIDDEN) {
+            lowMemory = true;
+            for (Tile tile : tiles) tile.reduceEffects();
+            if (level >= TRIM_MEMORY_RUNNING_CRITICAL) {
+                wallpaperSuppressed = true;
+                if (wallpaper != null) wallpaper.setImageDrawable(null);
+                background = null; backgroundKey = "";
+            }
+        }
     }
 
     @Override protected void onDestroy() {
-        io.shutdownNow();
-        ui.removeCallbacksAndMessages(null);
-        super.onDestroy();
+        io.shutdownNow(); ui.removeCallbacksAndMessages(null); super.onDestroy();
     }
 
     private void formats() {
@@ -121,131 +121,135 @@ public final class Home extends Activity {
     }
 
     private void tick() {
-        Date now = new Date();
-        clock.setText(timeFormat.format(now));
-        date.setText(dateFormat.format(now));
+        Date now = new Date(); clock.setText(timeFormat.format(now)); date.setText(dateFormat.format(now));
     }
 
-    private int dp(float value) { return Ui.dp(this, value); }
+    private int dp(float value) { return Math.round(sceneUnit * value); }
+
+    private TextView text(String value, float size, int color) {
+        return Ui.text(this, value, size * sceneUnit / getResources().getDisplayMetrics().density, color);
+    }
 
     private void build() {
-        focus.clear();
-        tiles.clear();
-        apps = new ArrayList<>();
+        focus.clear(); tiles.clear();
         order = Favorites.order(config.get("order"));
-        root = new FrameLayout(this);
-        root.setClipChildren(false);
-        root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[] {0xFF18314D, 0xFF0B192C, 0xFF060D18}));
-        wallpaper = new ImageView(this);
-        wallpaper.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        recents = "On".equals(config.get("recent.enabled")) ? RecentHistory.read(config.get("recent")) : new ArrayList<>();
+        Theme theme = Theme.named(config.get("theme"));
+        DisplayMetrics display = getResources().getDisplayMetrics();
+        LayoutPolicy layout = new LayoutPolicy(display.widthPixels, display.heightPixels, display.density,
+                config.get("tiles"), !recents.isEmpty());
+        sceneUnit = layout.unit;
+        root = new FrameLayout(this); root.setClipChildren(false);
+        root.addView(new Atmosphere(this, theme), new FrameLayout.LayoutParams(-1, -1));
+        wallpaper = new ImageView(this); wallpaper.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(wallpaper, new FrameLayout.LayoutParams(-1, -1));
-        if (background != null) wallpaper.setImageBitmap(background);
+        if (theme.photograph && background != null) wallpaper.setImageBitmap(background);
         View dim = new View(this);
-        dim.setBackgroundColor((Integer.parseInt(config.get("dim")) * 255 / 100) << 24);
+        dim.setBackgroundColor(Integer.parseInt(config.get("dim")) * 255 / 100 << 24);
         root.addView(dim, new FrameLayout.LayoutParams(-1, -1));
-        // A static legibility wash; no blur, live effects or wallpaper animation.
-        View wash = new View(this);
-        wash.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {0x22081120, 0x00081120, 0xB3081120}));
-        root.addView(wash, new FrameLayout.LayoutParams(-1, -1));
+        if (!theme.minimal) {
+            View wash = new View(this);
+            wash.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x15050B16, 0x33050B16, 0xBE050B16, 0xE5050B16}));
+            root.addView(wash, new FrameLayout.LayoutParams(-1, -1));
+        }
 
-        TextView wordmark = Ui.text(this, "JAG  /  HOME", 17, Ui.TEXT);
-        wordmark.setLetterSpacing(0.12f);
+        LinearLayout brand = new LinearLayout(this); brand.setGravity(Gravity.CENTER_VERTICAL);
+        TextView jag = text("JAG", 22, Ui.TEXT); jag.setLetterSpacing(0.15f);
+        brand.addView(jag);
+        View divider = new View(this); divider.setBackgroundColor(0x60BBCDE5);
+        LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(dp(1), dp(17));
+        line.setMargins(dp(16), 0, dp(16), 0); brand.addView(divider, line);
+        TextView home = text("HOME", 11, Ui.MUTED); home.setLetterSpacing(0.27f); brand.addView(home);
         FrameLayout.LayoutParams word = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.START);
-        word.setMargins(dp(48), dp(38), 0, 0);
-        root.addView(wordmark, word);
-        LinearLayout time = new LinearLayout(this);
-        time.setOrientation(LinearLayout.VERTICAL);
-        time.setGravity(Gravity.END);
-        clock = Ui.text(this, "", 27, Ui.TEXT);
-        clock.setTypeface(Ui.LIGHT);
-        date = Ui.text(this, "", 12, Ui.MUTED);
-        date.setPadding(0, dp(5), 0, 0);
-        time.addView(clock);
-        time.addView(date);
-        time.setVisibility("Shown".equals(config.get("clock")) ? View.VISIBLE : View.GONE);
-        FrameLayout.LayoutParams when = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
-        when.setMargins(0, dp(33), dp(48), 0);
-        root.addView(time, when);
+        word.setMargins(layout.edge, dp(37), 0, 0); root.addView(brand, word);
+        LinearLayout when = new LinearLayout(this); when.setOrientation(LinearLayout.VERTICAL); when.setGravity(Gravity.END);
+        clock = text("", 31, Ui.TEXT); clock.setTypeface(Ui.LIGHT);
+        date = text("", 11, Ui.MUTED); date.setPadding(0, dp(6), 0, 0);
+        when.addView(clock); when.addView(date);
+        when.setVisibility("Shown".equals(config.get("clock")) ? View.VISIBLE : View.GONE);
+        date.setVisibility(theme.minimal ? View.GONE : View.VISIBLE);
+        FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
+        at.setMargins(0, dp(31), layout.edge, 0); root.addView(when, at);
 
-        LinearLayout center = new LinearLayout(this);
-        center.setOrientation(LinearLayout.VERTICAL);
-        center.setClipChildren(false);
-        center.setClipToPadding(false);
-        TextView heading = Ui.text(this, "Your favorites", 26, Ui.TEXT);
-        heading.setTypeface(Ui.LIGHT);
-        heading.setPadding(dp(4), 0, 0, dp(24));
-        center.addView(heading);
-        LinearLayout row = new LinearLayout(this);
-        row.setClipChildren(false);
-        row.setClipToPadding(false);
-        int gap = dp(12);
-        float size = "Small".equals(config.get("tiles")) ? 0.86f : "Large".equals(config.get("tiles")) ? 1 : 0.94f;
-        int available = getResources().getDisplayMetrics().widthPixels - dp(96);
-        int width = Math.max(1, Math.round((available - gap * 5) / 6f * size));
-        int height = width * 9 / 16 + dp(32);
+        int left = (display.widthPixels - layout.rowWidth) / 2;
+        if (!theme.minimal) section("FAVORITES", left + dp(3), layout.top - dp(25));
+        LinearLayout row = strip();
         for (int i = 0; i < order.size(); i++) {
-            final String id = order.get(i);
-            Tile tile = new Tile(this, id, config);
-            tile.setOnClickListener(v -> launch(id));
-            tile.setOnLongClickListener(v -> { options(id); return true; });
-            registerFocus(tile, i);
-            LinearLayout.LayoutParams at = new LinearLayout.LayoutParams(width, height);
-            at.rightMargin = i == 5 ? 0 : gap;
-            row.addView(tile, at);
-            tiles.add(tile);
+            Tile tile = tile(order.get(i), false, "favorite:");
+            LinearLayout.LayoutParams card = new LinearLayout.LayoutParams(layout.cardWidth, layout.cardHeight);
+            card.rightMargin = i == 5 ? 0 : layout.gap; row.addView(tile, card);
         }
-        center.addView(row, new LinearLayout.LayoutParams(-2, -2));
-        hint = Ui.text(this, "Select to open   ·   Hold Select for options", 12, Ui.MUTED);
-        hint.setPadding(dp(4), dp(12), 0, 0);
-        center.addView(hint);
-        FrameLayout.LayoutParams main = new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
-        root.addView(center, main);
+        FrameLayout.LayoutParams primary = new FrameLayout.LayoutParams(layout.rowWidth, layout.cardHeight);
+        primary.leftMargin = left; primary.topMargin = layout.top; root.addView(row, primary);
+        if (!recents.isEmpty()) {
+            if (!theme.minimal) section("RECENTLY OPENED", left + dp(3), layout.recentTop - dp(23));
+            LinearLayout recentRow = strip();
+            for (int i = 0; i < recents.size(); i++) {
+                Tile tile = tile(recents.get(i), true, "recent:");
+                LinearLayout.LayoutParams card = new LinearLayout.LayoutParams(layout.recentWidth, layout.recentHeight);
+                card.rightMargin = layout.gap; recentRow.addView(tile, card);
+            }
+            FrameLayout.LayoutParams secondary = new FrameLayout.LayoutParams(-2, layout.recentHeight);
+            secondary.leftMargin = left; secondary.topMargin = layout.recentTop; root.addView(recentRow, secondary);
+        }
 
-        LinearLayout actions = new LinearLayout(this);
-        String[] names = {"Free Memory", "Wallpaper", "Settings"};
-        Runnable[] tasks = {() -> Memory.confirm(this), () -> preferences(true), () -> preferences(false)};
+        LinearLayout dock = strip(); dock.setPadding(dp(5), dp(5), dp(5), dp(5));
+        dock.setBackground(Ui.round(theme.dock, 0x24D6E4FF, dp(17)));
+        String[] names = {"Wallpaper", "Customize", "Memory Status", "System Settings"};
+        Runnable[] tasks = {() -> preferences(true), () -> preferences(false), () -> Memory.information(this), () -> Recovery.systemSettings(this)};
+        int width = Math.min(layout.rowWidth, dp(650));
         for (int i = 0; i < names.length; i++) {
-            TextView button = Ui.button(this, names[i], config.accent(), tasks[i]);
-            button.setGravity(Gravity.CENTER);
-            registerFocus(button, i + 6);
-            LinearLayout.LayoutParams at = new LinearLayout.LayoutParams(dp(145), dp(46));
-            at.setMargins(dp(6), 0, dp(6), 0);
-            actions.addView(button, at);
+            DockButton button = new DockButton(this, i, names[i], config.accent());
+            final Runnable action = tasks[i]; button.setOnClickListener(v -> action.run());
+            registerFocus(button, "dock:" + i);
+            dock.addView(button, new LinearLayout.LayoutParams(0, layout.dockHeight, 1));
         }
-        FrameLayout.LayoutParams quick = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        quick.bottomMargin = dp(57);
-        root.addView(actions, quick);
-        TextView development = Ui.text(this, "DEVELOPMENT PREVIEW  ·  Home returns to dumbtv", 10, Ui.MUTED);
-        development.setLetterSpacing(0.07f);
-        FrameLayout.LayoutParams foot = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        foot.bottomMargin = dp(26);
-        root.addView(development, foot);
+        FrameLayout.LayoutParams quick = new FrameLayout.LayoutParams(width, layout.dockHeight + dp(10), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        quick.bottomMargin = layout.dockBottom; root.addView(dock, quick);
         setContentView(root);
     }
 
-    private void registerFocus(View view, int position) {
-        focus.add(view);
-        view.setId(View.generateViewId());
-        view.setOnFocusChangeListener((v, has) -> {
-            if (has) lastFocus = position;
-        });
+    private LinearLayout strip() {
+        LinearLayout row = new LinearLayout(this); row.setClipChildren(false); row.setClipToPadding(false); return row;
+    }
+
+    private void section(String name, int left, int top) {
+        TextView section = text(name, 9, 0xB4BCCCE0); section.setLetterSpacing(0.22f);
+        FrameLayout.LayoutParams place = new FrameLayout.LayoutParams(-2, -2);
+        place.leftMargin = left; place.topMargin = top; root.addView(section, place);
+    }
+
+    private Tile tile(String id, boolean compact, String kind) {
+        Tile tile = new Tile(this, id, config, compact, lowMemory);
+        tile.setOnClickListener(v -> launch(id));
+        tile.setOnLongClickListener(v -> { options(id); return true; });
+        registerFocus(tile, kind + id); tiles.add(tile); return tile;
+    }
+
+    private void registerFocus(View view, String token) {
+        final int position = focus.size(); focus.add(view); view.setId(View.generateViewId()); view.setTag(token);
+        view.setOnFocusChangeListener((v, has) -> { if (has) focusToken = token; });
         view.setOnKeyListener((v, code, event) -> {
-            int direction = code == KeyEvent.KEYCODE_DPAD_LEFT ? Navigation.LEFT
-                : code == KeyEvent.KEYCODE_DPAD_RIGHT ? Navigation.RIGHT
-                : code == KeyEvent.KEYCODE_DPAD_UP ? Navigation.UP
-                : code == KeyEvent.KEYCODE_DPAD_DOWN ? Navigation.DOWN : -1;
+            int direction = code == KeyEvent.KEYCODE_DPAD_LEFT ? Navigation.LEFT : code == KeyEvent.KEYCODE_DPAD_RIGHT ? Navigation.RIGHT
+                : code == KeyEvent.KEYCODE_DPAD_UP ? Navigation.UP : code == KeyEvent.KEYCODE_DPAD_DOWN ? Navigation.DOWN : -1;
             if (direction < 0) return false;
-            if (event.getAction() == KeyEvent.ACTION_DOWN) focus.get(Navigation.next(position, direction)).requestFocus();
+            if (event.getAction() == KeyEvent.ACTION_DOWN) focus.get(Navigation.next(position, direction, recents.size())).requestFocus();
             return true;
         });
     }
 
+    private void restoreFocus() {
+        for (View view : focus) if (focusToken.equals(view.getTag())) { view.requestFocus(); return; }
+        focus.get(0).requestFocus();
+    }
+
     private void load() {
+        if (loading) { reloadRequested = true; return; }
+        loading = true; reloadRequested = false;
         final int ticket = ++generation;
         final List<String> ids = new ArrayList<>(order);
-        final String selected = config.get("wallpaper");
+        final String selected = Theme.named(config.get("theme")).photograph && !wallpaperSuppressed ? config.get("wallpaper") : "";
         final String cachedKey = backgroundKey;
         final boolean cached = background != null;
         io.execute(() -> {
@@ -256,33 +260,41 @@ public final class Home extends Activity {
             boolean reuse = cached && key.equals(cachedKey);
             Bitmap decoded = reuse ? null : Wallpapers.decode(file);
             ui.post(() -> {
+                loading = false;
                 if (!visible || ticket != generation) {
-                    AppCatalog.release(loaded);
-                    if (decoded != null) decoded.recycle();
-                    return;
+                    AppCatalog.release(loaded); if (decoded != null) decoded.recycle();
+                    if (visible) load(); return;
                 }
                 apps = loaded;
-                for (int i = 0; i < tiles.size(); i++) tiles.get(i).bind(apps.get(i));
-                if (!reuse) {
-                    background = decoded;
-                    backgroundKey = key;
-                    wallpaper.setImageBitmap(decoded);
-                }
-                hint.setText(!selected.isEmpty() && background == null
-                    ? "Wallpaper unavailable · using navy background"
-                    : "Select to open   ·   Hold Select for options");
+                for (Tile tile : tiles) for (AppCatalog.App app : apps) if (tile.packageId.equals(app.id)) tile.bind(app);
+                if (wallpaperSuppressed) {
+                    if (decoded != null) decoded.recycle();
+                    background = null; backgroundKey = ""; wallpaper.setImageDrawable(null);
+                } else if (!reuse) { background = decoded; backgroundKey = key; wallpaper.setImageBitmap(decoded); }
+                if (reloadRequested) load();
             });
         });
     }
 
     private void launch(String id) {
-        // Resolve again: app could have been disabled or uninstalled since the tile loaded.
-        if (!Ui.open(this, AppCatalog.launch(getPackageManager(), id))) {
-            Ui.dialog(this).setTitle(Favorites.name(id) + " is unavailable")
-                .setMessage("This app is missing, disabled or cannot be opened. Your apps and sign-in data have not been changed.")
-                .setPositiveButton("App settings", (d, which) -> Recovery.details(this, id))
-                .setNegativeButton("Close", null).show();
-        }
+        if (launchPending) return;
+        // All PackageManager work stays off the input/render thread, including a fresh launch resolution.
+        launchPending = true;
+        io.execute(() -> {
+            Intent intent = AppCatalog.launch(getPackageManager(), id);
+            ui.post(() -> {
+                launchPending = false;
+                if (!visible) return;
+                if (Ui.open(this, intent)) {
+                    try { config.recordLaunch(id, true); }
+                    catch (IOException e) { Ui.message(this, "App opened. Recent history could not be saved."); }
+                } else {
+                    Ui.dialog(this).setTitle(Favorites.name(id) + " is unavailable")
+                        .setMessage("This app is missing, disabled or cannot be opened. Your apps and sign-in data have not been changed.")
+                        .setPositiveButton("App settings", (d, which) -> Recovery.details(this, id)).setNegativeButton("Close", null).show();
+                }
+            });
+        });
     }
 
     private void options(String id) {
@@ -295,21 +307,16 @@ public final class Home extends Activity {
             }).setNegativeButton("Cancel", null).show();
     }
 
-    private void preferences(boolean wall) {
-        startActivity(new Intent(this, Preferences.class).putExtra("wallpaper", wall));
-    }
+    private void preferences(boolean wall) { startActivity(new Intent(this, Preferences.class).putExtra("wallpaper", wall)); }
 
     @Override public boolean onKeyDown(int code, KeyEvent event) {
         if (code == KeyEvent.KEYCODE_MENU) {
-            if (lastFocus < 6) options(order.get(lastFocus));
+            if (focusToken.startsWith("favorite:") || focusToken.startsWith("recent:")) options(focusToken.substring(focusToken.indexOf(':') + 1));
             else preferences(false);
             return true;
         }
         return super.onKeyDown(code, event);
     }
 
-    @Override public void onBackPressed() {
-        // Ordinary activity Back: leaves the development preview, preserving HOME integration.
-        finish();
-    }
+    @Override public void onBackPressed() { finish(); }
 }
