@@ -1,5 +1,9 @@
 # V2 development signing and update continuity
 
+For the separate V3 production package `com.jag.home`, use
+[stable/SIGNING.md](stable/SIGNING.md). Its dedicated owner certificate must
+differ from the preview certificate documented here.
+
 The retained v1 cloud signing key is available at
 `launcher/build/jag-home-dev.keystore` (ignored by Git). It matches the original
 cloud-built v1 APK. V2 retains **`com.jag.home.dev`**, the same certificate and

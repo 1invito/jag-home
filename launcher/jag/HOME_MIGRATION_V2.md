@@ -1,5 +1,11 @@
 # Future stable HOME migration — design only
 
+Historical v2 design: the implemented v3 tool and its narrower API 28-only
+contract are documented in [home/README.md](home/README.md). In particular, v3
+does not change the Android default HOME resolver or use an overlay, and handles
+Android 9's user-0-only list/delete limitation explicitly. Do not run design
+pseudocode below as an installer; use the tested owner-operated modes.
+
 **No production migration or HOME takeover is implemented or executed in this
 branch.** The preview remains an ordinary `com.jag.home.dev` application. Every
 device command below is a future owner-operated planning example. This cloud

@@ -72,6 +72,19 @@ final class Configuration {
         if (success && "On".equals(get("recent.enabled"))) set("recent", RecentHistory.launched(get("recent"), id));
     }
 
+    /** Explicit stable import: appearance/order only, never history or arbitrary private keys. */
+    void importAppearance(Properties incoming, String wallpaperPath) throws IOException {
+        Properties changed = new Properties(); changed.putAll(values);
+        for (String[] choice : CHOICES) {
+            if (choice[0].equals("recent.enabled")) continue;
+            String value = incoming.getProperty(choice[0]);
+            for (int i = 3; i < choice.length; i++) if (choice[i].equals(value)) changed.setProperty(choice[0], value);
+        }
+        if (incoming.containsKey("order")) changed.setProperty("order", Favorites.move(incoming.getProperty("order"), -1, -1));
+        if (wallpaperPath != null) changed.setProperty("wallpaper", wallpaperPath);
+        commit(changed);
+    }
+
     boolean animateFocus(boolean lowMemory, boolean hardwareAccelerated) {
         return "On".equals(get("animation")) && "Off".equals(get("reduce.motion"))
             && !"Ultra Minimal".equals(get("theme")) && !lowMemory && hardwareAccelerated;

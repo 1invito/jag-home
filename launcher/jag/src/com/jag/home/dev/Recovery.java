@@ -9,7 +9,7 @@ final class Recovery {
     private Recovery() {}
 
     static void systemSettings(Activity a) {
-        if (!Ui.open(a, new Intent(Settings.ACTION_SETTINGS))) Ui.message(a, "System settings are unavailable. Press Home to return to dumbtv.");
+        if (!Ui.open(a, new Intent(Settings.ACTION_SETTINGS))) Ui.message(a, "System settings are unavailable. " + HomeIntegration.recoveryHint());
     }
 
     static void applications(Activity a) {

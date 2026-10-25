@@ -1,5 +1,12 @@
 # JAG Home v2 development architecture
 
+This page describes the unchanged `com.jag.home.dev` preview. V3 adds a separate
+`com.jag.home` build with the same native UI, an event-driven accessibility Guard
+and explicit owner controls. Its manifest and adapter live under `stable/`;
+the preview retains its no-op adapter and original manifest. See
+[HOME integration](home/README.md) for the staged handover, trial lease and
+independent PC watchdog. The upstream components below remain separate.
+
 The upstream launcher uses native Java Views, an asynchronous PackageManager
 catalog, canvas-drawn tiles, file-based settings and a bare SDK shell build.
 `Home` coordinates wallpaper, package and time updates; `Options` edits settings;
@@ -114,5 +121,5 @@ New missing/invalid keys have safe defaults; no destructive migration runs.
 
 `SIGNING.md` documents retained certificate verification and the unsigned CI
 artifact. `HOME_MIGRATION_V2.md` studies the actual upstream Guard and describes
-future snapshots and rollback only. Neither document adds a device mutation path
+the original V2 snapshot and rollback proposal. Neither document adds a device mutation path
 to the application or build.

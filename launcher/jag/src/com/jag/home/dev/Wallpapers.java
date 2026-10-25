@@ -52,6 +52,9 @@ final class Wallpapers {
             File canonical = file.getCanonicalFile();
             File imported = new File(c.getFilesDir(), "imported-wallpaper").getCanonicalFile();
             if (canonical.equals(imported)) return valid(file) ? file : null;
+            if (canonical.equals(new File(c.getFilesDir(), "appearance-wallpaper.png").getCanonicalFile())) return valid(file) ? file : null;
+            if (canonical.getParentFile().equals(c.getFilesDir().getCanonicalFile())
+                    && canonical.getName().matches("appearance-wallpaper-[0-9]+\\.png")) return valid(file) ? file : null;
             for (File folder : folders(c)) {
                 if (folder.getCanonicalFile().equals(canonical.getParentFile())
                         && WallpaperPolicy.supported(canonical.getName())) return valid(file) ? file : null;

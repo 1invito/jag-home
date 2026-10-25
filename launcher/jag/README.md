@@ -1,5 +1,11 @@
 # JAG Home v2 · cinematic development preview
 
+**V3 stable HOME integration is a separate variant.** See the
+[owner-operated migration tool and recovery guide](home/README.md) and
+[stable signing instructions](stable/SIGNING.md). The development APK described
+below retains its existing identity and no-op HOME hooks. No device activation
+is performed by this branch or by CI.
+
 A native Java TV home for Fire TV Stick 3rd generation / Fire OS 7.7.1.7,
 with an original cinematic design, four themes and no network permission.
 
