@@ -1,6 +1,6 @@
 # Owner-controlled stable signing
 
-The stable application ID is **`com.jag.home`** (versionCode 4, `0.4-settings`, API 28).
+The stable application ID is **`com.jag.home`** (versionCode 5, `0.5-history`, API 28).
 It does not overwrite `com.jag.home.dev` or `tv.dumbtv.home`. Its Java UI namespace
 remains `com.jag.home.dev` to reuse the tested v2 source; Android package identity,
 UID, private storage, manifest and HOME component are separate.

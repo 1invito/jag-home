@@ -51,7 +51,7 @@ class StableSafety(unittest.TestCase):
         self.assertIn('new Intent(Settings.ACTION_SETTINGS)', recovery)
         self.assertIn('Hold Home and choose Settings', recovery)
         build = (ROOT / 'build-stable.sh').read_text()
-        self.assertIn('--version-code 4 --version-name 0.4-settings', build)
+        self.assertIn('--version-code 5 --version-name 0.5-history', build)
 
     def test_preview_keeps_noop_integration_and_no_manifest_change(self):
         source = (ROOT / 'src/com/jag/home/dev/HomeIntegration.java').read_text()

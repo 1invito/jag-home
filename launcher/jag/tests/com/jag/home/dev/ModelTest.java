@@ -34,10 +34,12 @@ public final class ModelTest {
 
     private static void navigation() {
         for (int recent = 0; recent <= 4; recent++) {
-            int total = 10 + recent;
+            int total = 10 + recent + (recent == 0 ? 0 : 1);
             check(Navigation.next(0, Navigation.LEFT, recent) == 0, "favorite left boundary");
             check(Navigation.next(5, Navigation.RIGHT, recent) == 5, "favorite right boundary");
             check(Navigation.next(total - 1, Navigation.DOWN, recent) == total - 1, "dock lower boundary");
+            check(Navigation.next(total - 1, Navigation.RIGHT, recent) == total - 1, "last dock control right boundary");
+            if (recent > 0) check(Navigation.next(total - 2, Navigation.RIGHT, recent) == total - 1, "clear history reachable from system settings");
             check(Navigation.next(-1, Navigation.UP, recent) == 0, "recover missing focus token");
             check(Navigation.next(5, Navigation.DOWN, recent) == (recent == 0 ? 9 : 5 + recent), "primary to next visible row");
             for (int start = 0; start < total; start++) {

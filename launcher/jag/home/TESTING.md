@@ -17,8 +17,8 @@ isolated AOSP Android 9 / API 28 emulator:
 | Builds | Preview and stable unsigned builds passed; disposable-key stable signing and signature verification passed |
 | Signing failure paths | Missing key, wrong expected certificate and preview-certificate reuse rejected without replacing the prior artifact |
 
-The validated stable identity is `com.jag.home`, versionCode 4, versionName
-`0.4-settings`, min/target API 28. Disposable-key APKs are QA artifacts, not the
+The validated stable identity is `com.jag.home`, versionCode 5, versionName
+`0.5-history`, min/target API 28. Disposable-key APKs are QA artifacts, not the
 owner-signed production release. No production owner key was created in the
 cloud. Physical Fire TV and native Windows execution remain unrun.
 

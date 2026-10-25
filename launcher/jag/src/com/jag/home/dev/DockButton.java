@@ -53,7 +53,7 @@ final class DockButton extends View {
                 path.moveTo(5 + i * 5, 0); path.lineTo(5 + i * 5, 2);
                 path.moveTo(5 + i * 5, 15); path.lineTo(5 + i * 5, 17);
             }
-        } else {
+        } else if (kind == 3) {
             path.addCircle(9.5f, 8.5f, 6.7f, Path.Direction.CW);
             path.addCircle(9.5f, 8.5f, 2.3f, Path.Direction.CW);
             for (int i = 0; i < 8; i++) {
@@ -61,6 +61,15 @@ final class DockButton extends View {
                 path.moveTo(9.5f + (float) Math.cos(angle) * 7, 8.5f + (float) Math.sin(angle) * 7);
                 path.lineTo(9.5f + (float) Math.cos(angle) * 9, 8.5f + (float) Math.sin(angle) * 9);
             }
+        } else if (kind == 4) {
+            // Minimal trash outline for the optional local-history action.
+            path.moveTo(4, 4); path.lineTo(15, 4);
+            path.moveTo(6, 2); path.lineTo(13, 2);
+            path.moveTo(7.5f, 1); path.lineTo(11.5f, 1);
+            path.moveTo(5.5f, 5); path.lineTo(6.4f, 16);
+            path.lineTo(12.6f, 16); path.lineTo(13.5f, 5);
+            path.moveTo(8.2f, 7); path.lineTo(8.2f, 13);
+            path.moveTo(10.8f, 7); path.lineTo(10.8f, 13);
         }
     }
 
