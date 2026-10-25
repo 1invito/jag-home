@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.jag.home.dev.tests">
+    <application android:label="JAG Home emulator checks" />
+    <instrumentation android:name="com.jag.home.dev.tests.DeviceTest"
+        android:targetPackage="com.jag.home.dev" android:label="JAG native UI checks" />
+</manifest>

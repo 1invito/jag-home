@@ -1,0 +1,27 @@
+name: JAG Home development APK
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  jag-home:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK components
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "build-tools;34.0.0"'
+      - name: Models and device-safety barriers
+        run: ./launcher/jag/test.sh
+      - name: Shell syntax
+        run: for f in launcher/jag/*.sh; do bash -n "$f" || exit 1; done
+      - name: Build separate-package APK
+        run: ./launcher/jag/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jag-home-dev-apk
+          path: launcher/jag/build/jag-home-dev.apk
