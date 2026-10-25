@@ -1,0 +1,10 @@
+<resources>
+    <style name="Jag" parent="android:Theme.DeviceDefault.NoActionBar.Fullscreen">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">@drawable/background</item>
+        <item name="android:colorBackground">#081323</item>
+        <item name="android:colorAccent">#A9C7F5</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowShowWallpaper">false</item>
+    </style>
+</resources>

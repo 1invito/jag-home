@@ -1,3 +1,7 @@
+> **JAG Home Dev:** This fork includes a separate-package Fire TV launcher preview.
+> See [source, Windows build and safe installation](launcher/jag/README.md),
+> [architecture](launcher/jag/ARCHITECTURE.md), and [testing](launcher/jag/TESTING.md).
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
