@@ -307,3 +307,40 @@ long-Home behavior, reboot performance, streaming/VPN continuity or latency/PSS.
 Windows code uses native Python subprocess/locking APIs but cloud execution is
 on Linux; perform read-only Windows preflight before any trial. Owner production
 signing and actual Fire Stick deployment remain intentionally outside this task.
+
+
+## Optional explicit owner waiver of measured performance
+
+For an owner who has confirmed the real remote, playback, VPN, Settings, long-Home,
+and a **fresh reboot in the current trial**, but elects not to time 10 HOME
+returns, the host tool supports an explicitly **unmeasured** performance waiver.
+This is not a performance pass: the <=10% latency and <=15 MiB PSS gates were
+**not tested**. The owner knowingly accepts that added latency or RAM use might
+be discovered later. This option does not modify Fire OS, disable the watchdog,
+skip the live-health/identity/install checks or bypass the fresh reboot check.
+The original dumbtv stays installed and the saved rollback remains available.
+
+Create an ignored private JSON file (not in Git) with **only** these owner-verified
+booleans, setting them to true only after genuinely testing them on this build:
+
+```json
+{
+  "remote_ok": true,
+  "playback_ok": true,
+  "vpn_ok": true,
+  "settings_ok": true,
+  "long_home_ok": true,
+  "reboot_ok": true,
+  "performance_waived": true
+}
+```
+
+After a new owner-operated trial, real reboot check and `--verify`, run
+`--accept --waive-performance --measurements /private/path/physical-checks.json`.
+The tool separately asks for `I ACCEPT UNMEASURED PERFORMANCE` and `KEEP JAG`
+and rejects the waiver if the file includes fabricated timings or any missing
+physical checks. This flag changes only the **host-side acceptance rule**; it
+does not require rebuilding or updating the Android APK. The watchdog still
+rolls back after its deadline if not accepted. Never manually alter the
+journal/lease to extend a trial. For ordinary measured acceptance, omit the flag
+and use `measurements.example.json` with 10 real warm trials and PSS.
