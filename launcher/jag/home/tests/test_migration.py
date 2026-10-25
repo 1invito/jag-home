@@ -82,6 +82,22 @@ class ProtocolTest(unittest.TestCase):
                        {'jag_p95_ms': float('nan')}, {'additional_visible_pss_mib': 16}, {'remote_ok': 'yes'}):
             with self.subTest(update=update), self.assertRaises(Blocked): validate_measurements(dict(data, **update))
 
+    def test_owner_performance_waiver_is_explicit_and_never_fakes_numbers(self):
+        physical = dict(remote_ok=True, playback_ok=True, vpn_ok=True,
+                        settings_ok=True, long_home_ok=True, reboot_ok=True,
+                        performance_waived=True)
+        validate_measurements(physical, waive_performance=True)
+        with self.assertRaises(Blocked):
+            validate_measurements(physical)  # no accidental bypass in normal mode
+        for invalid in (
+            dict(physical, remote_ok=False),
+            dict(physical, performance_waived=False),
+            dict(physical, warm_trials=10),
+            {'performance_waived': True},
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(Blocked):
+                validate_measurements(invalid, waive_performance=True)
+
 
 def acceptance():
     return dict(remote_ok=True, playback_ok=True, vpn_ok=True, settings_ok=True, long_home_ok=True,
@@ -255,6 +271,21 @@ class TransactionTest(unittest.TestCase):
         self.device.change(recovery_fail=True)
         with self.assertRaises(Blocked): self.prepare()
         self.assertEqual(self.device.load()['keys'], self.original['keys'])
+
+    def test_waived_acceptance_keeps_reboot_gate_and_records_unmeasured_state(self):
+        self.active()
+        physical = dict(remote_ok=True, playback_ok=True, vpn_ok=True,
+                        settings_ok=True, long_home_ok=True, reboot_ok=True,
+                        performance_waived=True)
+        with self.assertRaises(Blocked):
+            self.tool.accept(physical, waive_performance=True)
+        self.assertFalse(self.device.load()['committed'])
+        journal = self.tool.journal(); journal['reboot_verified'] = True; self.tool.save(journal)
+        self.tool.accept(physical, waive_performance=True)
+        self.assertEqual(self.tool.journal()['phase'], 'accepted')
+        self.assertTrue(self.tool.journal()['unmeasured_performance_waiver'])
+        self.assertNotIn('warm_trials', self.tool.journal()['measurements'])
+        self.tool.rollback(); self.assert_restored()
 
     def test_explicit_acceptance_is_required_and_persists_only_after_verification(self):
         self.active()
