@@ -30,6 +30,7 @@ class DevelopmentSafety(unittest.TestCase):
             r'deleteApplicationCacheFiles|setApplicationEnabledSetting|exec|'
             r'getRunningAppProcesses|getRunningTasks|startService|startForegroundService)\s*\('
             r'|\bProcessBuilder\b|\bRuntime\.getRuntime\b|Settings\.(Global|Secure)\.put'
+            r'|UsageStatsManager|UsageEvents|AccessibilityService|MediaSessionManager|TimerTask|scheduleAtFixedRate'
         )
         for source in (ROOT / 'src').rglob('*.java'):
             self.assertIsNone(forbidden.search(source.read_text()), source.name)
@@ -40,6 +41,23 @@ class DevelopmentSafety(unittest.TestCase):
         self.assertIn('jag-home-dev.keystore', build)
         self.assertNotIn('release.keystore', build)
         self.assertNotRegex(build, r'\badb\b|install\.sh|debloat\.sh|restore\.sh|all\.sh')
+
+    def test_no_ephemeral_update_identity_or_embedded_password(self):
+        build = (ROOT / 'build.sh').read_text()
+        self.assertNotIn('-genkeypair', build)
+        self.assertIn('--ks-pass env:JAG_STORE_PASSWORD', build)
+        self.assertIn('certificate differs', build)
+        self.assertIn('--version-code 2', build)
+        for source in (ROOT / 'src').rglob('*.java'):
+            self.assertNotRegex(source.read_text(), r'https?://|HttpURLConnection|WebView')
+
+    def test_unsigned_ci_artifact_and_emulator_boundary_are_explicit(self):
+        ci = (ROOT.parents[1] / '.github/workflows/jag-home.yml').read_text()
+        self.assertIn('./launcher/jag/build.sh --unsigned', ci)
+        self.assertIn('jag-home-dev-unsigned.apk', ci)
+        emulator = (ROOT / 'test-emulator.sh').read_text()
+        self.assertLess(emulator.index('disposable Android 9 emulator'), emulator.index('adb_ install'))
+        self.assertIn('versionName=jag-fixture', emulator)
 
 
 if __name__ == '__main__':

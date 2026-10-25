@@ -19,9 +19,9 @@ jobs:
         run: ./launcher/jag/test.sh
       - name: Shell syntax
         run: for f in launcher/jag/*.sh; do bash -n "$f" || exit 1; done
-      - name: Build separate-package APK
-        run: ./launcher/jag/build.sh
+      - name: Build unsigned validation APK (retained signing key stays offline)
+        run: ./launcher/jag/build.sh --unsigned
       - uses: actions/upload-artifact@v4
         with:
-          name: jag-home-dev-apk
-          path: launcher/jag/build/jag-home-dev.apk
+          name: jag-home-v2-unsigned-validation
+          path: launcher/jag/build/jag-home-dev-unsigned.apk

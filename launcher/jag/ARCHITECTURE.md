@@ -1,4 +1,4 @@
-# JAG Home development architecture
+# JAG Home v2 development architecture
 
 The upstream launcher uses native Java Views, an asynchronous PackageManager
 catalog, canvas-drawn tiles, file-based settings and a bare SDK shell build.
@@ -21,8 +21,10 @@ first, power-of-two sampling, and an output cap of 1920 × 1080. A single decode
 wallpaper is cached while visible; images are released when the activity stops.
 Only package/time broadcasts while visible trigger updates; there is no polling.
 
-The native focus graph has six app positions and three actions. The graph is
-shared with host tests and explicitly bounds movement at every edge. Settings
+The native focus graph has six favorites, zero to four compact recents and four
+dock actions. It is shared with host tests and bounds movement at every edge,
+skipping empty/disabled rows. Focus is restored by a stable row/package token,
+so changed ordering or removed recents cannot restore an invalid numeric slot. Settings
 are native focusable rows and dialogs; Back dismisses a dialog, then returns
 from settings. Long-press or Menu on a favorite opens its options.
 
@@ -40,10 +42,11 @@ tasks/services are also restricted. An ordinary launcher cannot establish that a
 third-party app has no active playback or shared protected process. A fixed app
 allowlist alone cannot prove this. Fire OS may impose further restrictions.
 
-Therefore v1 has an **empty automatic-cleanup allowlist** on every API level and
-does not request the kill permission or call process-control APIs. Free Memory
-shows the requested confirmation, an explicit unsupported explanation, an actual
-`ActivityManager.getMemoryInfo()` snapshot, and a manual application-management
+Therefore the app has an **empty automatic-cleanup allowlist** on every API level
+and does not request the kill permission or call process-control APIs. V2 replaces
+the misleading Free Memory confirmation with **Memory Status**: an actual
+`ActivityManager.getMemoryInfo()` snapshot, an explicit no-apps-stopped statement,
+and a manual application-management
 shortcut. The manual list excludes the VPN, both launchers and all system apps;
 the OS's general management screen remains reachable if package details are not
 supported. JAG does not operate any destructive Settings controls. No claimed
@@ -71,3 +74,45 @@ this. Physical focus behavior, Fire OS Settings availability, playback/VPN
 continuity, PSS, frame timing and the existing dumbtv Guard's treatment of a
 manually opened JAG activity require device validation. A host build cannot
 establish performance or HOME integration on a Fire Stick.
+
+## V2 scene, lifetime and local history
+
+`Theme` provides four immutable color/behavior token sets for one implementation.
+`Atmosphere` creates static shader geometry only when layout changes. `Tile`
+caches its rounded path, text, artwork destination and sheen, with an exact 16:9
+artwork area. `DockButton` builds original line-icon paths on size changes.
+Directional navigation performs bounded arithmetic and focus changes only:
+there is no image decode, PackageManager query, layout rebuild or per-frame
+object construction in these draw methods. A stateful transparent background
+marks custom focus as handled without using API 26-only calls or hidden APIs,
+avoiding Android's rectangular fallback highlight behind the rounded border.
+
+The visible scene is rebuilt on resume to apply settings/history, not on focus.
+Package broadcasts are registered only while resumed. Concurrent package changes
+coalesce into at most one active load and one requested follow-up. Catalog and
+fresh launch resolution run on a single worker. A lifecycle generation rejects
+stale results and recycles only never-displayed worker bitmaps. Visible bitmaps
+are detached and dereferenced on stop; they are not recycled underneath the GPU.
+Recent cards share the exact favorite catalog objects and bitmap references.
+
+Six banner bitmaps at the maximum 384 × 216 ARGB size require about 1.9 MiB of
+pixel storage; this is an allocation bound, **not measured TOTAL PSS**. One
+1920 × 1080 RGB_565 wallpaper is about 4 MiB; alpha formats may require about
+8 MiB. Graphics context, textures, views and system overhead require actual
+PSS measurement. Reduce Motion, Ultra Minimal, low-RAM classification and
+running-low memory callbacks disable scaling; critical running-memory pressure
+also drops wallpaper references to expose the default scene.
+
+`RecentHistory` normalizes at most four known favorite IDs. Only the successful
+`Ui.open` path records a launch in the private existing properties file. Failed
+or blocked launches and other apps' activity are never recorded. No timestamps,
+usage access, polling, content metadata or extra listeners are needed. Disabling
+history stops both display and recording. Visual reset preserves its entries,
+history opt-out and favorite ordering; clear-history is a separate confirmation.
+V1 keys retain their meaning, including explicit Ice accent, clock and ordering.
+New missing/invalid keys have safe defaults; no destructive migration runs.
+
+`SIGNING.md` documents retained certificate verification and the unsigned CI
+artifact. `HOME_MIGRATION_V2.md` studies the actual upstream Guard and describes
+future snapshots and rollback only. Neither document adds a device mutation path
+to the application or build.

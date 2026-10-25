@@ -10,13 +10,16 @@ import java.util.Properties;
 /** Small private settings file. A failed write never changes the in-memory values. */
 final class Configuration {
     static final String[][] CHOICES = {
+        {"theme", "Theme", "Cinematic", "Cinematic", "Midnight", "Graphite", "Ultra Minimal"},
         {"dim", "Background dimming", "20", "0", "20", "40", "60", "80"},
-        {"accent", "Accent color", "Ice", "Ice", "Blue", "Teal", "Violet", "White"},
+        {"accent", "Accent color", "Theme", "Theme", "Ice", "Blue", "Teal", "Violet", "White"},
         {"tiles", "Tile sizing", "Medium", "Small", "Medium", "Large"},
         {"labels", "Application labels", "Shown", "Shown", "Hidden"},
         {"clock", "Clock and date", "Shown", "Shown", "Hidden"},
         {"time", "Clock format", "24-hour", "24-hour", "12-hour"},
-        {"animation", "Focus animation", "On", "On", "Off"}
+        {"animation", "Focus animation", "On", "On", "Off"},
+        {"reduce.motion", "Reduce Motion", "Off", "Off", "On"},
+        {"recent.enabled", "Recently Opened", "On", "On", "Off"}
     };
     private final File file;
     private Properties values = new Properties();
@@ -60,7 +63,18 @@ final class Configuration {
     void resetAppearance() throws IOException {
         Properties changed = new Properties();
         changed.setProperty("order", get("order"));
+        changed.setProperty("recent", get("recent"));
+        changed.setProperty("recent.enabled", get("recent.enabled"));
         commit(changed);
+    }
+
+    void recordLaunch(String id, boolean success) throws IOException {
+        if (success && "On".equals(get("recent.enabled"))) set("recent", RecentHistory.launched(get("recent"), id));
+    }
+
+    boolean animateFocus(boolean lowMemory, boolean hardwareAccelerated) {
+        return "On".equals(get("animation")) && "Off".equals(get("reduce.motion"))
+            && !"Ultra Minimal".equals(get("theme")) && !lowMemory && hardwareAccelerated;
     }
 
     int accent() {
@@ -69,6 +83,7 @@ final class Configuration {
             case "Teal": return 0xFF83D5CE;
             case "Violet": return 0xFFB9A8EB;
             case "White": return 0xFFF4F6FA;
+            case "Theme": return Theme.named(get("theme")).accent;
             default: return 0xFFC5DCFF;
         }
     }

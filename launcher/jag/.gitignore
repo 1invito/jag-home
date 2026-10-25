@@ -1,1 +1,6 @@
 build/
+*.keystore
+*.jks
+*.p12
+*.pem
+.env*

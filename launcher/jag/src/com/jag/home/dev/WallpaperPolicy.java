@@ -14,7 +14,7 @@ final class WallpaperPolicy {
 
     static int sample(int width, int height) {
         int sample = 1;
-        while (width / sample > MAX_WIDTH || height / sample > MAX_HEIGHT) sample *= 2;
+        while ((long) width > (long) MAX_WIDTH * sample || (long) height > (long) MAX_HEIGHT * sample) sample *= 2;
         return sample;
     }
 

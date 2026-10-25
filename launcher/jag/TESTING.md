@@ -1,36 +1,38 @@
-# Validation and Fire Stick test procedure
+# JAG Home v2 validation and Fire OS acceptance
 
-## Recorded implementation validation
+## Recorded cloud validation
 
-Validated in the cloud on 2026-10-25:
+Validated on 2026-10-25, with the retained v1 cloud certificate:
 
 | Check | Observed result |
 |---|---|
-| Pure Java production models | 570 assertions passed |
-| Development safety regression suite | 3 tests passed |
-| Native Android 9 / API 28 emulator suite | 42 assertions passed |
-| Upstream Python fake-TV suite | 77 tests passed |
-| Catalog validation | All 29 device files valid with full YAML parsing |
-| Bash syntax and upstream version manifest | Passed |
-| SDK 25 / JDK 17 / build-tools 34 build | Passed; separate APK 37,472 bytes |
-| APK signature, package and permission inspection | Verified; `com.jag.home.dev`, min 25, target 28, zero permissions |
-| Fire Stick 3rd generation / Fire OS 7.7.1.7 | Not run; no household device contacted |
+| Production Java models | 3,602 assertions passed |
+| Manifest, no tracking/mutation, signing/CI safety barriers | 5 tests passed |
+| Actual v1 APK update | 18 migration assertions passed; 5 v1 preparation assertions |
+| Native missing-app, theme, memory, wallpaper and settings UI | 80 assertions passed |
+| Native fixture launches, recents, shared artwork and focus | 65 assertions passed |
+| Signing guards | Missing key/password and wrong certificate rejected; existing artifact preserved |
+| Signed and unsigned SDK build modes | Passed; unsigned output confirmed not signed |
+| Signed v2 development APK | 45,664 bytes, versionCode 2, min API 25 / target 28, zero permissions |
+| Upstream fake-TV regression suite | All 77 tests passed |
+| Catalog, Bash syntax, upstream release manifest, diff whitespace | Passed; all 29 device records valid |
+| Physical Fire Stick performance/playback/VPN | Unrun; device not contacted |
 
-The emulator is headless AOSP Android 9 at 1920 × 1080 with software CPU/GPU
-emulation. All six real streaming/VPN packages are absent there; the missing-app
-path is validated against the actual PackageManager. Real app artwork, app
-launching, playback/VPN continuity and Fire OS Settings/picker behavior remain
-physical-device checks. A first emulator pass exposed missing initial focus in
-touch mode; explicit focusability now handles that state. Dialog checks wait for
-actual window/accessibility readiness rather than assuming a queued UI event is
-already displayed. These results are not physical-device performance data.
+The signed output's public certificate fingerprint matches the retained cloud
+v1 artifact. This is not verification of the APK installed on the user's TV.
 
-## Automated checks
+## Automated scope
 
-From the repository root with the build environment activated:
+The cloud task does not contact the owner's Fire Stick. Runtime testing uses a
+headless AOSP Android 9 / API 28 emulator at 1920 × 1080, with software CPU/GPU
+emulation. This is compatibility/functional evidence, not Fire OS performance.
+
+From the repository root, with JDK 17 and SDK 25/build-tools 34 configured:
 
 ```bash
 ./launcher/jag/test.sh
+./launcher/jag/build.sh --unsigned
+# To produce the installable update, securely supply the retained v1 key/env:
 ./launcher/jag/build.sh
 python3 -m unittest discover -s tests -v
 python3 catalog/validate.py
@@ -38,147 +40,222 @@ for f in scripts/*.sh launcher/*.sh launcher/jag/*.sh; do bash -n "$f" || exit 1
 ./launcher/release-check.sh --manifest
 ```
 
-The JAG host suite exercises the actual app-order, settings persistence/recovery,
-navigation graph, wallpaper validation/sampling and fail-closed memory-policy
-models. The safety tests inspect the manifest and prohibit process mutation,
-privileged settings writes and unsafe build/deployment behavior. These are
-regression checks, not proof of Fire OS behavior.
+Host tests exercise the production models: all navigation vertices for zero to
+four recents, bounded/deduplicated/validated history, failed/disabled launch
+recording, theme persistence, motion overrides, appearance reset, legacy v1
+configuration, responsive layout margins, missing apps, wallpaper sampling
+(including odd dimensions) and fail-closed memory policy. Safety barriers reject
+permissions, HOME/services/receivers, usage/accessibility tracking, process or
+privileged settings mutation, network APIs, embedded signing passwords and
+silently regenerated update keys. CI runs the models/safety/syntax/build checks
+and uploads only a clearly named **unsigned** artifact.
 
-The build verifies the APK signature and rejects any permission declaration.
-The new GitHub workflow runs the JAG model/safety checks and SDK build and uploads
-only the development APK; signing keys and instrumentation APKs are excluded.
-The original upstream CI still runs independently.
+### Disposable Android 9 runtime suite
 
-### Disposable Android 9 emulator
-
-`launcher/jag/test-emulator.sh` builds a dependency-free native Instrumentation
-APK, installs it and JAG **only on a disposable API 28 emulator**, then exercises
-the rendered activity with D-pad events. It checks PackageManager missing states,
-six controls, focus boundaries, row movement, missing-app dialog recovery,
-settings changes/persistence/cancel and the installed manifest's permission/HOME
-properties. It also checks the actual memory confirmation/fallback and real
-sampled wallpaper decoding, corrupt-file and missing-file results.
-It resets only JAG's own private test settings. The script refuses
-physical device serials and non-emulator hardware.
+Use only a disposable AOSP API 28 emulator. The runner requires an `emulator-N`
+serial, ranchu/goldfish hardware and API 28 before any installation. It defaults
+to a separate ADB server port 5038; it does not discover/connect to a TV. It
+resets JAG's test settings and installs five **JAG Test Fixture** packages under
+favorite identities to test actual PackageManager resolution/launches. These
+fixtures are not real streaming apps and never enter the delivered launcher APK.
+If an emulator already has a genuine favorite app, the runner aborts instead of
+removing it. Only packages marked `versionName=jag-fixture` are replaced.
 
 ```bash
-# Start a disposable Android 9 emulator first. No real TV may be used for this suite.
-JAG_TEST_SERIAL=emulator-5558 JAG_TEST_ADB_PORT=5038 ./launcher/jag/test-emulator.sh
+# Use your private retained signing environment; do not print credentials.
+JAG_TEST_SERIAL=emulator-5558 JAG_TEST_ADB_PORT=5038 \
+  JAG_V1_APK=/private/path/to/original-cloud-v1.apk \
+  ./launcher/jag/test-emulator.sh
 ```
 
-It defaults to a dedicated ADB server port 5038 to avoid the ordinary device
-server. Change the port only to match your disposable emulator. A real pass must
-contain `JAG_DEVICE_TESTS_PASSED`; a successful build/install alone is insufficient.
-Results are written to ignored `launcher/jag/build/emulator-results.txt`.
-An AOSP emulator is not Fire OS and cannot validate its app catalog, VPN,
-playback, document picker, Settings intents, existing Guard or Bluetooth remote.
+The optional `JAG_V1_APK` must be the original same-key versionCode 1 development
+APK. The runner installs it only on the disposable emulator, seeds exact v1
+settings, updates to v2 using `install -r`, and verifies retained order/appearance
+plus safe defaults for new fields. Without that file, migration is **not run**;
+missing/fixture suites still execute. Never use the downgrade/seed test sequence
+on the household Fire Stick.
 
-## Manual Fire OS 7.7.1.7 test
+The runtime phases are:
 
-Use the separate APK installation commands in [README.md](README.md). Do not
-invoke the emulator suite or upstream cleanup/install scripts on the Fire Stick.
-Check [the existing AFTSSS report](../../catalog/devices/fireos-amazon-aftsss.yaml)
-for this model; its partial upstream report does not establish JAG compatibility.
-The owner already has dumbtv configured: do not repeat cleanup or HOME setup.
+1. `seed-v1`: writes only v1-schema private test settings under the v1 APK.
+2. `migration`: verifies ordinary APK-update data retention and new defaults.
+3. `missing`: actual PackageManager unavailable states, six favorites/hidden empty
+   recents, remote edges/dock, dialogs, real memory information, theme selection
+   and screenshots, settings recreation/cancel, real sampled decoder failures
+   and memory-pressure degradation.
+4. `fixtures`: real successful launches into local fixture activities, four-entry
+   recency, duplicate prevention, primary/recent/dock transitions, one shared
+   artwork object, true 16:9 geometry, tracking opt-out, re-enable, history
+   preservation on visual reset and explicit clear/focus recovery.
 
-1. Before installation, confirm dumbtv works, Home returns to it, streaming apps
-   launch with their existing accounts, ExpressVPN is connected, and system
-   settings/remote work. Privately note the disabled-package count and current
-   configuration. Do not publish identifiers or raw device logs.
-2. Install only `com.jag.home.dev` and launch `.Home` manually. Confirm the title
-   JAG Home Dev differs from dumbtv and all six apps appear in the requested order.
-3. Navigate every edge with Up/Down/Left/Right. Select each installed app; verify
-   existing logins and playback. Return with Home: **dumbtv is expected**. Reopen
-   JAG manually. The preview intentionally cannot prove production Home timing.
-4. A missing/disabled app must show Not installed/Unavailable, retain its position,
-   and show an honest error on Select. App settings may open; no installation,
-   enable/disable or data deletion happens automatically.
-5. Test Menu and long Select, change order with Select dialogs, then reopen JAG.
-   Every control needs a visible focus indicator. Back dismisses dialogs, exits
-   settings to JAG, then exits JAG. The Home button always follows the existing
-   integration. Long Home should still show the Fire OS quick menu.
-6. Select JPG, PNG and WebP still images, test dimming and Default. Test no file
-   picker, a deleted selected image and a corrupt image; navy must remain usable.
-   Wallpapers must not change during focus movement or rotate while idle.
-7. Change every appearance setting. Disable animations and labels; focus must
-   remain visible. Toggle clock/date, 12/24 hours and tile size. Reopen and verify
-   persistence. Restore appearance; verify app order and all other apps survive.
-8. With VPN and playback active, choose Free Memory, then Cancel. Choose again
-   and confirm. It must state no apps were stopped, show available memory or an
-   explicit read failure, and offer manual settings. VPN/playback continue.
-   Never expect or infer an automatic cleanup gain. Do not manually stop an
-   active streaming app or VPN in system settings.
-9. Check system Settings, app-management fallbacks and Return to existing dumbtv.
-   If a Fire OS intent is unsupported, the UI must fail gracefully. Home remains
-   the recovery route without changing any integration setting.
-10. Repeat return/reopen cycles after Netflix, YouTube and another streaming app.
-    Check for corrupt artwork, missing focus, crashes, ANRs or escalating memory.
-    Test preview removal only if desired, then confirm original dumbtv, accounts,
-    VPN, disabled packages and DNS remain unchanged.
+Results are in ignored `launcher/jag/build/emulator-results.txt`. Each requested
+phase must report `JAG_DEVICE_TESTS_PASSED [phase]`, not merely an install success.
+On failure a diagnostic screenshot is written to JAG's own external-files folder.
+The suite also saves theme/recents screenshots; fixture screenshots do not
+represent the real apps' logos. No zero-test or skipped migration is a full pass.
 
-## Comparable performance measurements
+For signed-build negative tests, `test-signing.sh` checks that absent credentials
+or a temporary wrong certificate fail without replacing the valid APK or
+creating a replacement key. Unsigned artifacts are explicitly checked as unsigned.
 
-Use the **same device**, resolution, wall image, display settings, network,
-foreground app state and thermal conditions for baseline and JAG. Run at least
-10 trials, keep the first cold run separate, and report median and p95. A frame
-comparison under software-emulated Android would not establish Fire Stick speed.
-Use a private local output folder and strip identifiers before publishing.
+## Manual Fire OS 7.7.1.7 acceptance
 
-From Windows Git Bash, `ADB_SERIAL` must identify exactly the owner's device:
+Use [README.md](README.md) and [SIGNING.md](SIGNING.md) to compare the installed
+certificate before any update. Keep `tv.dumbtv.home` and the working development
+preview installed. Check the existing AFTSSS catalog report and actual device
+menus; its partial upstream status is not evidence of JAG v2 compatibility.
+Do not run upstream installer/cleanup/restore scripts or emulator test fixtures.
+
+1. Record a private baseline: Home/long Home, Settings access, remote pairing,
+   enabled/disabled-package state, streaming accounts, current VPN connection,
+   JAG favorite order and appearance. No broad logs or identifiers go into Git.
+2. Only after signatures match, manually update `com.jag.home.dev` using
+   `adb install -r` and open `.Home`. Confirm v1 order, clock/labels, wallpaper,
+   dimming and other preferences survive. Missing v2 keys start at Cinematic and
+   recent tracking On, with no invented history.
+3. Test all six real apps' native banners/icons, aspect ratio and launch intents,
+   including the square-icon fallback. All login state stays intact. A missing,
+   disabled, restricted or uninstalled app keeps its slot and fails honestly;
+   no failed launch enters history and no app is automatically enabled/installed.
+4. Traverse every primary/recent/dock transition with Up/Down/Left/Right at recent
+   counts 0, 1, 2, 3 and 4. Select, long Select and Menu must work. Back dismisses
+   dialogs, returns from Customize, then exits the preview. Each focused control
+   needs a visible rounded indicator with animations both on and off. No square
+   platform fallback should obscure the card/label.
+5. Launch five different favorites from JAG; confirm the last four unique apps,
+   newest first. Relaunch one and verify it moves to the front. Opening an app
+   outside JAG must not update this local list. Disable recents and launch again:
+   the row is hidden and history unchanged. Re-enable, reset visual defaults,
+   then explicitly clear history; order survives and focus stays valid.
+6. Inspect all four themes at normal sofa distance and screen densities/overscan.
+   Cinematic shows the selected photo; Midnight/Graphite retain their static
+   backgrounds; Ultra Minimal has no gradients, wallpaper, scale motion or extra
+   date/labels. Switching back restores stored photo/preferences. Test every
+   setting, including Reduce Motion and clock 12/24-hour/visibility. Repeat after
+   returning from a streaming app and after an ordinary app restart.
+7. Test JPG/PNG/WebP selection through the remote, no document picker, a deleted
+   selection, corrupt bytes, large/odd dimensions, alpha images, dimming and
+   Default. The navy fallback must remain usable; focus changes never rotate or
+   re-decode wallpaper. If memory pressure suppresses wallpaper/motion, the
+   static background and focus ring must remain usable.
+8. Open Memory Status during playback/VPN operation. It must show real available
+   memory or a read failure and say no apps were stopped. App-management/settings
+   shortcuts are manual only; do not stop playback/VPN or clear app data. Check
+   unsupported Settings intents fail gracefully. There is no cleaner service.
+9. Verify system Settings and Return to existing dumbtv. **Physical Home must
+   continue using the existing dumbtv binding**, not JAG. Long Home remains the
+   native quick panel. No new accessibility component or HOME filter is present.
+10. Perform at least 20 remote navigation cycles and ten launch/return cycles,
+    including Netflix, YouTube, another player and ExpressVPN. Check focus,
+    artwork restoration, crashes, ANRs and memory trend. Confirm disabled-package
+    state, accounts, DNS/update behavior, VPN and original Home integration remain
+    unchanged. No production HOME migration is part of this acceptance pass.
+
+## Performance measurements and targets
+
+Use the same Fire Stick, resolution, network, thermal conditions, foreground
+streaming state, idle interval and wallpaper complexity for all comparisons.
+Measure dumbtv 1.2, JAG v1 if available, and JAG v2. Record the first cold launch
+separately, then **at least ten warm trials**, reporting median and nearest-rank
+p95. A small APK is not evidence of startup speed, PSS or GPU behavior.
+
+Acceptance targets, **not measured achievements**:
+
+- No noticeable directional-input lag, missing focus or traps.
+- No app-launch regression attributable to JAG; aim for warm-launch median/p95
+  within approximately 10% of the measured comparable dumbtv result.
+- Aim for no more than roughly 10–15 MiB additional visible TOTAL PSS under
+  comparable visuals. Inspect native/Java/graphics breakdowns and memory trend,
+  not only one snapshot or system-wide MemAvailable.
+- No crashes/ANRs during ordinary navigation and repeated launch/return cycles.
+- No recurring background CPU activity while another app is foregrounded.
+- If targets conflict with effects, prioritize static focus/Reduce Motion or
+  Ultra Minimal. Report a regression rather than reclassifying the target as met.
+
+Use Windows Git Bash with an explicitly selected `ADB_SERIAL` and private
+ignored report folder:
 
 ```bash
-# Resolve the baseline's real activity; record the returned component privately.
+mkdir -p report/jag-v2-benchmark
+# Resolve the real baseline component; do not invent its activity class.
 adb -s "$ADB_SERIAL" shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -p tv.dumbtv.home
 
-# Warm explicit launch timing for JAG (not HOME-button latency): read TotalTime/WaitTime.
+# Explicit warm handoff/start timing (not physical HOME-to-drawn latency).
 adb -s "$ADB_SERIAL" shell am start -W -n com.jag.home.dev/.Home
 
-# Memory snapshots while each launcher is visible and after the same streaming app.
+# Visible and background PSS under matched conditions, before/after the same app.
 adb -s "$ADB_SERIAL" shell dumpsys meminfo com.jag.home.dev
 adb -s "$ADB_SERIAL" shell dumpsys meminfo tv.dumbtv.home
-adb -s "$ADB_SERIAL" shell cat /proc/meminfo
+MSYS_NO_PATHCONV=1 adb -s "$ADB_SERIAL" shell cat /proc/meminfo
 
-# Frame counters; reset only the tested app's statistics before each trial.
+# Frame timing: reset only this app's counters, then use the same remote sequence.
 adb -s "$ADB_SERIAL" shell dumpsys gfxinfo com.jag.home.dev reset
-# Exercise the same left/right/up/down sequence with the remote for 30 seconds.
+# Navigate for the same 30-second interval in each launcher.
 adb -s "$ADB_SERIAL" shell dumpsys gfxinfo com.jag.home.dev framestats
-# Repeat separately for tv.dumbtv.home.
+# Repeat separately for the baseline package.
 
-# Crash/ANR observations; inspect locally and redact before sharing.
+# Inspect crash/ANR evidence privately; redact before sharing.
 adb -s "$ADB_SERIAL" logcat -d -b crash
 adb -s "$ADB_SERIAL" shell dumpsys activity lastanr
+# A one-shot CPU sample, not a background monitor in the application:
+adb -s "$ADB_SERIAL" shell dumpsys cpuinfo
 ```
 
-`am start -W` may report only an existing activity/task handoff on a warm launch,
-not time until icons are drawn. Label that result correctly. For cold starts,
-reboot normally and launch once before any automatic process-kill operation;
-do not force-stop the working dumbtv launcher/accessibility integration.
-Use an external high-frame-rate camera or platform frame trace to measure from
-Select to fully drawn favorites, including artwork, and from the physical Home
-press to the stable baseline screen. JAG v1 has no HOME binding: production Home
-latency is **unmeasured/not applicable** until a separately authorized migration.
-For a comparable preview-return metric, measure Back from the same app or an
-explicit ADB launch for both launchers and name the method.
+For repeatable explicit handoff trials, first resolve and verify the chosen
+comparison app's real component, then set `COMPARISON_APP_COMPONENT` to that
+value. Leave playback/account/VPN state unchanged; wait for the same stable state
+in every trial. Do not force-stop dumbtv or other protected packages:
 
-From `dumpsys meminfo`, record TOTAL PSS, Java/native heaps and graphics PSS,
-both visible and after the same app has played for five minutes. From
-`/proc/meminfo`, record MemAvailable before and after each app launch. Do not
-equate a system-wide fluctuation with memory freed by JAG. Test 20 navigation
-cycles, repeated settings changes, multiple wallpapers and at least 10
-launch/return cycles. Record janky-frame percentage, frame-time percentiles,
-focus/input delay, any ANRs and crashes. Some Fire OS builds omit counters; mark
-those unavailable and use camera/frame-trace evidence rather than inventing data.
+```bash
+for trial in $(seq 1 10); do
+  adb -s "$ADB_SERIAL" shell am start -W -n "$COMPARISON_APP_COMPONENT" > "report/jag-v2-benchmark/app-$trial.txt" || break
+  # Confirm the same foreground state before each return measurement.
+  adb -s "$ADB_SERIAL" shell am start -W -n com.jag.home.dev/.Home > "report/jag-v2-benchmark/warm-$trial.txt" || break
+done
+python3 - <<'STATS'
+from pathlib import Path
+import math, re, statistics
+paths = list(Path('report/jag-v2-benchmark').glob('warm-*.txt'))
+values = []
+for path in paths:
+    match = re.search(r'^TotalTime:\s*(\d+)', path.read_text(), re.M)
+    if match:
+        values.append(int(match[1]))
+if len(values) < 10:
+    raise SystemExit('Need at least 10 complete comparable warm trials')
+values.sort()
+print('trials:', len(values), 'median ms:', statistics.median(values),
+      'p95 ms:', values[math.ceil(.95 * len(values)) - 1])
+STATS
+```
 
-| Metric | Original dumbtv 1.2 | JAG Home Dev | Conditions |
-|---|---|---|---|
-| Cold fully drawn time | Unmeasured | Unmeasured | Same reboot/start procedure |
-| Warm explicit launch, median / p95 | Unmeasured | Unmeasured | 10+ trials |
-| Physical HOME return time | Unmeasured | Not applicable in preview | Existing binding retained |
-| Comparable Back/explicit return | Unmeasured | Unmeasured | Same streaming app |
-| Visible / background TOTAL PSS | Unmeasured | Unmeasured | Same wallpaper and idle period |
-| MemAvailable before / after apps | Unmeasured | Unmeasured | No cleanup attribution |
-| Janky frames / input delay / ANRs | Unmeasured | Unmeasured | Same navigation sequence |
+Use a fresh report folder for each run to avoid mixing old trials. Repeat the
+same procedure with the actual dumbtv component and the same conditions. `am
+start -W` may measure an existing-task handoff, not time until artwork is drawn;
+label it correctly and retain warnings/status. Use a high-frame-rate camera or
+platform frame trace for Select/Back-to-stable-artwork and physical remote input
+latency. Current JAG v2 has no HOME binding: physical HOME timing belongs to
+**dumbtv**, and production JAG HOME latency remains not applicable until a
+separately authorized/tested migration.
 
-Populate this table only with actual device observations. The target of roughly
-1 GB physical RAM motivates bounded allocations; APK size and host test success
-are not measurements of Fire Stick runtime memory or responsiveness.
+For cold observations, reboot normally and measure the first launch separately;
+do not clear accounts or stop the existing Guard. Record visible TOTAL PSS and
+Java/native/graphics breakdown after a fixed idle interval, then background PSS
+while the same player runs for five minutes. Repeat across ten cycles; inspect
+trend for retained references rather than inferring a leak from a single GC
+fluctuation. Record MemAvailable before/after app launches without attributing
+system changes to JAG. Record frame-time percentiles, janky-frame percentage,
+input delay, crashes and ANRs. If Fire OS omits a counter, mark it unavailable.
+
+| Metric | dumbtv 1.2 | JAG v1 | JAG v2 | Target / method |
+|---|---|---|---|---|
+| First cold fully drawn time | Unmeasured | Unmeasured | Unmeasured | Separate cold trial |
+| Warm median / p95 | Unmeasured | Unmeasured | Unmeasured | At least 10 comparable trials; aim ≤10% additional latency |
+| Comparable Back/explicit return | Unmeasured | Unmeasured | Unmeasured | Same player and method |
+| Physical HOME return | Unmeasured | Not applicable | Not applicable | Existing dumbtv binding retained |
+| Visible TOTAL PSS | Unmeasured | Unmeasured | Unmeasured | Aim ≤10–15 MiB additional under matched visuals |
+| Background PSS / CPU / memory trend | Unmeasured | Unmeasured | Unmeasured | Ten cycles, same idle/playback interval |
+| Frame times / input delay / ANRs | Unmeasured | Unmeasured | Unmeasured | Same navigation and thermal state |
+
+Populate this table only with actual Fire Stick observations. Emulator functional
+passes and theoretical bitmap limits are not physical-device performance results.

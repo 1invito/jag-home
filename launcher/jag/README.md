@@ -1,37 +1,73 @@
-# JAG Home · development preview
+# JAG Home v2 · cinematic development preview
 
-A separate, native Java launcher preview for the Fire TV Stick 3rd generation
-(2020), Fire OS 7.7.1.7 / Android 9. JAG Home Dev installs as **`com.jag.home.dev`**
-alongside **`tv.dumbtv.home`**. It does not claim HOME or install an accessibility
-service. Pressing Home uses your existing dumbtv integration.
+A native Java TV home for Fire TV Stick 3rd generation / Fire OS 7.7.1.7,
+with an original cinematic design, four themes and no network permission.
 
-The implementation is based on dumbtv's native View architecture and MIT build
-pipeline. Upstream copyright and [MIT license](../../LICENSE) are retained.
-See [architecture and API investigation](ARCHITECTURE.md) for the decisions and
-[device validation](TESTING.md) for physical-device checks and measurements.
+**Package: `com.jag.home.dev` · versionCode 2 · versionName `0.2-dev`.**
+This remains a manually opened application. There is no HOME intent filter,
+accessibility service, boot component or change to dumbtv's working integration.
+The original cloud v1 signing key is retained. Read [SIGNING.md](SIGNING.md)
+before updating: your installed v1 APK may have come from an independently
+signed CI build. No device is contacted or deployed to by this cloud task.
 
-## What's implemented
+## The v2 experience
 
-- Original navy gradient, spacious margins, JAG wordmark, clock/date, six rounded
-  cards and three quick actions. System typefaces and restrained 120 ms focus
-  scaling; visible focus also works with animations disabled.
-- Netflix, Sony LIV, JioHotstar, YouTube, FanCode and ExpressVPN in the requested
-  order. PackageManager resolves installed activities and native banners/icons.
-  Missing or disabled apps remain visible with an honest unavailable state.
-- D-pad navigation, Select, Back, Menu and long-Select options. Local app ordering,
-  tile size, labels, accent, clock format/visibility, dimming and animation settings.
-- Static JPG/PNG/WebP wallpaper selection from app-owned folders or a system
-  document picker when supplied by Fire OS. Sampled decode is bounded to 1080p;
-  decoded images are cached while visible and released when the activity stops.
-  Corrupt, missing, oversized or unsupported images fall back to navy.
-- Free Memory confirmation, actual available/total memory, explicit public API
-  limitations and native app-management shortcuts. **No automatic process killing.**
-- Access to system settings, app details, the existing dumbtv launcher, About and
-  appearance reset. Preferences stay in JAG's own private storage.
+![Cinematic theme on the Android 9 emulator](docs/cinematic.png)
 
-There are no permissions, analytics, ads, network calls, dependencies, polling,
-boot receivers, services, image rotation or hidden APIs. No baseline or Fire Stick
-performance improvement is claimed.
+This actual emulator capture shows the missing-app fallback design. The real
+streaming/VPN apps are not installed there; their installed banners/icons are
+resolved at runtime. [Ultra Minimal capture](docs/ultra-minimal.png) shows the
+static benchmark appearance. These are not Fire Stick performance measurements.
+
+- Six 16:9 artwork cards, original monogram/tonal fallbacks, restrained rounded
+  rims and 120 ms focus scaling. Square icons retain their proportions. Native
+  banners/icons are resolved with PackageManager, off the UI/input thread.
+- Four token-based themes: **Cinematic** (default, optional photograph),
+  **Midnight** (blue/black), **Graphite** (slate/white), and **Ultra Minimal**
+  (nearly black, static focus, reduced metadata). No live blur or animation loop.
+- Compact **Recently Opened**, enabled by default and hidden while empty. It
+  contains at most four unique favorites successfully opened by JAG, newest
+  first. It is not Android's global recent list. Disabling it also stops
+  recording; clearing it is explicit. No usage access, timestamps, viewing
+  history, background monitoring or accessibility tracking.
+- Integrated icon dock: **Wallpaper · Customize · Memory Status · System Settings**.
+  Time/date use visible-only Android time broadcasts, with saved 12/24-hour format.
+- Static JPG/PNG/WebP wallpaper, sampled off-thread to at most 1080p, cached while
+  visible. Adjustable dimming and a dark card-area gradient maintain readability.
+  Missing, corrupt, oversized or unsupported images use the atmospheric default.
+- All v1 preferences and favorite order remain readable. Added theme, Reduce
+  Motion, recent on/off and clear controls. Visual reset keeps order/history and
+  a user's history opt-out. Back/Select/Menu/long Select are remote-operated.
+
+The six favorites remain Netflix, Sony LIV, JioHotstar, YouTube, FanCode and
+ExpressVPN, in that default order. Missing or disabled apps retain their slots
+with an unavailable state; JAG never enables, removes or clears them. Launch
+activities come from PackageManager, never guessed class names.
+
+Ultra Minimal deliberately ignores wallpaper, hides decorative section/date/app
+labels, and disables scale animations. The stored preferences/wallpaper remain
+intact when switching back. Midnight and Graphite also use their own static
+backgrounds; choose Cinematic to display a selected photograph. Reduce Motion,
+low-RAM classification, memory pressure and software rendering select static
+focus treatment while retaining a visible border. These are conservative
+rendering choices, not measured claims of better Fire Stick performance.
+
+Runtime uses native Views/Canvas, system fonts and no dependencies. Six bounded
+artwork bitmaps are shared by favorites and recent cards; recent entries do not
+load duplicate images. Images are released when hidden. Package-change work is
+coalesced, and focus never decodes an image or rebuilds layout. No advertising,
+tracking, cloud images, background polling or recurring cleaner is included.
+
+## Memory Status
+
+Memory Status reads real available/total memory on demand and explains Android's
+background-process management. **No apps were stopped.** There is no kill/cache/
+data/disable operation or permission. The page offers supported app-management
+Settings shortcuts with fallbacks; leave active playback and VPN settings alone.
+JAG never operates destructive controls on those pages. See the API investigation
+in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Build and signing
 
 ## Build on Windows using WSL
 
@@ -66,9 +102,10 @@ have command-line tools, reuse them rather than overwriting their installation.
 Clone your branch into the WSL filesystem, then build:
 
 ```bash
-git clone --branch feat/jag-home-dev https://github.com/1invito/jag-home.git
+git clone --branch feat/jag-home-v2 https://github.com/1invito/jag-home.git
 cd jag-home
 ./launcher/jag/test.sh
+# Supply the retained key/password securely as described in SIGNING.md first.
 ./launcher/jag/build.sh
 sha256sum launcher/jag/build/jag-home-dev.apk
 ```
@@ -79,121 +116,90 @@ For subsequent WSL sessions, restore `JAVA_HOME`, `ANDROID_HOME`,
 `ANDROID_SDK_ROOT` and `PATH` above. This procedure requires x86-64 Linux/WSL;
 ARM Windows needs a compatible x86-64 build environment.
 
-The builder creates an ignored, development-only signing key at
-`launcher/build/jag-home-dev.keystore`. Keep it for updates to this development
-package. It never reads or replaces upstream `launcher/release.keystore`.
-`JAG_DEV_KEYSTORE` can select a retained development key with the same `jagdev`
-alias and local development password. Do not use this development key for a
-production release. APK signatures are verified at the end of the build.
 
-## Manually install with Windows Git Bash
+The signed output is **`launcher/jag/build/jag-home-dev.apk`**. Supply the retained
+keystore and environment passwords following [SIGNING.md](SIGNING.md); the builder
+fails safely if they are unavailable or the certificate differs. It no longer
+silently generates a new key. CI produces the clearly named **unsigned**
+`jag-home-dev-unsigned.apk` for compilation validation, not an installable update.
+Never commit private signing material or paste passwords into chat.
 
-No script deploys JAG to your TV. Follow this section only when you choose to
-test. Copy the built APK from WSL into the Windows checkout, for example:
+## Manual Windows Git Bash update
+
+First compare the installed and new APK signer fingerprints as described in
+[SIGNING.md](SIGNING.md). If different, stop and keep the working preview. Copy the
+signed APK from WSL to your Windows checkout, for example:
 
 ```bash
-# WSL: change the destination to your actual Windows checkout
+# WSL: use your actual Windows checkout path.
 mkdir -p /mnt/c/Users/YOUR_NAME/Projects/jag-home/launcher/jag/build
 cp launcher/jag/build/jag-home-dev.apk /mnt/c/Users/YOUR_NAME/Projects/jag-home/launcher/jag/build/
 ```
 
-Then in **Windows Git Bash**, from that checkout:
+Then from Windows Git Bash in that checkout:
 
 ```bash
-# Replace TV_ADDRESS with the device's address; do not commit it.
 export ADB_SERIAL='TV_ADDRESS:5555'
 adb connect "$ADB_SERIAL"
 adb -s "$ADB_SERIAL" get-state
-# Must say device. If unauthorized, accept the prompt on the TV before continuing.
+# Continue only if state is device and the certificate comparison matched.
 adb -s "$ADB_SERIAL" install -r launcher/jag/build/jag-home-dev.apk
 adb -s "$ADB_SERIAL" shell am start -W -n com.jag.home.dev/.Home
 ```
 
-The component is JAG's own declared activity. No third-party activities are
-hardcoded. Installation adds only `com.jag.home.dev`; it does not replace dumbtv,
-change settings, grant usage/accessibility access, disable packages or alter DNS.
-Never use upstream `launcher/install.sh`, `scripts/all.sh`, `restore.sh` or the
-cleanup scripts to install or remove this preview.
+Accept an authorization prompt on the TV if needed; do not retry in a loop.
+`install -r` is an in-place update only for a matching certificate, retaining
+JAG's private settings. Never use `pm clear`, uninstall the working launchers,
+change accessibility/default HOME, or invoke upstream install/cleanup/restore
+scripts to fix an update error. The old and new cloud artifact certificates
+match, but this does not establish your installed APK's signer.
 
-If an update reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use the original
-**JAG development key** to rebuild. Do not uninstall the existing dumbtv launcher
-or reset its data to fix a signing mismatch. Removing only `com.jag.home.dev`
-is an optional last resort and loses JAG's own settings, not streaming accounts.
+## Local wallpaper with the remote
 
-## Wallpaper with the remote
-
-From the home screen choose Wallpaper, then an image or Default. On a Fire TV
-without a usable document picker, first add pictures from Windows Git Bash:
+Choose Wallpaper in the dock, select a local image or Default, then Back to return.
+Some Fire OS builds lack a usable document picker. In that case put an image in
+JAG's own folder from Windows Git Bash and reopen Wallpaper:
 
 ```bash
 MSYS_NO_PATHCONV=1 adb -s "$ADB_SERIAL" shell mkdir -p /sdcard/Android/media/com.jag.home.dev/wallpapers
 MSYS_NO_PATHCONV=1 adb -s "$ADB_SERIAL" push 'C:/Users/YOUR_NAME/Pictures/wallpaper.jpg' /sdcard/Android/media/com.jag.home.dev/wallpapers/
 ```
 
-Use your own path and image; nothing is downloaded by JAG. The app also scans
-`/sdcard/Android/data/com.jag.home.dev/files/wallpapers/` when available.
-Select the filename using the remote. Images must be JPG, PNG or WebP, at most
-32 MB, with sensible dimensions; a 1920 × 1080 still is recommended. Reopen the
-wallpaper menu after adding files. Every settings change is local and requires
-no keyboard. Appearance reset returns to navy and keeps the custom app order.
+The app also scans its own external-files `wallpapers/` folder. No storage
+permission is requested. Use a landscape still, preferably 1920 × 1080, at most
+32 MB. At most 100 candidate files are offered. Opaque pictures prefer RGB_565;
+alpha images may need ARGB_8888. No images are downloaded or rotated. Wallpaper
+selection is retained when using a non-photo theme and shown again in Cinematic.
 
-## Free Memory limitations
+## Testing, performance and recovery
 
-Free Memory asks for confirmation, then reads available memory **once**. It
-reports that no apps were stopped and offers app-management settings. Android 9
-supports limited background kill requests with a normal permission, but public
-process visibility cannot establish that a streaming app, VPN or shared service
-is safe to target. JAG intentionally has an empty cleanup allowlist and requests
-no kill permission on any Android version.
+Run `./launcher/jag/test.sh` and build. See [TESTING.md](TESTING.md) for native
+emulator checks, the physical Fire OS acceptance checklist, comparable warm/cold
+measurements and the 10% latency / 10–15 MB PSS targets. Those targets are
+**unmeasured on the Fire Stick**, not achievements inferred from APK size.
+Test fixtures and instrumentation are separate emulator-only APKs; they are not
+included in the signed development APK and do not represent real streaming apps.
 
-Killing a background process, force-stopping an app, clearing its cache, clearing
-its data and disabling a package are different operations. JAG performs none of
-these. Android may restart background processes; increased free RAM is not a
-reliable performance score. The management page is a manual fallback: leave
-active playback and VPN settings alone. JAG never operates destructive controls
-in that page and never claims a before/after gain.
-
-## Return to dumbtv and rollback
-
-Press the remote's **Home** button. The existing dumbtv Home integration remains
-responsible for it. Back exits the preview; Settings also has Return to existing
-dumbtv. If needed, from Git Bash:
+Press the remote's **Home** button to use the existing dumbtv binding. Back exits
+settings/dialogs predictably and exits the preview from its home screen. Customize
+also offers Return to existing dumbtv. If needed, manually launch the retained
+app without guessing its activity:
 
 ```bash
-# Start the existing app through PackageManager; no activity-name guess is needed.
 adb -s "$ADB_SERIAL" shell monkey -p tv.dumbtv.home -c android.intent.category.LEANBACK_LAUNCHER 1
-# Optional: remove ONLY the development preview and its own settings/wallpapers.
-adb -s "$ADB_SERIAL" uninstall com.jag.home.dev
 ```
 
-No HOME rebinding, global settings restoration or reboot should be necessary
-because the preview never changes those. Do not run upstream `restore.sh`: that
-would undo the owner's existing cleanup. Existing disabled packages, accounts,
-streaming-app data and DNS configuration stay as they were.
+V2 does not change HOME/accessibility/global settings, DNS, installed streaming
+apps, account data or debloating state. No restoration script is needed. Do not
+uninstall JAG to roll back an update error; ordinary APK downgrades may be
+refused. Keep using dumbtv and prepare a same-key forward fix if necessary.
+The stable-package handover is a separate, design-only deliverable in
+[HOME_MIGRATION_V2.md](HOME_MIGRATION_V2.md), with snapshots, scoped rollback and
+failure recovery. There is **no HOME takeover in this PR**.
 
-## Future production migration (separate, deliberate task)
+## Attribution
 
-After successful hardware validation, prefer a separate stable package such as
-`com.jag.home`, leaving `tv.dumbtv.home` installed for recovery. Give production
-its own controlled signing certificate; archive it securely and sign every
-update with the same certificate. A different package does not inherit app data
-or settings. Export only JAG's appearance/order via an explicit migration step.
-
-Neither a new package nor a new certificate can update upstream `tv.dumbtv.home`.
-An in-place update would require its existing certificate and would conflict
-with the side-by-side recovery objective. Never uninstall dumbtv to sidestep this.
-The `.dev` preview has **no** Guard, Keeper or accessibility-service identifier.
-Any later production HOME service would have a new fully qualified component
-under the production package and require a separate, reviewed manifest and
-installer. Do not point the old installer at JAG: it contains hardcoded upstream
-IDs, alarm settings and accessibility writes.
-
-Before a migration, privately record the current HOME/accessibility/alarm
-configuration and certificate fingerprints, then design a narrowly scoped,
-verified change that preserves unrelated services and can restore those exact
-values. Obtain owner approval before applying it. Validate Home, Back, long Home,
-remote pairing, system settings, playback and VPN continuity. Keep dumbtv
-installed and reachable during the trial. The migration rollback must restore
-the recorded binding and launch dumbtv **before** removing a new service/package;
-it must not use the broad cleanup restore script. None of these production
-changes are implemented or performed by this preview.
+JAG is built on dumbtv's native View architecture and bare SDK build pipeline.
+Copyright (c) 2026 dumbtv contributors; the upstream [MIT license](../../LICENSE)
+is preserved. The new layout, line icons, atmospheric gradients and card
+fallbacks are original. No Apple artwork, icons, fonts or source code is used.
