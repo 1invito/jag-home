@@ -29,7 +29,7 @@ cp -R res "$WORK/res"
 cp -R stable/res/. "$WORK/res/"
 "$BT/aapt2" compile --dir "$WORK/res" -o "$WORK/res.zip"
 "$BT/aapt2" link -I "$JAR" --manifest stable/AndroidManifest.xml "$WORK/res.zip" \
-  --min-sdk-version 28 --target-sdk-version 28 --version-code 4 --version-name 0.4-settings \
+  --min-sdk-version 28 --target-sdk-version 28 --version-code 5 --version-name 0.5-history \
   --java "$WORK/gen" -o "$WORK/app.apk"
 (
   cd "$WORK"
