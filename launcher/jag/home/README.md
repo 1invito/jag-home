@@ -344,3 +344,26 @@ does not require rebuilding or updating the Android APK. The watchdog still
 rolls back after its deadline if not accepted. Never manually alter the
 journal/lease to extend a trial. For ordinary measured acceptance, omit the flag
 and use `measurements.example.json` with 10 real warm trials and PSS.
+
+
+## Home-screen Clear History shortcut (stable v0.5)
+
+When JAG's private Recently Opened list contains at least one successful
+JAG-initiated launch, Home displays a fifth dock control labelled
+`Clear History`. It uses the same on-device D-pad navigation as the four
+permanent controls, and opens a confirmation dialog. Cancel leaves history
+unchanged; Clear removes only the `recent` key in JAG's own private
+`jag.properties`. The empty recent row and optional fifth control disappear
+immediately, with focus safely returned to Customize. Favorites, appearance,
+streaming/app watch histories, system cache, accounts and VPN are untouched.
+The original Customize -> Clear recent history action remains available.
+No new background services, permissions, process-cleaning or HOME behavior.
+
+For an owner whose stable `com.jag.home` package is already accepted/armed:
+do **not** install an active-HOME update through the migration `--install`
+mode. Perform a recorded `--rollback` first while ADB and the original
+dumbtv recovery work, then owner-sign and `--install` the versionCode 5
+candidate, test it disarmed, and repeat the controlled trial and reboot
+acceptance. Do not lose the owner signing keystore or private migration
+backup. This patch changes the installed Android APK, unlike the earlier
+host-only performance-waiver option.
