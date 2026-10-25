@@ -1,5 +1,10 @@
 # JAG Home v2 validation and Fire OS acceptance
 
+V3 stable HOME integration has separate tests and owner deployment gates in
+[home/README.md](home/README.md). V2 UI results below do not establish Fire OS
+authorization or latency for the new Guard. No Home handover is performed by
+the development APK or the cloud task.
+
 ## Recorded cloud validation
 
 Validated on 2026-10-25, with the retained v1 cloud certificate:

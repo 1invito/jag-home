@@ -75,6 +75,7 @@ public final class Preferences extends Activity {
         action("Application management", () -> Recovery.applications(this));
         action("Return to existing dumbtv", () -> Recovery.dumbtv(this));
         action("About JAG Home", this::about);
+        HomeIntegration.preferences(this, list);
         action("Restore visual defaults", () -> Ui.dialog(this)
             .setTitle("Restore Cinematic defaults?")
             .setMessage("Resets JAG's appearance. Favorite order, recent history, installed apps, accounts and dumbtv are preserved.")
@@ -208,11 +209,11 @@ public final class Preferences extends Activity {
     }
 
     private void about() {
-        Ui.dialog(this).setTitle("JAG Home · cinematic development preview 0.2")
+        Ui.dialog(this).setTitle(HomeIntegration.title())
             .setMessage("An original, quiet TV home inspired by spatial clarity and simple navigation. "
-                + "Native Java and Android Views. No ads, tracking, network permission or background services. "
+                + "Native Java and Android Views. No ads, tracking or network permission. "
                 + "Built on dumbtv by the dumbtv contributors, MIT licensed. "
-                + "This separate development app does not replace dumbtv or change the Home button. "
+                + HomeIntegration.about() + " "
                 + "Performance and compatibility measurements on your Fire Stick are still required.")
             .setPositiveButton("Close", null).show();
     }

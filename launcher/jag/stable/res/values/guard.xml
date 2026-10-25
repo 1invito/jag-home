@@ -1,0 +1,3 @@
+<resources>
+    <string name="jag_guard_description">Redirects only the verified Amazon Home window to JAG Home after an owner-controlled migration. Does not read screen content or intercept remote keys.</string>
+</resources>

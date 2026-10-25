@@ -72,6 +72,7 @@ public final class Home extends Activity {
     @Override protected void onResume() {
         super.onResume(); visible = true;
         config = new Configuration(new File(getFilesDir(), "jag.properties"));
+        HomeIntegration.arrived(this);
         build(); formats(); tick();
         IntentFilter times = new IntentFilter(Intent.ACTION_TIME_TICK);
         times.addAction(Intent.ACTION_TIME_CHANGED); times.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -208,6 +209,7 @@ public final class Home extends Activity {
         FrameLayout.LayoutParams quick = new FrameLayout.LayoutParams(width, layout.dockHeight + dp(10), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         quick.bottomMargin = layout.dockBottom; root.addView(dock, quick);
         setContentView(root);
+        HomeIntegration.observeDraw(root);
     }
 
     private LinearLayout strip() {
@@ -318,5 +320,5 @@ public final class Home extends Activity {
         return super.onKeyDown(code, event);
     }
 
-    @Override public void onBackPressed() { finish(); }
+    @Override public void onBackPressed() { if (!HomeIntegration.consumeBack(this)) finish(); }
 }

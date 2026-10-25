@@ -1,0 +1,15 @@
+{
+  "remote_ok": false,
+  "playback_ok": false,
+  "vpn_ok": false,
+  "settings_ok": false,
+  "long_home_ok": false,
+  "reboot_ok": false,
+  "comparable_conditions": false,
+  "warm_trials": 0,
+  "dumbtv_median_ms": null,
+  "jag_median_ms": null,
+  "dumbtv_p95_ms": null,
+  "jag_p95_ms": null,
+  "additional_visible_pss_mib": null
+}

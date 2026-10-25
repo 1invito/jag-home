@@ -1,4 +1,4 @@
-name: JAG Home development APK
+name: JAG Home preview and stable validation
 
 on:
   push:
@@ -17,11 +17,19 @@ jobs:
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "build-tools;34.0.0"'
       - name: Models and device-safety barriers
         run: ./launcher/jag/test.sh
+      - name: HOME protocol, watchdog and stable safety tests
+        run: ./launcher/jag/test-home.sh
       - name: Shell syntax
         run: for f in launcher/jag/*.sh; do bash -n "$f" || exit 1; done
       - name: Build unsigned validation APK (retained signing key stays offline)
         run: ./launcher/jag/build.sh --unsigned
+      - name: Build separate unsigned stable APK (owner key stays offline)
+        run: ./launcher/jag/build-stable.sh --unsigned
       - uses: actions/upload-artifact@v4
         with:
           name: jag-home-v2-unsigned-validation
           path: launcher/jag/build/jag-home-dev-unsigned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jag-home-v3-stable-unsigned
+          path: launcher/jag/build/jag-home-stable-unsigned.apk
