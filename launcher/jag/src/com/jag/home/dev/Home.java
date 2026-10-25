@@ -197,9 +197,18 @@ public final class Home extends Activity {
 
         LinearLayout dock = strip(); dock.setPadding(dp(5), dp(5), dp(5), dp(5));
         dock.setBackground(Ui.round(theme.dock, 0x24D6E4FF, dp(17)));
-        String[] names = {"Wallpaper", "Customize", "Memory Status", "System Settings"};
-        Runnable[] tasks = {() -> preferences(true), () -> preferences(false), () -> Memory.information(this), () -> Recovery.systemSettings(this)};
-        int width = Math.min(layout.rowWidth, dp(650));
+        // A fifth dock action is useful only when there is history to clear.
+        // Removing the last recent entry returns to the familiar four-button layout.
+        boolean hasHistory = !recents.isEmpty();
+        String[] names = hasHistory
+            ? new String[] {"Wallpaper", "Customize", "Memory Status", "System Settings", "Clear History"}
+            : new String[] {"Wallpaper", "Customize", "Memory Status", "System Settings"};
+        Runnable[] tasks = hasHistory
+            ? new Runnable[] {() -> preferences(true), () -> preferences(false),
+                () -> Memory.information(this), () -> Recovery.systemSettings(this), this::confirmClearHistory}
+            : new Runnable[] {() -> preferences(true), () -> preferences(false),
+                () -> Memory.information(this), () -> Recovery.systemSettings(this)};
+        int width = Math.min(layout.rowWidth, dp(hasHistory ? 800 : 650));
         for (int i = 0; i < names.length; i++) {
             DockButton button = new DockButton(this, i, names[i], config.accent());
             final Runnable action = tasks[i]; button.setOnClickListener(v -> action.run());
@@ -210,6 +219,27 @@ public final class Home extends Activity {
         quick.bottomMargin = layout.dockBottom; root.addView(dock, quick);
         setContentView(root);
         HomeIntegration.observeDraw(root);
+    }
+
+    private void confirmClearHistory() {
+        Ui.dialog(this).setTitle("Clear Recently Opened?")
+            .setMessage("Remove only JAG Home's recently opened app shortcuts? "
+                + "This will not close apps, clear their caches, or affect watch history, sign-ins or VPN.")
+            .setPositiveButton("Clear", (dialog, which) -> {
+                try {
+                    config.set("recent", "");
+                    // The conditional fifth dock button disappears after clearing.
+                    // Move focus to Customize before reconstructing the scene so
+                    // the remote never points at a removed control.
+                    focusToken = "dock:1";
+                    build();
+                    load();
+                    restoreFocus();
+                } catch (IOException error) {
+                    Ui.message(this, "Could not clear recent history. Nothing was changed.");
+                }
+            })
+            .setNegativeButton("Cancel", null).show();
     }
 
     private LinearLayout strip() {
