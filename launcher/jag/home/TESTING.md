@@ -139,3 +139,19 @@ guarantee of automatic recovery, and no such guarantee is made.
 The separate development v2 UI is owner-reported as working on the Fire Stick.
 That report is not evidence that Fire OS authorizes or performs well with this
 new stable certificate/service.
+
+
+## Explicit unmeasured-performance owner waiver
+
+A separate host CLI option `--accept --waive-performance` is available for
+owners who decline the timing experiment but have confirmed every physical
+check and a fresh reboot in the **current** trial. The evidence file contains
+`performance_waived: true` and six true physical-check fields, with **no
+numbers**. The journal records `unmeasured_performance_waiver: true`. This
+is deliberately **not** equivalent to passing the <=10% latency or <=15 MiB
+PSS budgets; these remain unknown under the waiver. The mode keeps identity,
+watchdog heartbeat, installed APK identity, current foreground/draw/crash/ANR,
+exclusive service binding, reboot-generation verification, expiry checks, and
+rollback. The owner confirms the explicit waiver separately from `KEEP JAG`.
+Regression tests cover acceptance rejection before reboot, missing physical
+checks, fabricated metrics in waiver mode and retained original rollback.
