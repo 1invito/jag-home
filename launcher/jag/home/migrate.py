@@ -37,6 +37,7 @@ def main(argv=None):
     parser.add_argument('--appearance-file', type=Path)
     parser.add_argument('--wallpaper-file', type=Path)
     parser.add_argument('--measurements', type=Path)
+    parser.add_argument('--waive-performance', action='store_true', help='Owner explicitly accepts unmeasured latency/RAM; reboot and physical health checks remain mandatory')
     parser.add_argument('--seconds', type=int, default=300)
     args = parser.parse_args(argv)
     if not args.serial: parser.error('Select exactly one authorized device using --serial or ADB_SERIAL')
@@ -82,11 +83,15 @@ def main(argv=None):
         elif args.rollback:
             print(json.dumps(tool.rollback()))
         elif args.accept:
-            if not args.measurements: raise Blocked('Provide actual owner measurements and physical acceptance checks')
+            if not args.measurements: raise Blocked('Provide owner physical acceptance checks in a private JSON file')
             if args.measurements.stat().st_size > 16384: raise Blocked('Measurements file exceeds 16 KB')
             data = json.loads(args.measurements.read_text(encoding='utf-8-sig'))
+            if args.waive_performance:
+                print('PERFORMANCE NOT MEASURED: the 10-trial latency and RAM budget checks are waived by the owner.')
+                print('This does not prove speed, resource use, or long-term stability. Reboot and physical checks remain mandatory.')
+                confirm('I ACCEPT UNMEASURED PERFORMANCE')
             confirm('KEEP JAG')
-            tool.accept(data)
+            tool.accept(data, waive_performance=args.waive_performance)
             print('Owner accepted JAG. Stable arming persists across reboot; keep the original backup and dumbtv installed.')
         elif args.reboot_check:
             confirm('REBOOT CHECK')
