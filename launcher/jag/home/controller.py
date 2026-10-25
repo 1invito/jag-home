@@ -314,17 +314,20 @@ class Controller:
             if journal['phase'] == 'trial': self.heartbeat(journal)
             return self.health(snapshot, journal, foreground=True)
 
-    def accept(self, measurements):
+    def accept(self, measurements, waive_performance=False):
         with locked(self.folder):
             snapshot = self.check_identity(); journal = self.journal(); self.ensure_lease(journal)
             self.heartbeat(journal)
-            validate_measurements(measurements)
+            validate_measurements(measurements, waive_performance=waive_performance)
             if not journal.get('reboot_verified'): raise Blocked('Use --reboot-check and complete the owner-operated reboot before acceptance')
             self.verify_installed(snapshot, journal)
             self.health(snapshot, journal, foreground=True)
             status = self.adb.control(snapshot['identity'], 'commit', nonce=journal['nonce'])
             if not status['committed'] or not status['armed']: raise Blocked('Stable commit not confirmed')
-            journal['phase'] = 'accepted'; journal['measurements'] = measurements; self.save(journal)
+            journal['phase'] = 'accepted'
+            journal['measurements'] = measurements
+            journal['unmeasured_performance_waiver'] = waive_performance
+            self.save(journal)
 
     def reboot_check(self):
         with locked(self.folder):
@@ -410,10 +413,23 @@ class Controller:
             time.sleep(interval)
 
 
-def validate_measurements(data):
-    required = ('remote_ok', 'playback_ok', 'vpn_ok', 'settings_ok', 'long_home_ok', 'reboot_ok', 'comparable_conditions')
-    allowed = set(required) | {'warm_trials', 'dumbtv_median_ms', 'jag_median_ms', 'dumbtv_p95_ms', 'jag_p95_ms', 'additional_visible_pss_mib'}
-    if not isinstance(data, dict) or set(data) - allowed: raise Blocked('Use only the reviewed measurements template fields')
+def validate_measurements(data, waive_performance=False):
+    physical = ('remote_ok', 'playback_ok', 'vpn_ok', 'settings_ok', 'long_home_ok', 'reboot_ok')
+    required = physical + ('comparable_conditions',)
+    performance = ('warm_trials', 'dumbtv_median_ms', 'jag_median_ms',
+                   'dumbtv_p95_ms', 'jag_p95_ms', 'additional_visible_pss_mib')
+    if not isinstance(data, dict):
+        raise Blocked('Owner acceptance evidence must be a JSON object')
+    if waive_performance:
+        # A distinct, explicitly marked evidence shape: no synthetic trials,
+        # latency numbers or RAM metrics can be smuggled into the record.
+        if set(data) != set(physical) | {'performance_waived'} or data.get('performance_waived') is not True:
+            raise Blocked('Unmeasured acceptance needs only confirmed physical checks and performance_waived=true')
+        if any(data.get(key) is not True for key in physical):
+            raise Blocked('All physical checks must be owner-confirmed, even when performance is waived')
+        return
+    if set(data) - (set(required) | set(performance)):
+        raise Blocked('Use only the reviewed measurements template fields')
     if any(data.get(key) is not True for key in required) or type(data.get('warm_trials')) is not int or data['warm_trials'] < 10:
         raise Blocked('Owner acceptance needs real remote/reboot/playback/VPN checks and at least 10 comparable warm trials')
     for suffix in ('median_ms', 'p95_ms'):
@@ -425,7 +441,6 @@ def validate_measurements(data):
         raise Blocked('Measured visible PSS budget is missing or exceeds 15 MiB')
     if data['dumbtv_p95_ms'] < data['dumbtv_median_ms'] or data['jag_p95_ms'] < data['jag_median_ms']:
         raise Blocked('Inconsistent median/p95 observations')
-
 
 def appearance_text(text, wallpaper=False):
     """A deliberately small, non-escaped interchange format; unrelated/private keys are rejected."""
