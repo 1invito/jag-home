@@ -45,6 +45,14 @@ class StableSafety(unittest.TestCase):
         self.assertNotIn('jag-home-dev.keystore', build)
         self.assertIn('UNSIGNED stable validation artifact', build)
 
+    def test_fire_tv_settings_targets_observed_activity_with_fallback(self):
+        recovery = (ROOT / 'src/com/jag/home/dev/Recovery.java').read_text()
+        self.assertIn('com.amazon.tv.launcher.ui.MainSettingsActivity', recovery)
+        self.assertIn('new Intent(Settings.ACTION_SETTINGS)', recovery)
+        self.assertIn('Hold Home and choose Settings', recovery)
+        build = (ROOT / 'build-stable.sh').read_text()
+        self.assertIn('--version-code 4 --version-name 0.4-settings', build)
+
     def test_preview_keeps_noop_integration_and_no_manifest_change(self):
         source = (ROOT / 'src/com/jag/home/dev/HomeIntegration.java').read_text()
         self.assertNotIn('HomeGuard', source)
