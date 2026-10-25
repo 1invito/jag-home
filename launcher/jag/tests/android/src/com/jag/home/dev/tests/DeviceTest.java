@@ -309,6 +309,25 @@ public final class DeviceTest extends Instrumentation {
         key(KeyEvent.KEYCODE_BACK); returned(home);
         check(tiles() == 6 && saved().getProperty("recent", "").isEmpty(), "clear hides row and safely restores focus");
         check(!focused(home).isEmpty(), "focus survives removing row");
+
+        // Home-screen shortcut is visible only with recent history; it clears
+        // the same private key as Customize, not any other app's stored data.
+        focus("favorite:com.netflix.ninja"); key(KeyEvent.KEYCODE_DPAD_CENTER);
+        check(screenContains("JAG Test Fixture"), "fixture launched for Home shortcut");
+        key(KeyEvent.KEYCODE_BACK); returned(home);
+        check(tiles() == 7, "recent row reappears with one entry");
+        focus("dock:4");
+        check(focused(home).equals("Clear History"), "fifth dock shortcut is D-pad focusable");
+        key(KeyEvent.KEYCODE_DPAD_CENTER);
+        check(screenContains("Clear Recently Opened"), "shortcut requires confirmation");
+        key(KeyEvent.KEYCODE_BACK); returned(home);
+        check(tiles() == 7, "cancel preserves recently opened entry");
+        focus("dock:4"); key(KeyEvent.KEYCODE_DPAD_CENTER);
+        key(KeyEvent.KEYCODE_DPAD_RIGHT); key(KeyEvent.KEYCODE_DPAD_CENTER);
+        waitForIdleSync();
+        check(saved().getProperty("recent", "").isEmpty(), "home shortcut clears only JAG's history");
+        check(tiles() == 6, "empty history hides optional fifth dock button");
+        check(focused(home).equals("Customize"), "focus restored to surviving dock control");
     }
 
     @Override public void onStart() {
